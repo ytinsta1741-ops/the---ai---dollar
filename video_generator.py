@@ -140,7 +140,7 @@ def fetch_pexels_images(queries, num_images, save_dir):
                 photos = data.get("photos", [])
                 if photos:
                     photo = photos[i % len(photos)]
-                    img_url = photo["src"]["large2x"]
+                    img_url = photo["src"]["large"]
                     img_resp = requests.get(img_url, timeout=15)
                     if img_resp.status_code == 200:
                         with open(img_path, 'wb') as f:
@@ -149,7 +149,7 @@ def fetch_pexels_images(queries, num_images, save_dir):
                         print(f"  📸 Image {i+1}: {query}")
                         continue
 
-            print(f"  ⚠️ No image for '{query}', using color bg")
+            print(f"  ⚠️ Pexels API {resp.status_code}: {resp.text[:200]}")
             images.append(None)
 
         except Exception as e:
