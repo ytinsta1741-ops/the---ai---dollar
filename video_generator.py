@@ -65,38 +65,30 @@ def escape_ffmpeg_text(text):
     return text.replace("'", "\\'").replace(":", "\\:").replace("$", "\\$").replace("%", "%%")
 
 
-def create_video_ffmpeg(title, script_lines, audio_file, output_file, duration=30):
+def create_video_ffmpeg(title, script_lines, audio_file, output_file):
     """Create branded video using FFmpeg drawtext — no Pillow needed"""
 
-    t = escape_ffmpeg_text(title)
-    line1 = escape_ffmpeg_text(script_lines[0][:50] if len(script_lines) > 0 else "")
-    line2 = escape_ffmpeg_text(script_lines[1][:50] if len(script_lines) > 1 else "")
-    line3 = escape_ffmpeg_text(script_lines[2][:50] if len(script_lines) > 2 else "")
-    line4 = escape_ffmpeg_text(script_lines[3][:50] if len(script_lines) > 3 else "")
+    t  = escape_ffmpeg_text(title[:40])
+    l1 = escape_ffmpeg_text(script_lines[0][:45] if len(script_lines) > 0 else "")
+    l2 = escape_ffmpeg_text(script_lines[1][:45] if len(script_lines) > 1 else "")
+    l3 = escape_ffmpeg_text(script_lines[2][:45] if len(script_lines) > 2 else "")
+    l4 = escape_ffmpeg_text(script_lines[3][:45] if len(script_lines) > 3 else "")
 
-    vf = (
-        # Dark blue gradient background
-        "color=c=0x0A0A28:size=1080x1920:duration={dur},"
-        # Channel name
-        "drawtext=text='THE AI DOLLAR':x=(w-text_w)/2:y=160:fontsize=72:fontcolor=0xFFD700:box=0,"
-        # Gold line separator
-        "drawtext=text='━━━━━━━━━━━━━━━━━━━━━━━━━':x=(w-text_w)/2:y=270:fontsize=40:fontcolor=0xFFD700,"
-        # Title
-        "drawtext=text='{title}':x=(w-text_w)/2:y=380:fontsize=50:fontcolor=white:box=1:boxcolor=0x00000080:boxborderw=10,"
-        # Script lines
-        "drawtext=text='{l1}':x=(w-text_w)/2:y=600:fontsize=38:fontcolor=0xDDDDEE,"
-        "drawtext=text='{l2}':x=(w-text_w)/2:y=660:fontsize=38:fontcolor=0xDDDDEE,"
-        "drawtext=text='{l3}':x=(w-text_w)/2:y=720:fontsize=38:fontcolor=0xDDDDEE,"
-        "drawtext=text='{l4}':x=(w-text_w)/2:y=780:fontsize=38:fontcolor=0xDDDDEE,"
-        # Bottom branding
-        "drawtext=text='━━━━━━━━━━━━━━━━━━━━━━━━━':x=(w-text_w)/2:y=1650:fontsize=40:fontcolor=0xFFD700,"
-        "drawtext=text='@theaidollar1741':x=(w-text_w)/2:y=1720:fontsize=58:fontcolor=0xFFD700,"
-        "drawtext=text='Finance + AI = Your Future':x=(w-text_w)/2:y=1810:fontsize=40:fontcolor=0xAAAAAA"
-    ).format(dur=duration, title=t, l1=line1, l2=line2, l3=line3, l4=line4)
+    # drawtext filters only — color background is the INPUT, not a filter
+    vf = ",".join([
+        "drawtext=text='THE AI DOLLAR':x=(w-text_w)/2:y=160:fontsize=72:fontcolor=0xFFD700",
+        f"drawtext=text='{t}':x=(w-text_w)/2:y=350:fontsize=48:fontcolor=white",
+        f"drawtext=text='{l1}':x=(w-text_w)/2:y=580:fontsize=36:fontcolor=0xDDDDEE",
+        f"drawtext=text='{l2}':x=(w-text_w)/2:y=640:fontsize=36:fontcolor=0xDDDDEE",
+        f"drawtext=text='{l3}':x=(w-text_w)/2:y=700:fontsize=36:fontcolor=0xDDDDEE",
+        f"drawtext=text='{l4}':x=(w-text_w)/2:y=760:fontsize=36:fontcolor=0xDDDDEE",
+        "drawtext=text='@theaidollar1741':x=(w-text_w)/2:y=1720:fontsize=58:fontcolor=0xFFD700",
+        "drawtext=text='Finance + AI = Your Future':x=(w-text_w)/2:y=1810:fontsize=40:fontcolor=0xAAAAAA",
+    ])
 
     cmd = [
         FFMPEG, '-y',
-        '-f', 'lavfi', '-i', f'color=c=0x0A0A28:size=1080x1920:duration={duration}',
+        '-f', 'lavfi', '-i', 'color=c=0x0A0A28:size=1080x1920:rate=25',
         '-i', audio_file,
         '-vf', vf,
         '-c:v', 'libx264',
