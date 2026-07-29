@@ -4,7 +4,7 @@ schedule==1.2.0
 google-auth-oauthlib==1.1.0
 google-auth-httplib2==0.2.0
 google-api-python-client==2.97.0
-instagrapi==1.16.1
+instagrapi==1.16.41
 gtts==2.5.1
 imageio-ffmpeg==0.4.9
 pytz==2024.1
