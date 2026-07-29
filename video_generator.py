@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
 The AI Dollar - Video Generator
-Creates videos using FFmpeg (no Pillow needed) + gTTS voiceover
+Creates YouTube Shorts style videos with timed text + TTS voiceover
 """
 
 import os
 import subprocess
+import json
 from datetime import datetime
 
-# Get bundled FFmpeg binary
 try:
     import imageio_ffmpeg
     FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
@@ -23,90 +23,193 @@ CONFIG = {
 
 CONTENT_TOPICS = [
     {
-        "title": "ChatGPT Side Hustle Making $500/Week",
-        "hook": "Wait, people are actually making 500 dollars per week with ChatGPT?",
-        "script": "ChatGPT has created a new income opportunity. Businesses need content, and ChatGPT helps you generate it fast. Start by offering AI-powered content creation services. Charge 200 to 500 dollars per project. With just 2 clients per week, you hit 500 dollars or more.",
-        "cta": "Subscribe to The AI Dollar for daily AI money tips!",
+        "title": "What is AI?",
+        "slides": [
+            {"text": "What is AI?", "duration": 3},
+            {"text": "AI stands for\\nArtificial Intelligence", "duration": 3},
+            {"text": "It lets machines\\nlearn from data", "duration": 3},
+            {"text": "And make decisions\\nlike humans do", "duration": 3},
+            {"text": "ChatGPT, Siri, Tesla\\nall use AI", "duration": 3},
+            {"text": "AI is changing\\nEVERYTHING", "duration": 3},
+            {"text": "Follow for more\\nAI insights", "duration": 3},
+        ],
+        "voiceover": "What is AI? AI stands for Artificial Intelligence. It lets machines learn from data and make decisions like humans do. ChatGPT, Siri, and Tesla all use AI every day. AI is changing everything around us. Follow The AI Dollar for more AI insights.",
+        "keywords": ["AI", "Artificial Intelligence", "Tech"],
+    },
+    {
+        "title": "Make $500/Week with ChatGPT",
+        "slides": [
+            {"text": "Make $500 per week\\nwith ChatGPT", "duration": 3},
+            {"text": "Step 1\\nLearn prompt engineering", "duration": 3},
+            {"text": "Step 2\\nOffer content writing", "duration": 3},
+            {"text": "Step 3\\nCharge $200 per project", "duration": 3},
+            {"text": "Just 2-3 clients\\n= $500+ weekly", "duration": 3},
+            {"text": "Start TODAY\\nnot tomorrow", "duration": 3},
+            {"text": "Follow for more\\nAI money tips", "duration": 3},
+        ],
+        "voiceover": "You can make 500 dollars per week with ChatGPT. Step one, learn prompt engineering. Step two, offer content writing services to businesses. Step three, charge 200 dollars per project. With just 2 to 3 clients, that's 500 dollars or more every single week. Start today, not tomorrow. Follow The AI Dollar for more AI money tips.",
         "keywords": ["ChatGPT", "Money", "Side Hustle"],
     },
     {
-        "title": "5 AI Tools Making People Rich Right Now",
-        "hook": "These 5 AI tools are making people passive income right now.",
-        "script": "Tool one: Midjourney, generate art for 100 dollars per commission. Tool two: ChatGPT, sell content creation services. Tool three: Claude, AI copywriting. Tool four: Runway, video creation. Tool five: Dify, build AI apps with no code. Start with one tool and scale.",
-        "cta": "Follow The AI Dollar for more AI money strategies!",
+        "title": "5 AI Tools Making People Rich",
+        "slides": [
+            {"text": "5 AI Tools Making\\nPeople RICH", "duration": 3},
+            {"text": "1. ChatGPT\\nContent creation", "duration": 3},
+            {"text": "2. Midjourney\\nAI art for $100+", "duration": 3},
+            {"text": "3. Claude\\nAI copywriting", "duration": 3},
+            {"text": "4. Runway\\nVideo creation", "duration": 3},
+            {"text": "5. Dify\\nNo-code AI apps", "duration": 2.5},
+            {"text": "Pick ONE and\\nstart earning", "duration": 2.5},
+            {"text": "Subscribe for more!", "duration": 2},
+        ],
+        "voiceover": "5 AI tools making people rich right now. Number one, ChatGPT for content creation. Number two, Midjourney for AI art commissions at 100 dollars each. Number three, Claude for AI copywriting. Number four, Runway for video creation. Number five, Dify for building no-code AI apps. Pick one tool and start earning today. Subscribe for more.",
         "keywords": ["AI Tools", "Money", "Passive Income"],
     },
     {
-        "title": "This AI Made Me $1000 In 24 Hours",
-        "hook": "One AI tool did something unexpected and made me 1000 dollars in 24 hours.",
-        "script": "I tested an AI tool for 24 hours straight. I used it to create digital products and sell on Gumroad. Got 15 sales at 67 dollars each. Total was over 1000 dollars. The combo? ChatGPT plus Midjourney. Write with ChatGPT, illustrate with Midjourney, sell on Gumroad.",
-        "cta": "Like and subscribe for more real AI income strategies!",
+        "title": "AI Made Me $1000 in 24 Hours",
+        "slides": [
+            {"text": "AI made me $1000\\nin 24 hours", "duration": 3},
+            {"text": "I used ChatGPT +\\nMidjourney", "duration": 3},
+            {"text": "Created digital\\nproducts", "duration": 3},
+            {"text": "Sold them on\\nGumroad", "duration": 3},
+            {"text": "15 sales at $67\\neach", "duration": 3},
+            {"text": "Total = $1,005", "duration": 3},
+            {"text": "You can do this\\nTODAY", "duration": 2.5},
+            {"text": "Follow @theaidollar1741", "duration": 2},
+        ],
+        "voiceover": "AI made me 1000 dollars in just 24 hours. I used ChatGPT and Midjourney together. I created digital products and sold them on Gumroad. I got 15 sales at 67 dollars each. That's a total of 1005 dollars in one day. You can do this today. Follow The AI Dollar for more.",
         "keywords": ["AI Money", "Digital Products", "Quick Cash"],
     },
     {
-        "title": "Best Free AI Tools To Make Money in 2026",
-        "hook": "Most people have no idea these free AI tools can make them money.",
-        "script": "Free AI tools that work: ChatGPT free tier for content creation. Midjourney free trial for art. Claude free for copywriting. Pika for video creation. Dify for no-code AI apps. Combine any two of these and you have a real money-making business starting today.",
-        "cta": "Subscribe to The AI Dollar and never miss a money tip!",
+        "title": "Best FREE AI Tools 2026",
+        "slides": [
+            {"text": "Best FREE AI Tools\\nin 2026", "duration": 3},
+            {"text": "ChatGPT Free\\nContent creation", "duration": 3},
+            {"text": "Claude Free\\nCopywriting", "duration": 3},
+            {"text": "Pika Free\\nVideo creation", "duration": 3},
+            {"text": "Canva AI\\nDesign anything", "duration": 3},
+            {"text": "Combine any TWO\\n= real business", "duration": 3},
+            {"text": "Subscribe for\\ndaily AI tips!", "duration": 3},
+        ],
+        "voiceover": "Here are the best free AI tools in 2026. ChatGPT free tier for content creation. Claude free for copywriting. Pika for free video creation. Canva AI for designing anything. Combine any two of these and you have a real money-making business starting today. Subscribe to The AI Dollar for daily AI tips.",
         "keywords": ["Free Tools", "AI", "Money"],
-    }
+    },
+    {
+        "title": "How AI Will Replace 90% of Jobs",
+        "slides": [
+            {"text": "AI will replace\\n90%% of jobs", "duration": 3},
+            {"text": "Customer service?\\nAI chatbots", "duration": 3},
+            {"text": "Data entry?\\nAlready automated", "duration": 3},
+            {"text": "Writing?\\nChatGPT does it", "duration": 3},
+            {"text": "But here is\\nthe good news", "duration": 3},
+            {"text": "AI creates NEW\\njobs too", "duration": 3},
+            {"text": "Learn AI now\\nor get left behind", "duration": 3},
+        ],
+        "voiceover": "AI will replace 90 percent of jobs. Customer service? AI chatbots handle it. Data entry? Already automated. Writing? ChatGPT does it faster. But here is the good news. AI creates new jobs too. The question is, will you learn AI now, or get left behind? Follow The AI Dollar.",
+        "keywords": ["AI Jobs", "Future", "Automation"],
+    },
 ]
 
 
 def create_audio(text, output_path):
-    """Generate TTS audio using gTTS"""
     from gtts import gTTS
     tts = gTTS(text=text, lang='en', slow=False)
     tts.save(output_path)
 
 
+def get_audio_duration(audio_path):
+    cmd = [FFMPEG, '-i', audio_path, '-f', 'null', '-']
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    _, stderr = proc.communicate()
+    output = stderr.decode('utf-8', errors='replace')
+    for line in output.split('\n'):
+        if 'Duration' in line:
+            time_str = line.split('Duration:')[1].split(',')[0].strip()
+            parts = time_str.split(':')
+            return float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
+    return 21
+
+
 def escape_ffmpeg_text(text):
-    """Escape special characters for FFmpeg drawtext filter"""
     return text.replace("'", "\\'").replace(":", "\\:").replace("$", "\\$").replace("%", "%%")
 
 
-def create_video_ffmpeg(title, script_lines, audio_file, output_file):
-    """Create branded video using FFmpeg drawtext — no Pillow needed"""
+def create_video_ffmpeg(slides, audio_file, output_file):
+    audio_duration = get_audio_duration(audio_file)
 
-    t  = escape_ffmpeg_text(title[:35])
-    l1 = escape_ffmpeg_text(script_lines[0][:40] if len(script_lines) > 0 else "")
-    l2 = escape_ffmpeg_text(script_lines[1][:40] if len(script_lines) > 1 else "")
-    l3 = escape_ffmpeg_text(script_lines[2][:40] if len(script_lines) > 2 else "")
-    l4 = escape_ffmpeg_text(script_lines[3][:40] if len(script_lines) > 3 else "")
+    total_slide_duration = sum(s['duration'] for s in slides)
+    scale = audio_duration / total_slide_duration if total_slide_duration > 0 else 1.0
 
-    # Use 720x1280 (smaller = faster encoding on free tier)
-    vf = ",".join([
-        "drawtext=text='THE AI DOLLAR':x=(w-text_w)/2:y=100:fontsize=54:fontcolor=0xFFD700",
-        f"drawtext=text='{t}':x=(w-text_w)/2:y=250:fontsize=38:fontcolor=white",
-        f"drawtext=text='{l1}':x=(w-text_w)/2:y=440:fontsize=28:fontcolor=0xDDDDEE",
-        f"drawtext=text='{l2}':x=(w-text_w)/2:y=490:fontsize=28:fontcolor=0xDDDDEE",
-        f"drawtext=text='{l3}':x=(w-text_w)/2:y=540:fontsize=28:fontcolor=0xDDDDEE",
-        f"drawtext=text='{l4}':x=(w-text_w)/2:y=590:fontsize=28:fontcolor=0xDDDDEE",
-        "drawtext=text='@theaidollar1741':x=(w-text_w)/2:y=1140:fontsize=44:fontcolor=0xFFD700",
-        "drawtext=text='Finance + AI = Your Future':x=(w-text_w)/2:y=1210:fontsize=30:fontcolor=0xAAAAAA",
-    ])
+    filters = []
+
+    filters.append(
+        "drawtext=text='THE AI DOLLAR':"
+        "x=(w-text_w)/2:y=80:fontsize=36:fontcolor=0xFFD700:"
+        "borderw=2:bordercolor=0x000000"
+    )
+
+    t = 0
+    for slide in slides:
+        dur = slide['duration'] * scale
+        lines = slide['text'].split('\\n')
+
+        if len(lines) == 1:
+            escaped = escape_ffmpeg_text(lines[0])
+            filters.append(
+                f"drawtext=text='{escaped}':"
+                f"x=(w-text_w)/2:y=(h-text_h)/2:"
+                f"fontsize=52:fontcolor=white:"
+                f"borderw=3:bordercolor=0x000000:"
+                f"enable='between(t,{t:.2f},{t+dur:.2f})'"
+            )
+        else:
+            escaped1 = escape_ffmpeg_text(lines[0])
+            escaped2 = escape_ffmpeg_text(lines[1]) if len(lines) > 1 else ""
+            filters.append(
+                f"drawtext=text='{escaped1}':"
+                f"x=(w-text_w)/2:y=(h/2)-50:"
+                f"fontsize=52:fontcolor=white:"
+                f"borderw=3:bordercolor=0x000000:"
+                f"enable='between(t,{t:.2f},{t+dur:.2f})'"
+            )
+            if escaped2:
+                filters.append(
+                    f"drawtext=text='{escaped2}':"
+                    f"x=(w-text_w)/2:y=(h/2)+20:"
+                    f"fontsize=52:fontcolor=0x00DDFF:"
+                    f"borderw=3:bordercolor=0x000000:"
+                    f"enable='between(t,{t:.2f},{t+dur:.2f})'"
+                )
+        t += dur
+
+    filters.append(
+        "drawtext=text='@theaidollar1741':"
+        "x=(w-text_w)/2:y=h-120:fontsize=32:fontcolor=0xFFD700:"
+        "borderw=2:bordercolor=0x000000"
+    )
+
+    vf = ",".join(filters)
 
     cmd = [
         FFMPEG, '-y',
-        '-f', 'lavfi', '-i', 'color=c=0x0A0A28:size=720x1280:rate=24',
+        '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=30',
         '-i', audio_file,
         '-vf', vf,
-        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
+        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
         '-c:a', 'aac', '-b:a', '128k',
         '-pix_fmt', 'yuv420p',
         '-shortest',
         output_file
     ]
 
-    print(f"🔧 Running FFmpeg...")
-    # Use Popen + communicate to avoid stderr pipe deadlock
+    print(f"🔧 Running FFmpeg ({len(slides)} slides)...")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
-        stdout, stderr = proc.communicate(timeout=120)
+        stdout, stderr = proc.communicate(timeout=180)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
-        print("❌ FFmpeg timed out after 120s")
+        print("❌ FFmpeg timed out")
         return False
 
     if proc.returncode != 0:
@@ -119,33 +222,30 @@ def create_video_ffmpeg(title, script_lines, audio_file, output_file):
 
 
 def generate_daily_video():
-    """Generate a real video with TTS audio and text overlay"""
     day_number = int(datetime.now().strftime("%j"))
-    topic = CONTENT_TOPICS[day_number % len(CONTENT_TOPICS)]
+    hour = int(datetime.now().strftime("%H"))
+    index = (day_number * 3 + hour) % len(CONTENT_TOPICS)
+    topic = CONTENT_TOPICS[index]
 
     os.makedirs(CONFIG['output_dir'], exist_ok=True)
 
-    output_file = f"{CONFIG['output_dir']}/the_ai_dollar_{day_number}.mp4"
-    audio_file  = f"{CONFIG['output_dir']}/audio_{day_number}.mp3"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    output_file = f"{CONFIG['output_dir']}/the_ai_dollar_{timestamp}.mp4"
+    audio_file = f"{CONFIG['output_dir']}/audio_{timestamp}.mp3"
 
     try:
-        # 1. Generate voiceover
         print("🎤 Generating voiceover...")
-        voiceover = f"{topic['hook']} {topic['script']} {topic['cta']}"
-        create_audio(voiceover, audio_file)
+        create_audio(topic['voiceover'], audio_file)
         print("✅ Audio ready")
 
-        # 2. Create video with FFmpeg drawtext
         print("🎬 Creating video...")
-        script_lines = topic['script'].split(". ")
-        ok = create_video_ffmpeg(topic['title'], script_lines, audio_file, output_file)
+        ok = create_video_ffmpeg(topic['slides'], audio_file, output_file)
 
         if not ok:
             return {"status": "error", "message": "FFmpeg video creation failed"}
 
         print(f"✅ Video created: {output_file}")
 
-        # Cleanup audio
         try:
             os.remove(audio_file)
         except Exception:
@@ -155,7 +255,7 @@ def generate_daily_video():
             "status": "success",
             "video": output_file,
             "title": topic['title'],
-            "script": voiceover,
+            "script": topic['voiceover'],
             "keywords": topic['keywords']
         }
 
