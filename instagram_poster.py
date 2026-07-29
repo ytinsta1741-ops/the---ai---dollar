@@ -24,17 +24,21 @@ def _patch_instagrapi_file():
             content = f.read()
         if 'check_fields=False' in content:
             return  # Already patched
-        # Add check_fields=False to all @validator decorators
+        # Match both styles:
+        #   @validator('field')
+        #   var = validator("field", allow_reuse=True)
         patched = re.sub(
-            r"@validator\(([^)]+)\)",
+            r'\bvalidator\(([^)]+)\)',
             lambda m: m.group(0) if 'check_fields' in m.group(0)
-                      else f"@validator({m.group(1)}, check_fields=False)",
+                      else f"validator({m.group(1)}, check_fields=False)",
             content
         )
         if patched != content:
             with open(types_path, 'w', encoding='utf-8') as f:
                 f.write(patched)
             print("✅ Patched instagrapi types.py (check_fields=False)")
+        else:
+            print("⚠️ instagrapi patch: no changes made")
     except Exception as e:
         print(f"⚠️ instagrapi patch warning: {e}")
 
