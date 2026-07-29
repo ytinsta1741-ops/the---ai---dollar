@@ -10,6 +10,26 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _patch_pydantic_for_instagrapi():
+    """Monkey-patch pydantic to handle instagrapi's untyped fields"""
+    try:
+        import pydantic.fields
+        _orig = pydantic.fields.ModelField._set_default_and_type
+        def _safe_set(self):
+            try:
+                _orig(self)
+            except Exception:
+                from typing import Any
+                self.type_ = Any
+                self.outer_type_ = Any
+                if self.default is None:
+                    self.required = False
+        pydantic.fields.ModelField._set_default_and_type = _safe_set
+        print("✅ Patched pydantic for instagrapi compatibility")
+    except Exception as e:
+        print(f"⚠️ pydantic patch warning: {e}")
+
+
 def _patch_instagrapi_file():
     """Patch instagrapi/types.py on disk to add check_fields=False to all validators"""
     try:
@@ -23,10 +43,7 @@ def _patch_instagrapi_file():
         with open(types_path, 'r', encoding='utf-8') as f:
             content = f.read()
         if 'check_fields=False' in content:
-            return  # Already patched
-        # Match both styles:
-        #   @validator('field')
-        #   var = validator("field", allow_reuse=True)
+            return
         patched = re.sub(
             r'\bvalidator\(([^)]+)\)',
             lambda m: m.group(0) if 'check_fields' in m.group(0)
@@ -43,7 +60,8 @@ def _patch_instagrapi_file():
         print(f"⚠️ instagrapi patch warning: {e}")
 
 
-# Patch the file BEFORE ever importing instagrapi
+# Patch pydantic FIRST, then patch instagrapi file, THEN import instagrapi
+_patch_pydantic_for_instagrapi()
 _patch_instagrapi_file()
 
 
