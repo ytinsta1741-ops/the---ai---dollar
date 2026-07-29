@@ -47,8 +47,11 @@ def upload_to_youtube(video_path, title, description):
         from googleapiclient.discovery import build
         from googleapiclient.http import MediaFileUpload
 
-        CLIENT_ID     = "521651303810-e7elq5l12oo6ju5jq9iah4hf2l914mof.apps.googleusercontent.com"
-        CLIENT_SECRET = "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"
+        CLIENT_ID     = os.getenv("YOUTUBE_CLIENT_ID", "")
+        CLIENT_SECRET = os.getenv("YOUTUBE_CLIENT_SECRET", "")
+        if not CLIENT_ID or not CLIENT_SECRET:
+            print("⚠️  YOUTUBE_CLIENT_ID or YOUTUBE_CLIENT_SECRET not set — skipping YouTube")
+            return False
 
         creds = Credentials(
             token=None,
