@@ -4,23 +4,43 @@ Instagram posting using instagrapi (no browser needed - works on Render)
 """
 
 import os
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Patch pydantic BEFORE importing instagrapi so validators on missing fields don't crash
-def _patch_pydantic():
-    try:
-        from pydantic.class_validators import ValidatorDecoratorInfo
-        _orig = ValidatorDecoratorInfo.__init__
-        def _new(self, *args, **kwargs):
-            kwargs['check_fields'] = False
-            _orig(self, *args, **kwargs)
-        ValidatorDecoratorInfo.__init__ = _new
-    except Exception:
-        pass
 
-_patch_pydantic()
+def _patch_instagrapi_file():
+    """Patch instagrapi/types.py on disk to add check_fields=False to all validators"""
+    try:
+        import importlib.util
+        spec = importlib.util.find_spec('instagrapi')
+        if not spec or not spec.origin:
+            return
+        types_path = os.path.join(os.path.dirname(spec.origin), 'types.py')
+        if not os.path.exists(types_path):
+            return
+        with open(types_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        if 'check_fields=False' in content:
+            return  # Already patched
+        # Add check_fields=False to all @validator decorators
+        patched = re.sub(
+            r"@validator\(([^)]+)\)",
+            lambda m: m.group(0) if 'check_fields' in m.group(0)
+                      else f"@validator({m.group(1)}, check_fields=False)",
+            content
+        )
+        if patched != content:
+            with open(types_path, 'w', encoding='utf-8') as f:
+                f.write(patched)
+            print("✅ Patched instagrapi types.py (check_fields=False)")
+    except Exception as e:
+        print(f"⚠️ instagrapi patch warning: {e}")
+
+
+# Patch the file BEFORE ever importing instagrapi
+_patch_instagrapi_file()
 
 
 def post_to_instagram(video_path, caption):
