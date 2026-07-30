@@ -120,12 +120,8 @@ def post_video():
         youtube_success = upload_to_youtube(video_path, title, script)
 
         print(f"\n3️⃣  Posting to Instagram...")
-        caption = (
-            f"{title}\n\n"
-            f"Follow @theaidollar1741 for daily finance education!\n\n"
-            f"#Finance #Money #PersonalFinance #Investing #FinanceTips #TheAIDollar"
-        )
-        instagram_success = post_to_instagram(video_path, caption)
+        print("⏭️  Instagram disabled (anti-bot detection blocking automated posts)")
+        instagram_success = False
 
         with open("last_post_time.txt", "w") as f:
             f.write(str(time.time()))
