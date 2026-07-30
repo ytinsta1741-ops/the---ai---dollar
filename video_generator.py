@@ -5,6 +5,7 @@ Finance education Shorts with cartoon/illustration backgrounds + animated zoom +
 """
 
 import os
+import gc
 import subprocess
 import asyncio
 import requests
@@ -216,7 +217,7 @@ def fetch_pexels_images(queries, num_images, save_dir):
                 photos = data.get("photos", [])
                 if photos:
                     photo = photos[i % len(photos)]
-                    img_url = photo["src"].get("large2x", photo["src"]["large"])
+                    img_url = photo["src"].get("portrait", photo["src"]["large"])
                     img_resp = requests.get(img_url, timeout=15)
                     if img_resp.status_code == 200:
                         with open(img_path, 'wb') as f:
@@ -303,8 +304,8 @@ def prep_slides(images, slides, scale, work_dir):
             pass
         return ImageFont.load_default()
 
-    title_font = get_font(64)
-    body_font = get_font(58)
+    title_font = get_font(46)
+    body_font = get_font(40)
 
     for idx, slide in enumerate(slides):
         img_src = images[idx] if idx < len(images) else None
@@ -312,35 +313,38 @@ def prep_slides(images, slides, scale, work_dir):
 
         if img_src and os.path.exists(img_src):
             bg = Image.open(img_src).convert("RGB")
-            bg = bg.resize((1080, 1920), Image.LANCZOS)
+            bg = bg.resize((720, 1280), Image.LANCZOS)
         else:
-            bg = Image.new("RGB", (1080, 1920), (10, 10, 46))
+            bg = Image.new("RGB", (720, 1280), (10, 10, 46))
 
-        overlay = Image.new("RGBA", (1080, 1920), (0, 0, 0, 140))
+        overlay = Image.new("RGBA", (720, 1280), (0, 0, 0, 140))
         bg = bg.convert("RGBA")
         bg = Image.alpha_composite(bg, overlay).convert("RGB")
+        del overlay
 
         draw = ImageDraw.Draw(bg)
         lines = slide['text'].split('\n')
-        line_h = 85
+        line_h = 60
         total_h = len(lines) * line_h
-        start_y = (1920 - total_h) // 2
+        start_y = (1280 - total_h) // 2
 
         for li, line in enumerate(lines):
             font = title_font if li == 0 else body_font
             color = (255, 255, 255) if li == 0 else (0, 221, 255)
             bbox = draw.textbbox((0, 0), line, font=font)
             tw = bbox[2] - bbox[0]
-            x = (1080 - tw) // 2
+            x = (720 - tw) // 2
             y = start_y + li * line_h
 
-            for ox in [-3, 0, 3]:
-                for oy in [-3, 0, 3]:
+            for ox in [-2, 0, 2]:
+                for oy in [-2, 0, 2]:
                     if ox or oy:
                         draw.text((x + ox, y + oy), line, font=font, fill=(0, 0, 0))
             draw.text((x, y), line, font=font, fill=color)
 
-        bg.save(out, "JPEG", quality=90)
+        bg.save(out, "JPEG", quality=85)
+        del draw, bg
+        gc.collect()
         print(f"  slide {idx+1}/{len(slides)} ready")
 
     with open(concat_file, 'w') as f:
@@ -412,17 +416,17 @@ def create_video_simple(slides, audio_file, output_file):
         dur = slide['duration'] * scale
         lines = slide['text'].split('\n')
         num_lines = len(lines)
-        start_y = f"(h/2)-{(num_lines * 40)}"
+        start_y = f"(h/2)-{(num_lines * 30)}"
 
         for li, line in enumerate(lines):
             escaped = escape_ffmpeg_text(line)
-            y_pos = f"({start_y})+{li * 80}"
+            y_pos = f"({start_y})+{li * 60}"
             color = "white" if li == 0 else "0x00DDFF"
             filters.append(
                 f"drawtext=text='{escaped}':"
                 f"x=(w-text_w)/2:y={y_pos}:"
-                f"fontsize=62:fontcolor={color}:"
-                f"borderw=4:bordercolor=black:"
+                f"fontsize=42:fontcolor={color}:"
+                f"borderw=3:bordercolor=black:"
                 f"enable='between(t,{t:.2f},{t+dur:.2f})'"
             )
         t += dur
@@ -430,7 +434,7 @@ def create_video_simple(slides, audio_file, output_file):
     vf = ",".join(filters)
     cmd = [
         FFMPEG, '-y',
-        '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=24',
+        '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=720x1280:rate=24',
         '-i', audio_file,
         '-vf', vf,
         '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',

@@ -1,0 +1,9 @@
+get_youtube_token.py
+.env
+*.json
+videos/
+__pycache__/
+*.pyc
+last_post_time.txt
+topic_counter.txt
+instagram_session.json
