@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 The AI Dollar - Video Generator
-Finance education Shorts with stock images + deep male TTS voiceover
+Finance education Shorts with cartoon/illustration backgrounds + animated zoom + deep male TTS
 """
 
 import os
@@ -25,7 +25,11 @@ PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
 CONTENT_TOPICS = [
     {
         "title": "What Inflation Actually Does to Your Money",
-        "search_queries": ["grocery shopping", "price tag store", "wallet money", "supermarket aisle", "cost of living", "empty wallet", "rising prices"],
+        "search_queries": [
+            "money illustration cartoon", "grocery store cartoon", "piggy bank illustration",
+            "dollar bill illustration", "price increase illustration", "savings illustration",
+            "money flying away cartoon", "inflation chart illustration",
+        ],
         "slides": [
             {"text": "What inflation\nactually does\nto your money", "duration": 3.5},
             {"text": "That $100 you saved\nlast year?", "duration": 3},
@@ -41,7 +45,11 @@ CONTENT_TOPICS = [
     },
     {
         "title": "Compound Interest Explained in 60 Seconds",
-        "search_queries": ["money growing", "plant growing", "savings account", "piggy bank", "investment growth", "calculator finance", "bank interest"],
+        "search_queries": [
+            "money tree illustration", "growth chart cartoon", "savings jar illustration",
+            "compound interest graph", "money growing plant", "investment cartoon",
+            "calculator illustration", "wealth building cartoon", "snowball rolling",
+        ],
         "slides": [
             {"text": "Compound interest\nexplained in\n60 seconds", "duration": 3},
             {"text": "You put $1,000\nin an account", "duration": 3},
@@ -58,7 +66,11 @@ CONTENT_TOPICS = [
     },
     {
         "title": "What Your Credit Score Actually Means",
-        "search_queries": ["credit card", "financial document", "loan application", "bank approval", "credit report", "financial planning", "mortgage house"],
+        "search_queries": [
+            "credit card illustration", "credit score meter cartoon", "bank building cartoon",
+            "loan application illustration", "financial report cartoon", "approval stamp illustration",
+            "house mortgage cartoon", "credit rating illustration",
+        ],
         "slides": [
             {"text": "What your credit\nscore actually\nmeans", "duration": 3},
             {"text": "It's a number\nbetween 300\nand 850", "duration": 3},
@@ -74,15 +86,19 @@ CONTENT_TOPICS = [
     },
     {
         "title": "The 50/30/20 Budget Rule",
-        "search_queries": ["budget planning", "calculator notepad", "monthly bills", "savings jar", "financial planning desk", "paycheck money", "household budget"],
+        "search_queries": [
+            "budget pie chart cartoon", "money planning illustration", "paycheck illustration",
+            "rent house cartoon", "shopping bag cartoon", "savings piggy bank cartoon",
+            "financial planning illustration", "budget calculator cartoon", "coins jar illustration",
+        ],
         "slides": [
             {"text": "The simplest\nbudget that\nactually works", "duration": 3},
             {"text": "Take your\npaycheck", "duration": 2},
-            {"text": "50% goes to\nneeds", "duration": 2.5},
+            {"text": "50%% goes to\nneeds", "duration": 2.5},
             {"text": "Rent, food,\nutilities,\ntransportation", "duration": 3},
-            {"text": "30% goes to\nwants", "duration": 2.5},
+            {"text": "30%% goes to\nwants", "duration": 2.5},
             {"text": "Eating out,\nentertainment,\nshopping", "duration": 3},
-            {"text": "20% goes to\nsavings", "duration": 2.5},
+            {"text": "20%% goes to\nsavings", "duration": 2.5},
             {"text": "Emergency fund\nfirst, then\ninvesting", "duration": 3},
             {"text": "Simple?\nYes\nEffective?\nExtremely", "duration": 3},
         ],
@@ -91,7 +107,11 @@ CONTENT_TOPICS = [
     },
     {
         "title": "Stocks vs Bonds - What's the Difference",
-        "search_queries": ["stock market screen", "wall street", "trading chart", "investment portfolio", "business newspaper", "financial graph", "stock exchange"],
+        "search_queries": [
+            "stock market chart cartoon", "wall street illustration", "investment graph cartoon",
+            "business growth illustration", "financial newspaper cartoon", "bull bear market cartoon",
+            "trading illustration", "portfolio cartoon", "stock exchange illustration",
+        ],
         "slides": [
             {"text": "Stocks vs Bonds\nthe real\ndifference", "duration": 3},
             {"text": "A stock means\nyou own a tiny\npiece of a company", "duration": 3.5},
@@ -108,13 +128,17 @@ CONTENT_TOPICS = [
     },
     {
         "title": "What an Emergency Fund Is and Why You Need One",
-        "search_queries": ["emergency savings", "rainy day", "broken car", "hospital bills", "piggy bank savings", "money jar", "financial safety"],
+        "search_queries": [
+            "emergency cartoon", "car repair illustration", "hospital cartoon",
+            "umbrella rain cartoon", "safety net illustration", "broken car cartoon",
+            "money shield illustration", "piggy bank umbrella cartoon", "financial safety cartoon",
+        ],
         "slides": [
             {"text": "Why you need an\nemergency fund", "duration": 3},
             {"text": "Your car breaks\ndown tomorrow", "duration": 2.5},
             {"text": "Repair costs\n$800", "duration": 2.5},
             {"text": "No emergency fund?\nThat goes on a\ncredit card", "duration": 3.5},
-            {"text": "At 24% interest", "duration": 2},
+            {"text": "At 24%% interest", "duration": 2},
             {"text": "Now that $800\ncosts you $1,100", "duration": 3},
             {"text": "An emergency fund\nis 3 to 6 months\nof expenses", "duration": 3.5},
             {"text": "In a savings\naccount you\ndon't touch", "duration": 3},
@@ -125,7 +149,12 @@ CONTENT_TOPICS = [
     },
     {
         "title": "What Is a Recession",
-        "search_queries": ["economic downturn", "stock market crash", "unemployment line", "closed business", "financial crisis", "recession economy", "market decline"],
+        "search_queries": [
+            "economic crisis illustration", "downward graph cartoon", "unemployment cartoon",
+            "closed shop illustration", "recession chart cartoon", "economy falling cartoon",
+            "financial crisis illustration", "stock crash cartoon", "business closed cartoon",
+            "recovery growth cartoon",
+        ],
         "slides": [
             {"text": "What is a\nrecession?", "duration": 2.5},
             {"text": "When the economy\nshrinks for 6+\nmonths straight", "duration": 3.5},
@@ -143,7 +172,11 @@ CONTENT_TOPICS = [
     },
     {
         "title": "Assets vs Liabilities",
-        "search_queries": ["real estate investment", "luxury car", "rental property", "stock portfolio", "expensive watch", "house keys", "investment property"],
+        "search_queries": [
+            "real estate cartoon", "luxury car illustration", "rental property cartoon",
+            "investment portfolio illustration", "house keys cartoon", "money in pocket cartoon",
+            "money out pocket cartoon", "wealthy person cartoon", "balance scale money cartoon",
+        ],
         "slides": [
             {"text": "Assets vs\nLiabilities", "duration": 2.5},
             {"text": "An asset puts\nmoney in\nyour pocket", "duration": 3},
@@ -174,7 +207,7 @@ def fetch_pexels_images(queries, num_images, save_dir):
             continue
 
         try:
-            url = f"https://api.pexels.com/v1/search?query={query}&orientation=portrait&per_page=5&page=1"
+            url = f"https://api.pexels.com/v1/search?query={query}&orientation=portrait&per_page=15&page=1"
             headers = {"Authorization": PEXELS_API_KEY}
             resp = requests.get(url, headers=headers, timeout=10)
 
@@ -192,18 +225,17 @@ def fetch_pexels_images(queries, num_images, save_dir):
                         print(f"  📸 Image {i+1}: {query}")
                         continue
 
-            print(f"  ⚠️ Pexels API {resp.status_code}: {resp.text[:200]}")
+            print(f"  ⚠️ Pexels {resp.status_code}: {resp.text[:150]}")
             images.append(None)
 
         except Exception as e:
-            print(f"  ⚠️ Image fetch error: {e}")
+            print(f"  ⚠️ Image error: {e}")
             images.append(None)
 
     return images
 
 
 def create_audio(text, output_path):
-    """Generate TTS audio using edge-tts (deep male voice)"""
     try:
         import edge_tts
         voice = "en-US-GuyNeural"
@@ -212,7 +244,7 @@ def create_audio(text, output_path):
         print(f"✅ Audio ready (voice: {voice})")
         return True
     except Exception as e:
-        print(f"⚠️ edge-tts failed ({e}), falling back to gTTS")
+        print(f"⚠️ edge-tts failed ({e}), using gTTS")
         from gtts import gTTS
         tts = gTTS(text=text, lang='en', slow=False)
         tts.save(output_path)
@@ -256,25 +288,34 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
             input_args.extend(['-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=30:d=0.1'])
 
     num_inputs = len(images)
-    t = 0
     segments = []
 
     for idx, slide in enumerate(slides):
         dur = slide['duration'] * scale
         inp_idx = idx if idx < num_inputs else idx % num_inputs
+        num_frames = max(int(dur * 30), 30)
 
         seg_label = f"seg{idx}"
+        zoom_label = f"zoom{idx}"
         dark_label = f"dark{idx}"
+
+        zoom_dir = idx % 3
+        if zoom_dir == 0:
+            zoom_expr = f"z='min(zoom+0.0003,1.15)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+        elif zoom_dir == 1:
+            zoom_expr = f"z='1.15-0.0003*on':x='iw/4':y='ih/2-(ih/zoom/2)'"
+        else:
+            zoom_expr = f"z='min(zoom+0.0002,1.12)':x='iw/3+on*0.3':y='ih/2-(ih/zoom/2)'"
+
         filter_parts.append(
-            f"[{inp_idx}:v]scale=1080:1920:force_original_aspect_ratio=increase,"
-            f"crop=1080:1920,setsar=1,loop=loop={int(dur*30)}:size=1:start=0,"
-            f"fps=30,trim=duration={dur:.2f},setpts=PTS-STARTPTS[{seg_label}]"
+            f"[{inp_idx}:v]scale=2160:3840:force_original_aspect_ratio=increase,"
+            f"crop=2160:3840,zoompan={zoom_expr}:d={num_frames}:s=1080x1920:fps=30,"
+            f"setpts=PTS-STARTPTS[{zoom_label}]"
         )
         filter_parts.append(
-            f"[{seg_label}]drawbox=x=0:y=0:w=1080:h=1920:color=black@0.5:t=fill[{dark_label}]"
+            f"[{zoom_label}]drawbox=x=0:y=0:w=1080:h=1920:color=black@0.45:t=fill[{dark_label}]"
         )
         segments.append(f"[{dark_label}]")
-        t += dur
 
     concat_inputs = "".join(segments)
     filter_parts.append(
@@ -287,16 +328,16 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         dur = slide['duration'] * scale
         lines = slide['text'].split('\n')
         num_lines = len(lines)
-        start_y = f"(h/2)-{(num_lines * 35)}"
+        start_y = f"(h/2)-{(num_lines * 38)}"
 
         for li, line in enumerate(lines):
             escaped = escape_ffmpeg_text(line)
-            y_pos = f"({start_y})+{li * 70}"
+            y_pos = f"({start_y})+{li * 76}"
             color = "white" if li == 0 else "0x00DDFF"
             text_filters.append(
                 f"drawtext=text='{escaped}':"
                 f"x=(w-text_w)/2:y={y_pos}:"
-                f"fontsize=56:fontcolor={color}:"
+                f"fontsize=54:fontcolor={color}:"
                 f"borderw=4:bordercolor=black:"
                 f"enable='between(t,{t:.2f},{t+dur:.2f})'"
             )
@@ -329,23 +370,23 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         output_file
     ]
 
-    print(f"🔧 Running FFmpeg ({len(slides)} slides with images)...")
+    print(f"🔧 Running FFmpeg ({len(slides)} animated slides)...")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
-        stdout, stderr = proc.communicate(timeout=240)
+        stdout, stderr = proc.communicate(timeout=300)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
-        print("❌ FFmpeg timed out")
-        return False
+        print("❌ FFmpeg timed out, trying simple mode...")
+        return create_video_simple(slides, audio_file, output_file)
 
     if proc.returncode != 0:
         err = stderr.decode('utf-8', errors='replace')[-800:]
-        print(f"❌ FFmpeg image mode failed: {err}")
-        print("⚠️ Retrying with simple mode...")
+        print(f"❌ FFmpeg animated mode failed: {err[-300:]}")
+        print("⚠️ Falling back to simple mode...")
         return create_video_simple(slides, audio_file, output_file)
 
-    print("✅ Video created with images!")
+    print("✅ Video created with animated images!")
     return True
 
 
@@ -366,16 +407,16 @@ def create_video_simple(slides, audio_file, output_file):
         dur = slide['duration'] * scale
         lines = slide['text'].split('\n')
         num_lines = len(lines)
-        start_y = f"(h/2)-{(num_lines * 35)}"
+        start_y = f"(h/2)-{(num_lines * 38)}"
 
         for li, line in enumerate(lines):
             escaped = escape_ffmpeg_text(line)
-            y_pos = f"({start_y})+{li * 70}"
+            y_pos = f"({start_y})+{li * 76}"
             color = "white" if li == 0 else "0x00DDFF"
             filters.append(
                 f"drawtext=text='{escaped}':"
                 f"x=(w-text_w)/2:y={y_pos}:"
-                f"fontsize=56:fontcolor={color}:"
+                f"fontsize=54:fontcolor={color}:"
                 f"borderw=4:bordercolor=black:"
                 f"enable='between(t,{t:.2f},{t+dur:.2f})'"
             )
@@ -411,7 +452,7 @@ def create_video_simple(slides, audio_file, output_file):
         return False
 
     if proc.returncode != 0:
-        print(f"❌ FFmpeg failed (code {proc.returncode})")
+        print(f"❌ FFmpeg failed")
         print(stderr.decode('utf-8', errors='replace')[-500:])
         return False
 
@@ -438,7 +479,7 @@ def generate_daily_video():
 
         images = []
         if PEXELS_API_KEY:
-            print("📸 Fetching images from Pexels...")
+            print("📸 Fetching cartoon/illustration images...")
             images = fetch_pexels_images(
                 topic['search_queries'],
                 len(topic['slides']),
@@ -448,7 +489,7 @@ def generate_daily_video():
         else:
             print("⚠️ No PEXELS_API_KEY, using color background")
 
-        print("🎬 Creating video...")
+        print("🎬 Creating animated video...")
         ok = create_video_ffmpeg(topic['slides'], images, audio_file, output_file)
 
         if not ok:
