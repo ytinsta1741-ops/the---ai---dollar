@@ -5,6 +5,9 @@ Instagram posting using instagrapi (no browser needed - works on Render)
 
 import os
 import re
+import json
+import base64
+import tempfile
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -60,9 +63,24 @@ def _patch_instagrapi_file():
         print(f"⚠️ instagrapi patch warning: {e}")
 
 
-# Patch pydantic FIRST, then patch instagrapi file, THEN import instagrapi
 _patch_pydantic_for_instagrapi()
 _patch_instagrapi_file()
+
+
+def _load_session_from_env():
+    """Load Instagram session from INSTAGRAM_SESSION env var (base64-encoded JSON)"""
+    session_b64 = os.getenv("INSTAGRAM_SESSION", "")
+    if not session_b64:
+        return None
+    try:
+        session_json = base64.b64decode(session_b64).decode()
+        tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
+        tmp.write(session_json)
+        tmp.close()
+        return tmp.name
+    except Exception as e:
+        print(f"⚠️ Failed to decode INSTAGRAM_SESSION: {e}")
+        return None
 
 
 def post_to_instagram(video_path, caption):
@@ -84,30 +102,53 @@ def post_to_instagram(video_path, caption):
         cl = Client()
         cl.delay_range = [1, 3]
 
-        session_file = "instagram_session.json"
+        logged_in = False
 
-        if os.path.exists(session_file):
+        session_file = _load_session_from_env()
+        if session_file:
             try:
                 cl.load_settings(session_file)
                 cl.login(username, password)
-                print("✅ Instagram: resumed session")
+                logged_in = True
+                print("✅ Instagram: resumed session from env var")
+            except Exception as e:
+                print(f"⚠️ Session from env failed ({e}), trying fresh login...")
+                cl = Client()
+                cl.delay_range = [1, 3]
+            finally:
+                try:
+                    os.unlink(session_file)
+                except Exception:
+                    pass
+
+        if not logged_in and os.path.exists("instagram_session.json"):
+            try:
+                cl.load_settings("instagram_session.json")
+                cl.login(username, password)
+                logged_in = True
+                print("✅ Instagram: resumed session from file")
             except Exception:
                 cl = Client()
                 cl.delay_range = [1, 3]
-                cl.login(username, password)
-                cl.dump_settings(session_file)
-                print("✅ Instagram: logged in fresh")
-        else:
+
+        if not logged_in:
             cl.login(username, password)
-            cl.dump_settings(session_file)
-            print("✅ Instagram: logged in")
+            cl.dump_settings("instagram_session.json")
+            print("✅ Instagram: logged in fresh")
 
         print("📤 Uploading reel to Instagram...")
         try:
             media = cl.clip_upload(video_path, caption=caption)
-        except Exception:
+        except Exception as e:
+            print(f"⚠️ clip_upload failed ({e}), trying video_upload...")
             media = cl.video_upload(video_path, caption=caption)
         print(f"✅ Instagram posted! ID: {media.pk}")
+
+        try:
+            cl.dump_settings("instagram_session.json")
+        except Exception:
+            pass
+
         return True
 
     except Exception as e:
