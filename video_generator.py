@@ -238,26 +238,34 @@ def fetch_pexels_images(queries, num_images, save_dir):
 
 def create_audio(text, output_path):
     try:
-        import edge_tts
-        for voice in ["en-US-GuyNeural", "en-US-ChristopherNeural", "en-US-AndrewNeural"]:
-            try:
-                communicate = edge_tts.Communicate(text, voice, rate="-5%", pitch="-2Hz")
-                loop = asyncio.new_event_loop()
-                loop.run_until_complete(communicate.save(output_path))
-                loop.close()
-                if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-                    print(f"✅ Audio ready (voice: {voice})")
-                    return True
-            except Exception:
-                continue
-        raise Exception("All voices blocked")
+        from silero_tts import silero_tts
+        silero_tts(text, language='en', speaker='en_0', audio_path=output_path)
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+            print("✅ Audio ready (Silero TTS - deep male voice)")
+            return True
     except Exception as e:
-        print(f"⚠️ edge-tts failed ({e}), using gTTS")
-        from gtts import gTTS
-        tts = gTTS(text=text, lang='en', slow=False)
-        tts.save(output_path)
-        print("✅ Audio ready (gTTS)")
-        return True
+        print(f"⚠️ Silero TTS failed ({e}), trying edge-tts...")
+        try:
+            import edge_tts
+            for voice in ["en-US-GuyNeural", "en-US-ChristopherNeural", "en-US-AndrewNeural"]:
+                try:
+                    communicate = edge_tts.Communicate(text, voice, rate="-5%", pitch="-2Hz")
+                    loop = asyncio.new_event_loop()
+                    loop.run_until_complete(communicate.save(output_path))
+                    loop.close()
+                    if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+                        print(f"✅ Audio ready (voice: {voice})")
+                        return True
+                except Exception:
+                    continue
+            raise Exception("All voices blocked")
+        except Exception as e2:
+            print(f"⚠️ edge-tts failed ({e2}), using gTTS")
+            from gtts import gTTS
+            tts = gTTS(text=text, lang='en', slow=False)
+            tts.save(output_path)
+            print("✅ Audio ready (gTTS fallback)")
+            return True
 
 
 def get_audio_duration(audio_path):
@@ -291,7 +299,13 @@ def prep_slides(images, slides, scale, work_dir):
     from PIL import Image, ImageDraw, ImageFont
 
     def get_font(size):
-        for name in ["DejaVuSans-Bold.ttf", "arial.ttf", "FreeSans.ttf", "LiberationSans-Bold.ttf"]:
+        font_names = [
+            "Arial Black.ttf", "ArialBD.ttf", "arial.ttf",
+            "DejaVuSans-Bold.ttf", "FreeSansBold.ttf",
+            "LiberationSans-Bold.ttf", "Ubuntu-Bold.ttf",
+            "Helvetica-Bold"
+        ]
+        for name in font_names:
             try:
                 return ImageFont.truetype(name, size)
             except Exception:
@@ -304,8 +318,8 @@ def prep_slides(images, slides, scale, work_dir):
             pass
         return ImageFont.load_default()
 
-    title_font = get_font(46)
-    body_font = get_font(40)
+    title_font = get_font(52)
+    body_font = get_font(46)
 
     for idx, slide in enumerate(slides):
         img_src = images[idx] if idx < len(images) else None
@@ -324,22 +338,21 @@ def prep_slides(images, slides, scale, work_dir):
 
         draw = ImageDraw.Draw(bg)
         lines = slide['text'].split('\n')
-        line_h = 60
+        line_h = 75
         total_h = len(lines) * line_h
-        start_y = (1280 - total_h) // 2
+        start_y = max(100, (1280 - total_h) // 2)
 
         for li, line in enumerate(lines):
             font = title_font if li == 0 else body_font
-            color = (255, 255, 255) if li == 0 else (0, 221, 255)
+            color = (255, 255, 255) if li == 0 else (100, 220, 255)
             bbox = draw.textbbox((0, 0), line, font=font)
             tw = bbox[2] - bbox[0]
             x = (720 - tw) // 2
             y = start_y + li * line_h
 
-            for ox in [-2, 0, 2]:
-                for oy in [-2, 0, 2]:
-                    if ox or oy:
-                        draw.text((x + ox, y + oy), line, font=font, fill=(0, 0, 0))
+            for ox in [-3, -2, -1, 1, 2, 3]:
+                for oy in [-3, -2, -1, 1, 2, 3]:
+                    draw.text((x + ox, y + oy), line, font=font, fill=(0, 0, 0, 180))
             draw.text((x, y), line, font=font, fill=color)
 
         bg.save(out, "JPEG", quality=85)
