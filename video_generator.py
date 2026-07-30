@@ -216,7 +216,7 @@ def fetch_pexels_images(queries, num_images, save_dir):
                 photos = data.get("photos", [])
                 if photos:
                     photo = photos[i % len(photos)]
-                    img_url = photo["src"]["large"]
+                    img_url = photo["src"]["medium"]
                     img_resp = requests.get(img_url, timeout=15)
                     if img_resp.status_code == 200:
                         with open(img_path, 'wb') as f:
@@ -288,8 +288,8 @@ def prep_images(images, slides, scale, work_dir):
             out = os.path.join(work_dir, f"p_{idx}.jpg")
             cmd = [
                 FFMPEG, '-y', '-i', img,
-                '-vf', 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,'
-                       'drawbox=x=0:y=0:w=1080:h=1920:color=black@0.45:t=fill',
+                '-vf', 'scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,'
+                       'drawbox=x=0:y=0:w=720:h=1280:color=black@0.45:t=fill',
                 '-q:v', '3', out
             ]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -300,7 +300,7 @@ def prep_images(images, slides, scale, work_dir):
 
         color_img = os.path.join(work_dir, f"p_{idx}.jpg")
         cmd = [
-            FFMPEG, '-y', '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920',
+            FFMPEG, '-y', '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=720x1280',
             '-frames:v', '1', '-q:v', '3', color_img
         ]
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -335,7 +335,7 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
     text_filters = []
     text_filters.append(
         "drawtext=text='THE AI DOLLAR':"
-        "x=(w-text_w)/2:y=80:fontsize=38:fontcolor=0xFFD700:"
+        "x=(w-text_w)/2:y=80:fontsize=30:fontcolor=0xFFD700:"
         "borderw=3:bordercolor=black"
     )
 
@@ -344,16 +344,16 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         dur = slide['duration'] * scale
         lines = slide['text'].split('\n')
         num_lines = len(lines)
-        start_y = f"(h/2)-{(num_lines * 38)}"
+        start_y = f"(h/2)-{(num_lines * 30)}"
 
         for li, line in enumerate(lines):
             escaped = escape_ffmpeg_text(line)
-            y_pos = f"({start_y})+{li * 76}"
+            y_pos = f"({start_y})+{li * 58}"
             color = "white" if li == 0 else "0x00DDFF"
             text_filters.append(
                 f"drawtext=text='{escaped}':"
                 f"x=(w-text_w)/2:y={y_pos}:"
-                f"fontsize=54:fontcolor={color}:"
+                f"fontsize=42:fontcolor={color}:"
                 f"borderw=4:bordercolor=black:"
                 f"enable='between(t,{t:.2f},{t+dur:.2f})'"
             )
@@ -361,7 +361,7 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
 
     text_filters.append(
         "drawtext=text='@theaidollar1741':"
-        "x=(w-text_w)/2:y=h-100:fontsize=28:fontcolor=0xFFD700:"
+        "x=(w-text_w)/2:y=h-100:fontsize=22:fontcolor=0xFFD700:"
         "borderw=2:bordercolor=black"
     )
 
@@ -409,7 +409,7 @@ def create_video_simple(slides, audio_file, output_file):
     filters = []
     filters.append(
         "drawtext=text='THE AI DOLLAR':"
-        "x=(w-text_w)/2:y=80:fontsize=38:fontcolor=0xFFD700:"
+        "x=(w-text_w)/2:y=80:fontsize=30:fontcolor=0xFFD700:"
         "borderw=3:bordercolor=black"
     )
 
@@ -418,16 +418,16 @@ def create_video_simple(slides, audio_file, output_file):
         dur = slide['duration'] * scale
         lines = slide['text'].split('\n')
         num_lines = len(lines)
-        start_y = f"(h/2)-{(num_lines * 38)}"
+        start_y = f"(h/2)-{(num_lines * 30)}"
 
         for li, line in enumerate(lines):
             escaped = escape_ffmpeg_text(line)
-            y_pos = f"({start_y})+{li * 76}"
+            y_pos = f"({start_y})+{li * 58}"
             color = "white" if li == 0 else "0x00DDFF"
             filters.append(
                 f"drawtext=text='{escaped}':"
                 f"x=(w-text_w)/2:y={y_pos}:"
-                f"fontsize=54:fontcolor={color}:"
+                f"fontsize=42:fontcolor={color}:"
                 f"borderw=4:bordercolor=black:"
                 f"enable='between(t,{t:.2f},{t+dur:.2f})'"
             )
@@ -435,14 +435,14 @@ def create_video_simple(slides, audio_file, output_file):
 
     filters.append(
         "drawtext=text='@theaidollar1741':"
-        "x=(w-text_w)/2:y=h-100:fontsize=28:fontcolor=0xFFD700:"
+        "x=(w-text_w)/2:y=h-100:fontsize=22:fontcolor=0xFFD700:"
         "borderw=2:bordercolor=black"
     )
 
     vf = ",".join(filters)
     cmd = [
         FFMPEG, '-y',
-        '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=30',
+        '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=720x1280:rate=30',
         '-i', audio_file,
         '-vf', vf,
         '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
