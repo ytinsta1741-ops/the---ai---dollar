@@ -274,47 +274,62 @@ def escape_ffmpeg_text(text):
     return text
 
 
-def prep_images(images, slides, scale, work_dir):
-    """Pre-scale all images to 1080x1920 and create concat list"""
+def prep_slides(images, slides, scale, work_dir):
+    """Pre-render each slide as a JPEG with text burned in, then create concat list"""
     os.makedirs(work_dir, exist_ok=True)
     concat_file = os.path.join(work_dir, "concat.txt")
-    prepped = []
 
     for idx, slide in enumerate(slides):
         dur = slide['duration'] * scale
         img = images[idx] if idx < len(images) else None
+        out = os.path.join(work_dir, f"s_{idx}.jpg")
+
+        lines = slide['text'].split('\n')
+        num_lines = len(lines)
+
+        text_vf = []
+        text_vf.append("drawbox=x=0:y=0:w=720:h=1280:color=black@0.45:t=fill")
+        text_vf.append(
+            "drawtext=text='THE AI DOLLAR':x=(w-text_w)/2:y=60:fontsize=28:fontcolor=0xFFD700:borderw=2:bordercolor=black"
+        )
+
+        start_y = (1280 // 2) - (num_lines * 28)
+        for li, line in enumerate(lines):
+            escaped = escape_ffmpeg_text(line)
+            y = start_y + li * 56
+            color = "white" if li == 0 else "0x00DDFF"
+            text_vf.append(
+                f"drawtext=text='{escaped}':x=(w-text_w)/2:y={y}:fontsize=40:fontcolor={color}:borderw=3:bordercolor=black"
+            )
+
+        text_vf.append(
+            "drawtext=text='@theaidollar1741':x=(w-text_w)/2:y=h-80:fontsize=22:fontcolor=0xFFD700:borderw=2:bordercolor=black"
+        )
+
+        vf = ",".join(text_vf)
 
         if img and os.path.exists(img):
-            out = os.path.join(work_dir, f"p_{idx}.jpg")
             cmd = [
                 FFMPEG, '-y', '-i', img,
-                '-vf', 'scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,'
-                       'drawbox=x=0:y=0:w=720:h=1280:color=black@0.45:t=fill',
-                '-q:v', '3', out
+                '-vf', f'scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,{vf}',
+                '-frames:v', '1', '-q:v', '4', out
             ]
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            proc.communicate(timeout=15)
-            if proc.returncode == 0 and os.path.exists(out):
-                prepped.append((out, dur))
-                continue
+        else:
+            cmd = [
+                FFMPEG, '-y', '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=720x1280',
+                '-vf', vf,
+                '-frames:v', '1', '-q:v', '4', out
+            ]
 
-        color_img = os.path.join(work_dir, f"p_{idx}.jpg")
-        cmd = [
-            FFMPEG, '-y', '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=720x1280',
-            '-frames:v', '1', '-q:v', '3', color_img
-        ]
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        proc.communicate(timeout=10)
-        prepped.append((color_img, dur))
+        proc.communicate(timeout=15)
 
     with open(concat_file, 'w') as f:
-        for img_path, dur in prepped:
-            fname = os.path.basename(img_path)
-            f.write(f"file '{fname}'\n")
+        for idx, slide in enumerate(slides):
+            dur = slide['duration'] * scale
+            f.write(f"file 's_{idx}.jpg'\n")
             f.write(f"duration {dur:.2f}\n")
-        if prepped:
-            fname = os.path.basename(prepped[-1][0])
-            f.write(f"file '{fname}'\n")
+        f.write(f"file 's_{len(slides)-1}.jpg'\n")
 
     return concat_file
 
@@ -329,63 +344,29 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         return create_video_simple(slides, audio_file, output_file)
 
     work_dir = output_file + "_work"
-    print("🖼️ Preparing images...")
-    concat_file = prep_images(images, slides, scale, work_dir)
+    print("🖼️ Preparing slides with text...")
+    concat_file = prep_slides(images, slides, scale, work_dir)
 
-    text_filters = []
-    text_filters.append(
-        "drawtext=text='THE AI DOLLAR':"
-        "x=(w-text_w)/2:y=80:fontsize=30:fontcolor=0xFFD700:"
-        "borderw=3:bordercolor=black"
-    )
-
-    t = 0
-    for slide in slides:
-        dur = slide['duration'] * scale
-        lines = slide['text'].split('\n')
-        num_lines = len(lines)
-        start_y = f"(h/2)-{(num_lines * 30)}"
-
-        for li, line in enumerate(lines):
-            escaped = escape_ffmpeg_text(line)
-            y_pos = f"({start_y})+{li * 58}"
-            color = "white" if li == 0 else "0x00DDFF"
-            text_filters.append(
-                f"drawtext=text='{escaped}':"
-                f"x=(w-text_w)/2:y={y_pos}:"
-                f"fontsize=42:fontcolor={color}:"
-                f"borderw=4:bordercolor=black:"
-                f"enable='between(t,{t:.2f},{t+dur:.2f})'"
-            )
-        t += dur
-
-    text_filters.append(
-        "drawtext=text='@theaidollar1741':"
-        "x=(w-text_w)/2:y=h-100:fontsize=22:fontcolor=0xFFD700:"
-        "borderw=2:bordercolor=black"
-    )
-
-    vf = ",".join(text_filters)
     cmd = [
         FFMPEG, '-y',
         '-f', 'concat', '-safe', '0', '-i', concat_file,
         '-i', audio_file,
-        '-vf', vf,
         '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
         '-c:a', 'aac', '-b:a', '128k',
         '-pix_fmt', 'yuv420p',
         '-shortest',
+        '-vsync', 'vfr',
         output_file
     ]
 
-    print(f"🔧 Running FFmpeg ({len(slides)} image slides)...")
+    print(f"🔧 Running FFmpeg (concat {len(slides)} slides)...")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
-        stdout, stderr = proc.communicate(timeout=90)
+        stdout, stderr = proc.communicate(timeout=60)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
-        print("❌ FFmpeg timed out, trying simple mode...")
+        print("❌ FFmpeg timed out")
         return create_video_simple(slides, audio_file, output_file)
 
     import shutil
@@ -393,8 +374,7 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
 
     if proc.returncode != 0:
         err = stderr.decode('utf-8', errors='replace')[-500:]
-        print(f"❌ FFmpeg image mode failed: {err[-300:]}")
-        print("⚠️ Falling back to simple mode...")
+        print(f"❌ FFmpeg failed: {err[-300:]}")
         return create_video_simple(slides, audio_file, output_file)
 
     print("✅ Video created with animated images!")
