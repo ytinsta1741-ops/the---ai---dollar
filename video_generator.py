@@ -274,51 +274,71 @@ def escape_ffmpeg_text(text):
     return text
 
 
+def prep_images(images, slides, scale, work_dir):
+    """Pre-scale all images to 1080x1920 and create concat list"""
+    os.makedirs(work_dir, exist_ok=True)
+    concat_file = os.path.join(work_dir, "concat.txt")
+    prepped = []
+
+    for idx, slide in enumerate(slides):
+        dur = slide['duration'] * scale
+        img = images[idx] if idx < len(images) else None
+
+        if img and os.path.exists(img):
+            out = os.path.join(work_dir, f"p_{idx}.jpg")
+            cmd = [
+                FFMPEG, '-y', '-i', img,
+                '-vf', 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,'
+                       'drawbox=x=0:y=0:w=1080:h=1920:color=black@0.45:t=fill',
+                '-q:v', '3', out
+            ]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc.communicate(timeout=15)
+            if proc.returncode == 0 and os.path.exists(out):
+                prepped.append((out, dur))
+                continue
+
+        color_img = os.path.join(work_dir, f"p_{idx}.jpg")
+        cmd = [
+            FFMPEG, '-y', '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920',
+            '-frames:v', '1', '-q:v', '3', color_img
+        ]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc.communicate(timeout=10)
+        prepped.append((color_img, dur))
+
+    with open(concat_file, 'w') as f:
+        for img_path, dur in prepped:
+            safe_path = img_path.replace('\\', '/')
+            f.write(f"file '{safe_path}'\n")
+            f.write(f"duration {dur:.2f}\n")
+        if prepped:
+            safe_path = prepped[-1][0].replace('\\', '/')
+            f.write(f"file '{safe_path}'\n")
+
+    return concat_file
+
+
 def create_video_ffmpeg(slides, images, audio_file, output_file):
     audio_duration = get_audio_duration(audio_file)
     total_slide_dur = sum(s['duration'] for s in slides)
     scale = audio_duration / total_slide_dur if total_slide_dur > 0 else 1.0
 
     valid_images = [img for img in images if img is not None]
-
     if not valid_images:
         return create_video_simple(slides, audio_file, output_file)
 
-    input_args = []
-    filter_parts = []
-
-    for idx, img in enumerate(images):
-        if img and os.path.exists(img):
-            input_args.extend(['-i', img])
-        else:
-            input_args.extend(['-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=24:d=0.1'])
-
-    num_inputs = len(images)
-    segments = []
-
-    for idx, slide in enumerate(slides):
-        dur = slide['duration'] * scale
-        inp_idx = idx if idx < num_inputs else idx % num_inputs
-
-        seg_label = f"seg{idx}"
-        dark_label = f"dark{idx}"
-
-        filter_parts.append(
-            f"[{inp_idx}:v]scale=1080:1920:force_original_aspect_ratio=increase,"
-            f"crop=1080:1920,setsar=1,loop=loop={int(dur*24)}:size=1:start=0,"
-            f"fps=24,trim=duration={dur:.2f},setpts=PTS-STARTPTS[{seg_label}]"
-        )
-        filter_parts.append(
-            f"[{seg_label}]drawbox=x=0:y=0:w=1080:h=1920:color=black@0.45:t=fill[{dark_label}]"
-        )
-        segments.append(f"[{dark_label}]")
-
-    concat_inputs = "".join(segments)
-    filter_parts.append(
-        f"{concat_inputs}concat=n={len(slides)}:v=1:a=0[slideshow]"
-    )
+    work_dir = output_file + "_work"
+    print("🖼️ Preparing images...")
+    concat_file = prep_images(images, slides, scale, work_dir)
 
     text_filters = []
+    text_filters.append(
+        "drawtext=text='THE AI DOLLAR':"
+        "x=(w-text_w)/2:y=80:fontsize=38:fontcolor=0xFFD700:"
+        "borderw=3:bordercolor=black"
+    )
+
     t = 0
     for slide in slides:
         dur = slide['duration'] * scale
@@ -340,25 +360,17 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         t += dur
 
     text_filters.append(
-        "drawtext=text='THE AI DOLLAR':"
-        "x=(w-text_w)/2:y=80:fontsize=38:fontcolor=0xFFD700:"
-        "borderw=3:bordercolor=black"
-    )
-    text_filters.append(
         "drawtext=text='@theaidollar1741':"
         "x=(w-text_w)/2:y=h-100:fontsize=28:fontcolor=0xFFD700:"
         "borderw=2:bordercolor=black"
     )
 
-    full_filter = ";".join(filter_parts) + ";[slideshow]" + ",".join(text_filters) + "[outv]"
-
-    audio_input_idx = num_inputs
+    vf = ",".join(text_filters)
     cmd = [
         FFMPEG, '-y',
-        *input_args,
+        '-f', 'concat', '-safe', '0', '-i', concat_file,
         '-i', audio_file,
-        '-filter_complex', full_filter,
-        '-map', '[outv]', '-map', f'{audio_input_idx}:a',
+        '-vf', vf,
         '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
         '-c:a', 'aac', '-b:a', '128k',
         '-pix_fmt', 'yuv420p',
@@ -366,18 +378,21 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         output_file
     ]
 
-    print(f"🔧 Running FFmpeg ({len(slides)} slides with images)...")
+    print(f"🔧 Running FFmpeg ({len(slides)} image slides)...")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
-        stdout, stderr = proc.communicate(timeout=120)
+        stdout, stderr = proc.communicate(timeout=90)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
         print("❌ FFmpeg timed out, trying simple mode...")
         return create_video_simple(slides, audio_file, output_file)
 
+    import shutil
+    shutil.rmtree(work_dir, ignore_errors=True)
+
     if proc.returncode != 0:
-        err = stderr.decode('utf-8', errors='replace')[-800:]
+        err = stderr.decode('utf-8', errors='replace')[-500:]
         print(f"❌ FFmpeg image mode failed: {err[-300:]}")
         print("⚠️ Falling back to simple mode...")
         return create_video_simple(slides, audio_file, output_file)
@@ -475,7 +490,7 @@ def generate_daily_video():
 
         images = []
         if PEXELS_API_KEY:
-            print("📸 Fetching cartoon/illustration images...")
+            print("📸 Fetching images from Pexels...")
             images = fetch_pexels_images(
                 topic['search_queries'],
                 len(topic['slides']),
