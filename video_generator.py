@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
 The AI Dollar - Video Generator
-YouTube Shorts style: stock images + text overlay + TTS voiceover
+Finance education Shorts with stock images + deep male TTS voiceover
 """
 
 import os
 import subprocess
+import asyncio
 import requests
 from datetime import datetime
 
@@ -17,108 +18,150 @@ except Exception as e:
     FFMPEG = "ffmpeg"
     print(f"⚠️ Using system ffmpeg: {e}")
 
-CONFIG = {"output_dir": "./videos", "img_dir": "./videos/imgs"}
+CONFIG = {"output_dir": "./videos"}
 
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
 
 CONTENT_TOPICS = [
     {
-        "title": "What is AI?",
-        "search_queries": ["artificial intelligence", "robot technology", "computer brain", "futuristic technology", "AI robot", "neural network", "machine learning"],
+        "title": "What Inflation Actually Does to Your Money",
+        "search_queries": ["grocery shopping", "price tag store", "wallet money", "supermarket aisle", "cost of living", "empty wallet", "rising prices"],
         "slides": [
-            {"text": "What is AI?", "duration": 3},
-            {"text": "AI stands for\nArtificial Intelligence", "duration": 3},
-            {"text": "It lets machines\nlearn from data", "duration": 3},
-            {"text": "And make decisions\nlike humans do", "duration": 3},
-            {"text": "ChatGPT, Siri, Tesla\nall use AI", "duration": 3},
-            {"text": "AI is changing\nEVERYTHING", "duration": 3},
-            {"text": "Follow for more\nAI insights", "duration": 3},
+            {"text": "What inflation\nactually does\nto your money", "duration": 3.5},
+            {"text": "That $100 you saved\nlast year?", "duration": 3},
+            {"text": "It now buys\nabout $93 worth\nof stuff", "duration": 3.5},
+            {"text": "Your money didn't\ndisappear", "duration": 2.5},
+            {"text": "Prices just\nwent up", "duration": 2.5},
+            {"text": "This is why keeping\ncash under your\nmattress hurts you", "duration": 3.5},
+            {"text": "Your savings need\nto grow faster\nthan inflation", "duration": 3.5},
+            {"text": "That's the\nwhole game", "duration": 2.5},
         ],
-        "voiceover": "What is AI? AI stands for Artificial Intelligence. It lets machines learn from data and make decisions like humans do. ChatGPT, Siri, and Tesla all use AI every day. AI is changing everything around us. Follow The AI Dollar for more AI insights.",
-        "keywords": ["AI", "Artificial Intelligence", "Tech"],
+        "voiceover": "Let's talk about what inflation actually does to your money. That hundred dollars you saved last year? It now buys about ninety three dollars worth of stuff. Your money didn't disappear. Prices just went up. This is why keeping cash under your mattress actually hurts you over time. Your savings need to grow faster than inflation. That's the whole game of personal finance right there.",
+        "keywords": ["Inflation", "Finance", "Money"],
     },
     {
-        "title": "Make $500/Week with ChatGPT",
-        "search_queries": ["laptop money", "freelancer working", "typing laptop", "online business", "dollar bills", "work from home", "digital entrepreneur"],
+        "title": "Compound Interest Explained in 60 Seconds",
+        "search_queries": ["money growing", "plant growing", "savings account", "piggy bank", "investment growth", "calculator finance", "bank interest"],
         "slides": [
-            {"text": "Make $500 per week\nwith ChatGPT", "duration": 3},
-            {"text": "Step 1\nLearn prompt engineering", "duration": 3},
-            {"text": "Step 2\nOffer content writing", "duration": 3},
-            {"text": "Step 3\nCharge $200 per project", "duration": 3},
-            {"text": "Just 2-3 clients\n= $500+ weekly", "duration": 3},
-            {"text": "Start TODAY\nnot tomorrow", "duration": 3},
-            {"text": "Follow for more\nAI money tips", "duration": 3},
+            {"text": "Compound interest\nexplained in\n60 seconds", "duration": 3},
+            {"text": "You put $1,000\nin an account", "duration": 3},
+            {"text": "It earns 5%\na year", "duration": 2.5},
+            {"text": "Year 1:\nyou have $1,050", "duration": 3},
+            {"text": "Year 2:\nyou earn 5%\non $1,050", "duration": 3},
+            {"text": "Not on $1,000", "duration": 2},
+            {"text": "Your interest\nearns interest", "duration": 3},
+            {"text": "In 30 years that\n$1,000 becomes\n$4,322", "duration": 3.5},
+            {"text": "Without adding\na single dollar", "duration": 3},
         ],
-        "voiceover": "You can make 500 dollars per week with ChatGPT. Step one, learn prompt engineering. Step two, offer content writing services to businesses. Step three, charge 200 dollars per project. With just 2 to 3 clients, that's 500 dollars or more every single week. Start today, not tomorrow. Follow The AI Dollar for more AI money tips.",
-        "keywords": ["ChatGPT", "Money", "Side Hustle"],
+        "voiceover": "Compound interest, explained simply. You put one thousand dollars in an account. It earns five percent a year. After year one, you have one thousand and fifty dollars. In year two, you earn five percent on one thousand and fifty, not on the original thousand. Your interest earns interest. That's compounding. In thirty years, that one thousand dollars becomes four thousand three hundred and twenty two dollars. Without you adding a single dollar. Start early. Time is the cheat code.",
+        "keywords": ["Compound Interest", "Investing", "Finance"],
     },
     {
-        "title": "5 AI Tools Making People Rich",
-        "search_queries": ["AI technology", "digital tools", "money technology", "creative software", "app development", "rich lifestyle", "tech startup", "coding screen"],
+        "title": "What Your Credit Score Actually Means",
+        "search_queries": ["credit card", "financial document", "loan application", "bank approval", "credit report", "financial planning", "mortgage house"],
         "slides": [
-            {"text": "5 AI Tools Making\nPeople RICH", "duration": 3},
-            {"text": "1. ChatGPT\nContent creation", "duration": 3},
-            {"text": "2. Midjourney\nAI art for $100+", "duration": 3},
-            {"text": "3. Claude\nAI copywriting", "duration": 3},
-            {"text": "4. Runway\nVideo creation", "duration": 3},
-            {"text": "5. Dify\nNo-code AI apps", "duration": 2.5},
-            {"text": "Pick ONE and\nstart earning", "duration": 2.5},
-            {"text": "Subscribe for more!", "duration": 2},
+            {"text": "What your credit\nscore actually\nmeans", "duration": 3},
+            {"text": "It's a number\nbetween 300\nand 850", "duration": 3},
+            {"text": "Banks use it to\ndecide if they\ntrust you", "duration": 3.5},
+            {"text": "Above 740?\nYou get the\nbest rates", "duration": 3},
+            {"text": "Below 580?\nYou'll pay way\nmore in interest", "duration": 3.5},
+            {"text": "On a $300,000\nmortgage, bad\ncredit costs you\n$100,000 extra", "duration": 4},
+            {"text": "Pay on time\nKeep balances low\nDon't close\nold cards", "duration": 4},
+            {"text": "Three rules\nthat's it", "duration": 2.5},
         ],
-        "voiceover": "5 AI tools making people rich right now. Number one, ChatGPT for content creation. Number two, Midjourney for AI art commissions at 100 dollars each. Number three, Claude for AI copywriting. Number four, Runway for video creation. Number five, Dify for building no-code AI apps. Pick one tool and start earning today. Subscribe for more.",
-        "keywords": ["AI Tools", "Money", "Passive Income"],
+        "voiceover": "Your credit score. Most people don't really understand what it means. It's a number between three hundred and eight fifty. Banks use it to decide if they trust you with money. Above seven forty? You're getting the best interest rates available. Below five eighty? You're going to pay way more in interest. On a three hundred thousand dollar mortgage, bad credit can cost you over a hundred thousand dollars extra over the life of the loan. Here's how to keep it high. Pay on time. Keep your balances low. And don't close your old cards. Three rules. That's literally it.",
+        "keywords": ["Credit Score", "Finance", "Banking"],
     },
     {
-        "title": "AI Made Me $1000 in 24 Hours",
-        "search_queries": ["money cash", "online earnings", "laptop success", "digital product", "ecommerce", "gumroad sales", "passive income"],
+        "title": "The 50/30/20 Budget Rule",
+        "search_queries": ["budget planning", "calculator notepad", "monthly bills", "savings jar", "financial planning desk", "paycheck money", "household budget"],
         "slides": [
-            {"text": "AI made me $1000\nin 24 hours", "duration": 3},
-            {"text": "I used ChatGPT +\nMidjourney", "duration": 3},
-            {"text": "Created digital\nproducts", "duration": 3},
-            {"text": "Sold them on\nGumroad", "duration": 3},
-            {"text": "15 sales at $67\neach", "duration": 3},
-            {"text": "Total = $1,005", "duration": 3},
-            {"text": "You can do this\nTODAY", "duration": 2.5},
-            {"text": "Follow @theaidollar1741", "duration": 2},
+            {"text": "The simplest\nbudget that\nactually works", "duration": 3},
+            {"text": "Take your\npaycheck", "duration": 2},
+            {"text": "50% goes to\nneeds", "duration": 2.5},
+            {"text": "Rent, food,\nutilities,\ntransportation", "duration": 3},
+            {"text": "30% goes to\nwants", "duration": 2.5},
+            {"text": "Eating out,\nentertainment,\nshopping", "duration": 3},
+            {"text": "20% goes to\nsavings", "duration": 2.5},
+            {"text": "Emergency fund\nfirst, then\ninvesting", "duration": 3},
+            {"text": "Simple?\nYes\nEffective?\nExtremely", "duration": 3},
         ],
-        "voiceover": "AI made me 1000 dollars in just 24 hours. I used ChatGPT and Midjourney together. I created digital products and sold them on Gumroad. I got 15 sales at 67 dollars each. That's a total of 1005 dollars in one day. You can do this today. Follow The AI Dollar for more.",
-        "keywords": ["AI Money", "Digital Products", "Quick Cash"],
+        "voiceover": "Here's the simplest budget that actually works. Take your paycheck. Fifty percent goes to needs. That's rent, food, utilities, transportation. Thirty percent goes to wants. Eating out, entertainment, shopping. And twenty percent goes straight to savings. Build your emergency fund first, then start investing. Is it simple? Yes. Is it effective? Extremely. Most millionaires started with this exact formula.",
+        "keywords": ["Budgeting", "50/30/20", "Personal Finance"],
     },
     {
-        "title": "Best FREE AI Tools 2026",
-        "search_queries": ["free software", "AI application", "smartphone apps", "creative tools", "design software", "video editing", "writing tools"],
+        "title": "Stocks vs Bonds - What's the Difference",
+        "search_queries": ["stock market screen", "wall street", "trading chart", "investment portfolio", "business newspaper", "financial graph", "stock exchange"],
         "slides": [
-            {"text": "Best FREE AI Tools\nin 2026", "duration": 3},
-            {"text": "ChatGPT Free\nContent creation", "duration": 3},
-            {"text": "Claude Free\nCopywriting", "duration": 3},
-            {"text": "Pika Free\nVideo creation", "duration": 3},
-            {"text": "Canva AI\nDesign anything", "duration": 3},
-            {"text": "Combine any TWO\n= real business", "duration": 3},
-            {"text": "Subscribe for\ndaily AI tips!", "duration": 3},
+            {"text": "Stocks vs Bonds\nthe real\ndifference", "duration": 3},
+            {"text": "A stock means\nyou own a tiny\npiece of a company", "duration": 3.5},
+            {"text": "If the company\ngrows, your\nmoney grows", "duration": 3},
+            {"text": "If it tanks,\nso does your\ninvestment", "duration": 3},
+            {"text": "A bond means\nyou're lending\nmoney", "duration": 3},
+            {"text": "To a government\nor company", "duration": 2.5},
+            {"text": "They pay you\nback with interest", "duration": 3},
+            {"text": "Lower risk\nlower reward", "duration": 2.5},
+            {"text": "Young? More stocks\nOlder? More bonds", "duration": 3},
         ],
-        "voiceover": "Here are the best free AI tools in 2026. ChatGPT free tier for content creation. Claude free for copywriting. Pika for free video creation. Canva AI for designing anything. Combine any two of these and you have a real money-making business starting today. Subscribe to The AI Dollar for daily AI tips.",
-        "keywords": ["Free Tools", "AI", "Money"],
+        "voiceover": "Stocks versus bonds. Here's the real difference. When you buy a stock, you own a tiny piece of a company. If the company grows, your money grows with it. But if it tanks, so does your investment. A bond is completely different. You're lending money to a government or a company. They pay you back with interest over time. Lower risk, but lower reward. General rule? If you're young, lean more into stocks. You have time to ride out the ups and downs. As you get older, shift more into bonds for stability.",
+        "keywords": ["Stocks", "Bonds", "Investing"],
     },
     {
-        "title": "How AI Will Replace 90% of Jobs",
-        "search_queries": ["office workers", "automation factory", "robot working", "unemployment", "future jobs", "AI workplace", "technology office"],
+        "title": "What an Emergency Fund Is and Why You Need One",
+        "search_queries": ["emergency savings", "rainy day", "broken car", "hospital bills", "piggy bank savings", "money jar", "financial safety"],
         "slides": [
-            {"text": "AI will replace\n90%% of jobs", "duration": 3},
-            {"text": "Customer service?\nAI chatbots", "duration": 3},
-            {"text": "Data entry?\nAlready automated", "duration": 3},
-            {"text": "Writing?\nChatGPT does it", "duration": 3},
-            {"text": "But here is\nthe good news", "duration": 3},
-            {"text": "AI creates NEW\njobs too", "duration": 3},
-            {"text": "Learn AI now\nor get left behind", "duration": 3},
+            {"text": "Why you need an\nemergency fund", "duration": 3},
+            {"text": "Your car breaks\ndown tomorrow", "duration": 2.5},
+            {"text": "Repair costs\n$800", "duration": 2.5},
+            {"text": "No emergency fund?\nThat goes on a\ncredit card", "duration": 3.5},
+            {"text": "At 24% interest", "duration": 2},
+            {"text": "Now that $800\ncosts you $1,100", "duration": 3},
+            {"text": "An emergency fund\nis 3 to 6 months\nof expenses", "duration": 3.5},
+            {"text": "In a savings\naccount you\ndon't touch", "duration": 3},
+            {"text": "It's not investing\nIt's insurance", "duration": 3},
         ],
-        "voiceover": "AI will replace 90 percent of jobs. Customer service? AI chatbots handle it. Data entry? Already automated. Writing? ChatGPT does it faster. But here is the good news. AI creates new jobs too. The question is, will you learn AI now, or get left behind? Follow The AI Dollar.",
-        "keywords": ["AI Jobs", "Future", "Automation"],
+        "voiceover": "Here's why you need an emergency fund. Imagine your car breaks down tomorrow. The repair costs eight hundred dollars. If you don't have an emergency fund, that goes on a credit card. At twenty four percent interest, that eight hundred dollar repair now costs you eleven hundred. An emergency fund is three to six months of your expenses, sitting in a savings account you don't touch. It's not investing. It's insurance. It's the difference between a bad week and a financial disaster.",
+        "keywords": ["Emergency Fund", "Savings", "Finance"],
+    },
+    {
+        "title": "What Is a Recession",
+        "search_queries": ["economic downturn", "stock market crash", "unemployment line", "closed business", "financial crisis", "recession economy", "market decline"],
+        "slides": [
+            {"text": "What is a\nrecession?", "duration": 2.5},
+            {"text": "When the economy\nshrinks for 6+\nmonths straight", "duration": 3.5},
+            {"text": "Companies make\nless money", "duration": 2.5},
+            {"text": "They cut jobs", "duration": 2},
+            {"text": "People spend less", "duration": 2},
+            {"text": "Which means\ncompanies make\neven less", "duration": 3},
+            {"text": "It's a cycle", "duration": 2},
+            {"text": "But here's\nthe thing", "duration": 2},
+            {"text": "Every single\nrecession in\nhistory ended", "duration": 3.5},
+            {"text": "The economy\nalways recovered", "duration": 3},
+        ],
+        "voiceover": "What is a recession? It's when the economy shrinks for six or more months in a row. Companies make less money, so they cut jobs. People have less income, so they spend less. Which means companies make even less. It's a downward cycle. But here's the thing most people forget. Every single recession in history has ended. The economy has always recovered. Always. The worst financial decision you can make during a recession is panic.",
+        "keywords": ["Recession", "Economy", "Finance"],
+    },
+    {
+        "title": "Assets vs Liabilities",
+        "search_queries": ["real estate investment", "luxury car", "rental property", "stock portfolio", "expensive watch", "house keys", "investment property"],
+        "slides": [
+            {"text": "Assets vs\nLiabilities", "duration": 2.5},
+            {"text": "An asset puts\nmoney in\nyour pocket", "duration": 3},
+            {"text": "A liability takes\nmoney out", "duration": 2.5},
+            {"text": "Your house?\nIt depends", "duration": 2.5},
+            {"text": "If you live in it\nit costs you\nmoney every month", "duration": 3.5},
+            {"text": "Mortgage, taxes,\nmaintenance", "duration": 2.5},
+            {"text": "If you rent it out\nand it makes\nmore than it costs", "duration": 3.5},
+            {"text": "Now it's\nan asset", "duration": 2.5},
+            {"text": "Rich people buy\nassets first", "duration": 3},
+        ],
+        "voiceover": "Assets versus liabilities. An asset puts money in your pocket. A liability takes money out. Simple. Your house? Well, it depends. If you live in it, it costs you money every month. Mortgage, taxes, maintenance. That's a liability. But if you rent it out, and it brings in more than it costs, now it's an asset. The difference between wealthy people and everyone else? Wealthy people buy assets first. They let those assets pay for their liabilities.",
+        "keywords": ["Assets", "Liabilities", "Wealth"],
     },
 ]
 
 
 def fetch_pexels_images(queries, num_images, save_dir):
-    """Download portrait images from Pexels for each slide"""
     os.makedirs(save_dir, exist_ok=True)
     images = []
 
@@ -160,9 +203,20 @@ def fetch_pexels_images(queries, num_images, save_dir):
 
 
 def create_audio(text, output_path):
-    from gtts import gTTS
-    tts = gTTS(text=text, lang='en', slow=False)
-    tts.save(output_path)
+    """Generate TTS audio using edge-tts (deep male voice)"""
+    try:
+        import edge_tts
+        voice = "en-US-GuyNeural"
+        communicate = edge_tts.Communicate(text, voice, rate="-5%", pitch="-2Hz")
+        asyncio.run(communicate.save(output_path))
+        print(f"✅ Audio ready (voice: {voice})")
+        return True
+    except Exception as e:
+        print(f"⚠️ edge-tts failed ({e}), falling back to gTTS")
+        from gtts import gTTS
+        tts = gTTS(text=text, lang='en', slow=False)
+        tts.save(output_path)
+        return True
 
 
 def get_audio_duration(audio_path):
@@ -175,7 +229,7 @@ def get_audio_duration(audio_path):
             time_str = line.split('Duration:')[1].split(',')[0].strip()
             parts = time_str.split(':')
             return float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
-    return 21
+    return 25
 
 
 def escape_ffmpeg_text(text):
@@ -190,131 +244,112 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
     valid_images = [img for img in images if img is not None]
 
     if not valid_images:
-        input_args = ['-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=30']
-        base_label = "[0:v]"
-    else:
-        input_args = []
-        filter_parts = []
+        return create_video_simple(slides, audio_file, output_file)
 
-        for idx, img in enumerate(images):
-            if img and os.path.exists(img):
-                input_args.extend(['-i', img])
-            else:
-                input_args.extend(['-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=30:d=0.1'])
+    input_args = []
+    filter_parts = []
 
-        num_inputs = len(images)
-        t = 0
-        segments = []
+    for idx, img in enumerate(images):
+        if img and os.path.exists(img):
+            input_args.extend(['-i', img])
+        else:
+            input_args.extend(['-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=30:d=0.1'])
 
-        for idx, slide in enumerate(slides):
-            dur = slide['duration'] * scale
-            inp_idx = idx if idx < num_inputs else idx % num_inputs
+    num_inputs = len(images)
+    t = 0
+    segments = []
 
-            seg_label = f"seg{idx}"
-            dark_label = f"dark{idx}"
-            filter_parts.append(
-                f"[{inp_idx}:v]scale=1080:1920:force_original_aspect_ratio=increase,"
-                f"crop=1080:1920,setsar=1,loop=loop={int(dur*30)}:size=1:start=0,"
-                f"fps=30,trim=duration={dur:.2f},setpts=PTS-STARTPTS[{seg_label}]"
-            )
-            filter_parts.append(
-                f"[{seg_label}]drawbox=x=0:y=0:w=1080:h=1920:color=black@0.55:t=fill[{dark_label}]"
-            )
-            segments.append(f"[{dark_label}]")
-            t += dur
+    for idx, slide in enumerate(slides):
+        dur = slide['duration'] * scale
+        inp_idx = idx if idx < num_inputs else idx % num_inputs
 
-        concat_inputs = "".join(segments)
+        seg_label = f"seg{idx}"
+        dark_label = f"dark{idx}"
         filter_parts.append(
-            f"{concat_inputs}concat=n={len(slides)}:v=1:a=0[slideshow]"
+            f"[{inp_idx}:v]scale=1080:1920:force_original_aspect_ratio=increase,"
+            f"crop=1080:1920,setsar=1,loop=loop={int(dur*30)}:size=1:start=0,"
+            f"fps=30,trim=duration={dur:.2f},setpts=PTS-STARTPTS[{seg_label}]"
         )
-
-        text_filters = []
-        t = 0
-        for slide in slides:
-            dur = slide['duration'] * scale
-            lines = slide['text'].split('\n')
-
-            if len(lines) == 1:
-                escaped = escape_ffmpeg_text(lines[0])
-                text_filters.append(
-                    f"drawtext=text='{escaped}':"
-                    f"x=(w-text_w)/2:y=(h-text_h)/2:"
-                    f"fontsize=58:fontcolor=white:"
-                    f"borderw=4:bordercolor=black:"
-                    f"enable='between(t,{t:.2f},{t+dur:.2f})'"
-                )
-            else:
-                escaped1 = escape_ffmpeg_text(lines[0])
-                text_filters.append(
-                    f"drawtext=text='{escaped1}':"
-                    f"x=(w-text_w)/2:y=(h/2)-60:"
-                    f"fontsize=58:fontcolor=white:"
-                    f"borderw=4:bordercolor=black:"
-                    f"enable='between(t,{t:.2f},{t+dur:.2f})'"
-                )
-                if len(lines) > 1:
-                    escaped2 = escape_ffmpeg_text(lines[1])
-                    text_filters.append(
-                        f"drawtext=text='{escaped2}':"
-                        f"x=(w-text_w)/2:y=(h/2)+20:"
-                        f"fontsize=58:fontcolor=0x00DDFF:"
-                        f"borderw=4:bordercolor=black:"
-                        f"enable='between(t,{t:.2f},{t+dur:.2f})'"
-                    )
-            t += dur
-
-        text_filters.append(
-            "drawtext=text='THE AI DOLLAR':"
-            "x=(w-text_w)/2:y=80:fontsize=40:fontcolor=0xFFD700:"
-            "borderw=3:bordercolor=black"
+        filter_parts.append(
+            f"[{seg_label}]drawbox=x=0:y=0:w=1080:h=1920:color=black@0.5:t=fill[{dark_label}]"
         )
-        text_filters.append(
-            "drawtext=text='@theaidollar1741':"
-            "x=(w-text_w)/2:y=h-100:fontsize=30:fontcolor=0xFFD700:"
-            "borderw=2:bordercolor=black"
-        )
+        segments.append(f"[{dark_label}]")
+        t += dur
 
-        full_filter = ";".join(filter_parts) + ";[slideshow]" + ",".join(text_filters) + "[outv]"
+    concat_inputs = "".join(segments)
+    filter_parts.append(
+        f"{concat_inputs}concat=n={len(slides)}:v=1:a=0[slideshow]"
+    )
 
-        audio_input_idx = num_inputs
-        cmd = [
-            FFMPEG, '-y',
-            *input_args,
-            '-i', audio_file,
-            '-filter_complex', full_filter,
-            '-map', '[outv]', '-map', f'{audio_input_idx}:a',
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
-            '-c:a', 'aac', '-b:a', '128k',
-            '-pix_fmt', 'yuv420p',
-            '-shortest',
-            output_file
-        ]
+    text_filters = []
+    t = 0
+    for slide in slides:
+        dur = slide['duration'] * scale
+        lines = slide['text'].split('\n')
+        num_lines = len(lines)
+        start_y = f"(h/2)-{(num_lines * 35)}"
 
-        print(f"🔧 Running FFmpeg ({len(slides)} slides with images)...")
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        try:
-            stdout, stderr = proc.communicate(timeout=180)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.communicate()
-            print("❌ FFmpeg timed out")
-            return False
+        for li, line in enumerate(lines):
+            escaped = escape_ffmpeg_text(line)
+            y_pos = f"({start_y})+{li * 70}"
+            color = "white" if li == 0 else "0x00DDFF"
+            text_filters.append(
+                f"drawtext=text='{escaped}':"
+                f"x=(w-text_w)/2:y={y_pos}:"
+                f"fontsize=56:fontcolor={color}:"
+                f"borderw=4:bordercolor=black:"
+                f"enable='between(t,{t:.2f},{t+dur:.2f})'"
+            )
+        t += dur
 
-        if proc.returncode != 0:
-            err = stderr.decode('utf-8', errors='replace')[-800:]
-            print(f"❌ FFmpeg failed (code {proc.returncode})")
-            print(err)
-            print("⚠️ Retrying with simple mode...")
-            return create_video_simple(slides, audio_file, output_file)
+    text_filters.append(
+        "drawtext=text='THE AI DOLLAR':"
+        "x=(w-text_w)/2:y=80:fontsize=38:fontcolor=0xFFD700:"
+        "borderw=3:bordercolor=black"
+    )
+    text_filters.append(
+        "drawtext=text='@theaidollar1741':"
+        "x=(w-text_w)/2:y=h-100:fontsize=28:fontcolor=0xFFD700:"
+        "borderw=2:bordercolor=black"
+    )
 
-        print("✅ FFmpeg done - video with images!")
-        return True
+    full_filter = ";".join(filter_parts) + ";[slideshow]" + ",".join(text_filters) + "[outv]"
 
-    return create_video_simple(slides, audio_file, output_file)
+    audio_input_idx = num_inputs
+    cmd = [
+        FFMPEG, '-y',
+        *input_args,
+        '-i', audio_file,
+        '-filter_complex', full_filter,
+        '-map', '[outv]', '-map', f'{audio_input_idx}:a',
+        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+        '-c:a', 'aac', '-b:a', '128k',
+        '-pix_fmt', 'yuv420p',
+        '-shortest',
+        output_file
+    ]
+
+    print(f"🔧 Running FFmpeg ({len(slides)} slides with images)...")
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        stdout, stderr = proc.communicate(timeout=240)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        print("❌ FFmpeg timed out")
+        return False
+
+    if proc.returncode != 0:
+        err = stderr.decode('utf-8', errors='replace')[-800:]
+        print(f"❌ FFmpeg image mode failed: {err}")
+        print("⚠️ Retrying with simple mode...")
+        return create_video_simple(slides, audio_file, output_file)
+
+    print("✅ Video created with images!")
+    return True
 
 
 def create_video_simple(slides, audio_file, output_file):
-    """Fallback: text-only video if image mode fails"""
     audio_duration = get_audio_duration(audio_file)
     total_slide_dur = sum(s['duration'] for s in slides)
     scale = audio_duration / total_slide_dur if total_slide_dur > 0 else 1.0
@@ -322,7 +357,7 @@ def create_video_simple(slides, audio_file, output_file):
     filters = []
     filters.append(
         "drawtext=text='THE AI DOLLAR':"
-        "x=(w-text_w)/2:y=80:fontsize=40:fontcolor=0xFFD700:"
+        "x=(w-text_w)/2:y=80:fontsize=38:fontcolor=0xFFD700:"
         "borderw=3:bordercolor=black"
     )
 
@@ -330,38 +365,25 @@ def create_video_simple(slides, audio_file, output_file):
     for slide in slides:
         dur = slide['duration'] * scale
         lines = slide['text'].split('\n')
-        if len(lines) == 1:
-            escaped = escape_ffmpeg_text(lines[0])
+        num_lines = len(lines)
+        start_y = f"(h/2)-{(num_lines * 35)}"
+
+        for li, line in enumerate(lines):
+            escaped = escape_ffmpeg_text(line)
+            y_pos = f"({start_y})+{li * 70}"
+            color = "white" if li == 0 else "0x00DDFF"
             filters.append(
                 f"drawtext=text='{escaped}':"
-                f"x=(w-text_w)/2:y=(h-text_h)/2:"
-                f"fontsize=58:fontcolor=white:"
+                f"x=(w-text_w)/2:y={y_pos}:"
+                f"fontsize=56:fontcolor={color}:"
                 f"borderw=4:bordercolor=black:"
                 f"enable='between(t,{t:.2f},{t+dur:.2f})'"
             )
-        else:
-            escaped1 = escape_ffmpeg_text(lines[0])
-            filters.append(
-                f"drawtext=text='{escaped1}':"
-                f"x=(w-text_w)/2:y=(h/2)-60:"
-                f"fontsize=58:fontcolor=white:"
-                f"borderw=4:bordercolor=black:"
-                f"enable='between(t,{t:.2f},{t+dur:.2f})'"
-            )
-            if len(lines) > 1:
-                escaped2 = escape_ffmpeg_text(lines[1])
-                filters.append(
-                    f"drawtext=text='{escaped2}':"
-                    f"x=(w-text_w)/2:y=(h/2)+20:"
-                    f"fontsize=58:fontcolor=0x00DDFF:"
-                    f"borderw=4:bordercolor=black:"
-                    f"enable='between(t,{t:.2f},{t+dur:.2f})'"
-                )
         t += dur
 
     filters.append(
         "drawtext=text='@theaidollar1741':"
-        "x=(w-text_w)/2:y=h-100:fontsize=30:fontcolor=0xFFD700:"
+        "x=(w-text_w)/2:y=h-100:fontsize=28:fontcolor=0xFFD700:"
         "borderw=2:bordercolor=black"
     )
 
@@ -381,7 +403,7 @@ def create_video_simple(slides, audio_file, output_file):
     print(f"🔧 Running FFmpeg (simple mode)...")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
-        stdout, stderr = proc.communicate(timeout=180)
+        stdout, stderr = proc.communicate(timeout=240)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -393,7 +415,7 @@ def create_video_simple(slides, audio_file, output_file):
         print(stderr.decode('utf-8', errors='replace')[-500:])
         return False
 
-    print("✅ FFmpeg done (simple mode)")
+    print("✅ Video created (simple mode)")
     return True
 
 
@@ -413,7 +435,6 @@ def generate_daily_video():
     try:
         print("🎤 Generating voiceover...")
         create_audio(topic['voiceover'], audio_file)
-        print("✅ Audio ready")
 
         images = []
         if PEXELS_API_KEY:
