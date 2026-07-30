@@ -34,11 +34,11 @@ CONTENT_TOPICS = [
             {"text": "What inflation\nactually does\nto your money", "duration": 3.5},
             {"text": "That $100 you saved\nlast year?", "duration": 3},
             {"text": "It now buys\nabout $93 worth\nof stuff", "duration": 3.5},
-            {"text": "Your money didn't\ndisappear", "duration": 2.5},
+            {"text": "Your money did not\ndisappear", "duration": 2.5},
             {"text": "Prices just\nwent up", "duration": 2.5},
             {"text": "This is why keeping\ncash under your\nmattress hurts you", "duration": 3.5},
             {"text": "Your savings need\nto grow faster\nthan inflation", "duration": 3.5},
-            {"text": "That's the\nwhole game", "duration": 2.5},
+            {"text": "Thats the\nwhole game", "duration": 2.5},
         ],
         "voiceover": "Let's talk about what inflation actually does to your money. That hundred dollars you saved last year? It now buys about ninety three dollars worth of stuff. Your money didn't disappear. Prices just went up. This is why keeping cash under your mattress actually hurts you over time. Your savings need to grow faster than inflation. That's the whole game of personal finance right there.",
         "keywords": ["Inflation", "Finance", "Money"],
@@ -73,13 +73,13 @@ CONTENT_TOPICS = [
         ],
         "slides": [
             {"text": "What your credit\nscore actually\nmeans", "duration": 3},
-            {"text": "It's a number\nbetween 300\nand 850", "duration": 3},
+            {"text": "A number\nbetween 300\nand 850", "duration": 3},
             {"text": "Banks use it to\ndecide if they\ntrust you", "duration": 3.5},
             {"text": "Above 740?\nYou get the\nbest rates", "duration": 3},
-            {"text": "Below 580?\nYou'll pay way\nmore in interest", "duration": 3.5},
+            {"text": "Below 580?\nYou pay way\nmore in interest", "duration": 3.5},
             {"text": "On a $300,000\nmortgage, bad\ncredit costs you\n$100,000 extra", "duration": 4},
-            {"text": "Pay on time\nKeep balances low\nDon't close\nold cards", "duration": 4},
-            {"text": "Three rules\nthat's it", "duration": 2.5},
+            {"text": "Pay on time\nKeep balances low\nDo not close\nold cards", "duration": 4},
+            {"text": "Three rules\nthats it", "duration": 2.5},
         ],
         "voiceover": "Your credit score. Most people don't really understand what it means. It's a number between three hundred and eight fifty. Banks use it to decide if they trust you with money. Above seven forty? You're getting the best interest rates available. Below five eighty? You're going to pay way more in interest. On a three hundred thousand dollar mortgage, bad credit can cost you over a hundred thousand dollars extra over the life of the loan. Here's how to keep it high. Pay on time. Keep your balances low. And don't close your old cards. Three rules. That's literally it.",
         "keywords": ["Credit Score", "Finance", "Banking"],
@@ -106,7 +106,7 @@ CONTENT_TOPICS = [
         "keywords": ["Budgeting", "50/30/20", "Personal Finance"],
     },
     {
-        "title": "Stocks vs Bonds - What's the Difference",
+        "title": "Stocks vs Bonds - The Real Difference",
         "search_queries": [
             "stock market chart cartoon", "wall street illustration", "investment graph cartoon",
             "business growth illustration", "financial newspaper cartoon", "bull bear market cartoon",
@@ -117,7 +117,7 @@ CONTENT_TOPICS = [
             {"text": "A stock means\nyou own a tiny\npiece of a company", "duration": 3.5},
             {"text": "If the company\ngrows, your\nmoney grows", "duration": 3},
             {"text": "If it tanks,\nso does your\ninvestment", "duration": 3},
-            {"text": "A bond means\nyou're lending\nmoney", "duration": 3},
+            {"text": "A bond means\nyou are lending\nmoney", "duration": 3},
             {"text": "To a government\nor company", "duration": 2.5},
             {"text": "They pay you\nback with interest", "duration": 3},
             {"text": "Lower risk\nlower reward", "duration": 2.5},
@@ -141,8 +141,8 @@ CONTENT_TOPICS = [
             {"text": "At 24%% interest", "duration": 2},
             {"text": "Now that $800\ncosts you $1,100", "duration": 3},
             {"text": "An emergency fund\nis 3 to 6 months\nof expenses", "duration": 3.5},
-            {"text": "In a savings\naccount you\ndon't touch", "duration": 3},
-            {"text": "It's not investing\nIt's insurance", "duration": 3},
+            {"text": "In a savings\naccount you\nnever touch", "duration": 3},
+            {"text": "Not investing\nIts insurance", "duration": 3},
         ],
         "voiceover": "Here's why you need an emergency fund. Imagine your car breaks down tomorrow. The repair costs eight hundred dollars. If you don't have an emergency fund, that goes on a credit card. At twenty four percent interest, that eight hundred dollar repair now costs you eleven hundred. An emergency fund is three to six months of your expenses, sitting in a savings account you don't touch. It's not investing. It's insurance. It's the difference between a bad week and a financial disaster.",
         "keywords": ["Emergency Fund", "Savings", "Finance"],
@@ -162,7 +162,7 @@ CONTENT_TOPICS = [
             {"text": "They cut jobs", "duration": 2},
             {"text": "People spend less", "duration": 2},
             {"text": "Which means\ncompanies make\neven less", "duration": 3},
-            {"text": "It's a cycle", "duration": 2},
+            {"text": "Its a cycle", "duration": 2},
             {"text": "But here's\nthe thing", "duration": 2},
             {"text": "Every single\nrecession in\nhistory ended", "duration": 3.5},
             {"text": "The economy\nalways recovered", "duration": 3},
@@ -265,7 +265,13 @@ def get_audio_duration(audio_path):
 
 
 def escape_ffmpeg_text(text):
-    return text.replace("'", "\\'").replace(":", "\\:").replace("$", "\\$").replace("%", "%%")
+    text = text.replace("'", "")
+    text = text.replace(":", "\\:")
+    text = text.replace("$", "\\$")
+    text = text.replace("%", "%%")
+    text = text.replace('"', "")
+    text = text.replace(";", "\\;")
+    return text
 
 
 def create_video_ffmpeg(slides, images, audio_file, output_file):
