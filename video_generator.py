@@ -309,12 +309,12 @@ def prep_images(images, slides, scale, work_dir):
 
     with open(concat_file, 'w') as f:
         for img_path, dur in prepped:
-            safe_path = img_path.replace('\\', '/')
-            f.write(f"file '{safe_path}'\n")
+            fname = os.path.basename(img_path)
+            f.write(f"file '{fname}'\n")
             f.write(f"duration {dur:.2f}\n")
         if prepped:
-            safe_path = prepped[-1][0].replace('\\', '/')
-            f.write(f"file '{safe_path}'\n")
+            fname = os.path.basename(prepped[-1][0])
+            f.write(f"file '{fname}'\n")
 
     return concat_file
 
