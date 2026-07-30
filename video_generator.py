@@ -26,9 +26,9 @@ CONTENT_TOPICS = [
     {
         "title": "What Inflation Actually Does to Your Money",
         "search_queries": [
-            "money illustration cartoon", "grocery store cartoon", "piggy bank illustration",
-            "dollar bill illustration", "price increase illustration", "savings illustration",
-            "money flying away cartoon", "inflation chart illustration",
+            "coins stacked", "grocery shopping", "piggy bank",
+            "wallet cash", "supermarket aisle", "savings money",
+            "dollar bills", "shopping cart",
         ],
         "slides": [
             {"text": "What inflation\nactually does\nto your money", "duration": 3.5},
@@ -40,36 +40,36 @@ CONTENT_TOPICS = [
             {"text": "Your savings need\nto grow faster\nthan inflation", "duration": 3.5},
             {"text": "Thats the\nwhole game", "duration": 2.5},
         ],
-        "voiceover": "Let's talk about what inflation actually does to your money. That hundred dollars you saved last year? It now buys about ninety three dollars worth of stuff. Your money didn't disappear. Prices just went up. This is why keeping cash under your mattress actually hurts you over time. Your savings need to grow faster than inflation. That's the whole game of personal finance right there.",
+        "voiceover": "Let me tell you something about inflation that nobody talks about. That hundred dollars you saved last year? Right now it only buys about ninety three dollars worth of stuff. Your money didn't disappear. Prices just went up around it. And this is exactly why keeping cash under your mattress is one of the worst things you can do. Your savings need to grow faster than inflation. That's the whole game. That's all personal finance comes down to.",
         "keywords": ["Inflation", "Finance", "Money"],
     },
     {
         "title": "Compound Interest Explained in 60 Seconds",
         "search_queries": [
-            "money tree illustration", "growth chart cartoon", "savings jar illustration",
-            "compound interest graph", "money growing plant", "investment cartoon",
-            "calculator illustration", "wealth building cartoon", "snowball rolling",
+            "plant growing", "stacked coins growth", "savings jar",
+            "money growth", "tree growing", "investment growth",
+            "calculator finance", "snowball rolling hill", "wealth building",
         ],
         "slides": [
             {"text": "Compound interest\nexplained in\n60 seconds", "duration": 3},
             {"text": "You put $1,000\nin an account", "duration": 3},
-            {"text": "It earns 5%\na year", "duration": 2.5},
-            {"text": "Year 1:\nyou have $1,050", "duration": 3},
-            {"text": "Year 2:\nyou earn 5%\non $1,050", "duration": 3},
+            {"text": "It earns 5 percent\na year", "duration": 2.5},
+            {"text": "Year 1\nyou have $1,050", "duration": 3},
+            {"text": "Year 2\nyou earn 5 percent\non $1,050", "duration": 3},
             {"text": "Not on $1,000", "duration": 2},
             {"text": "Your interest\nearns interest", "duration": 3},
             {"text": "In 30 years that\n$1,000 becomes\n$4,322", "duration": 3.5},
             {"text": "Without adding\na single dollar", "duration": 3},
         ],
-        "voiceover": "Compound interest, explained simply. You put one thousand dollars in an account. It earns five percent a year. After year one, you have one thousand and fifty dollars. In year two, you earn five percent on one thousand and fifty, not on the original thousand. Your interest earns interest. That's compounding. In thirty years, that one thousand dollars becomes four thousand three hundred and twenty two dollars. Without you adding a single dollar. Start early. Time is the cheat code.",
+        "voiceover": "Let me break down compound interest in sixty seconds flat. You put one thousand dollars in an account that earns five percent a year. After year one, you have one thousand and fifty. Now here's where it gets interesting. In year two, you earn five percent on one thousand and fifty. Not on the original thousand. Your interest starts earning its own interest. That's the magic of compounding. In thirty years, that one thousand turns into four thousand three hundred twenty two. Without you adding a single dollar. Start early. Time is the real cheat code.",
         "keywords": ["Compound Interest", "Investing", "Finance"],
     },
     {
         "title": "What Your Credit Score Actually Means",
         "search_queries": [
-            "credit card illustration", "credit score meter cartoon", "bank building cartoon",
-            "loan application illustration", "financial report cartoon", "approval stamp illustration",
-            "house mortgage cartoon", "credit rating illustration",
+            "credit card hand", "bank building", "loan document",
+            "house keys", "financial planning", "approved stamp",
+            "mortgage house", "person paying bills",
         ],
         "slides": [
             {"text": "What your credit\nscore actually\nmeans", "duration": 3},
@@ -77,40 +77,40 @@ CONTENT_TOPICS = [
             {"text": "Banks use it to\ndecide if they\ntrust you", "duration": 3.5},
             {"text": "Above 740?\nYou get the\nbest rates", "duration": 3},
             {"text": "Below 580?\nYou pay way\nmore in interest", "duration": 3.5},
-            {"text": "On a $300,000\nmortgage, bad\ncredit costs you\n$100,000 extra", "duration": 4},
+            {"text": "On a $300,000\nmortgage bad\ncredit costs you\n$100,000 extra", "duration": 4},
             {"text": "Pay on time\nKeep balances low\nDo not close\nold cards", "duration": 4},
             {"text": "Three rules\nthats it", "duration": 2.5},
         ],
-        "voiceover": "Your credit score. Most people don't really understand what it means. It's a number between three hundred and eight fifty. Banks use it to decide if they trust you with money. Above seven forty? You're getting the best interest rates available. Below five eighty? You're going to pay way more in interest. On a three hundred thousand dollar mortgage, bad credit can cost you over a hundred thousand dollars extra over the life of the loan. Here's how to keep it high. Pay on time. Keep your balances low. And don't close your old cards. Three rules. That's literally it.",
+        "voiceover": "Your credit score. I bet most of you don't actually know what this number means. It goes from three hundred to eight fifty. Banks look at it to decide whether they trust you with their money. Got above seven forty? You're getting the absolute best interest rates out there. Below five eighty? You're paying way more than everyone else. On a three hundred thousand dollar mortgage, bad credit can cost you over a hundred thousand extra. How to keep it high? Pay on time. Keep your balances low. Don't close your oldest cards. Three rules. That's literally all there is to it.",
         "keywords": ["Credit Score", "Finance", "Banking"],
     },
     {
         "title": "The 50/30/20 Budget Rule",
         "search_queries": [
-            "budget pie chart cartoon", "money planning illustration", "paycheck illustration",
-            "rent house cartoon", "shopping bag cartoon", "savings piggy bank cartoon",
-            "financial planning illustration", "budget calculator cartoon", "coins jar illustration",
+            "budget planning", "paycheck money", "rent apartment",
+            "grocery bag", "shopping bag", "piggy bank savings",
+            "financial planning desk", "calculator budget", "coins jar",
         ],
         "slides": [
             {"text": "The simplest\nbudget that\nactually works", "duration": 3},
             {"text": "Take your\npaycheck", "duration": 2},
-            {"text": "50%% goes to\nneeds", "duration": 2.5},
+            {"text": "50 percent goes\nto needs", "duration": 2.5},
             {"text": "Rent, food,\nutilities,\ntransportation", "duration": 3},
-            {"text": "30%% goes to\nwants", "duration": 2.5},
+            {"text": "30 percent goes\nto wants", "duration": 2.5},
             {"text": "Eating out,\nentertainment,\nshopping", "duration": 3},
-            {"text": "20%% goes to\nsavings", "duration": 2.5},
+            {"text": "20 percent goes\nto savings", "duration": 2.5},
             {"text": "Emergency fund\nfirst, then\ninvesting", "duration": 3},
             {"text": "Simple?\nYes\nEffective?\nExtremely", "duration": 3},
         ],
-        "voiceover": "Here's the simplest budget that actually works. Take your paycheck. Fifty percent goes to needs. That's rent, food, utilities, transportation. Thirty percent goes to wants. Eating out, entertainment, shopping. And twenty percent goes straight to savings. Build your emergency fund first, then start investing. Is it simple? Yes. Is it effective? Extremely. Most millionaires started with this exact formula.",
+        "voiceover": "I'm going to give you the simplest budget that actually works in real life. Take your paycheck. Fifty percent goes straight to needs. Rent, food, utilities, transportation. Thirty percent is for wants. Eating out, entertainment, a little shopping. And twenty percent goes directly into savings. Build your emergency fund first, then start investing what's left. Is it simple? Absolutely. Is it effective? Extremely. Most millionaires started with this exact formula. No fancy spreadsheets needed.",
         "keywords": ["Budgeting", "50/30/20", "Personal Finance"],
     },
     {
         "title": "Stocks vs Bonds - The Real Difference",
         "search_queries": [
-            "stock market chart cartoon", "wall street illustration", "investment graph cartoon",
-            "business growth illustration", "financial newspaper cartoon", "bull bear market cartoon",
-            "trading illustration", "portfolio cartoon", "stock exchange illustration",
+            "stock market screen", "wall street", "business chart",
+            "company building", "newspaper finance", "trading desk",
+            "investment portfolio", "growth chart", "stock exchange",
         ],
         "slides": [
             {"text": "Stocks vs Bonds\nthe real\ndifference", "duration": 3},
@@ -123,37 +123,37 @@ CONTENT_TOPICS = [
             {"text": "Lower risk\nlower reward", "duration": 2.5},
             {"text": "Young? More stocks\nOlder? More bonds", "duration": 3},
         ],
-        "voiceover": "Stocks versus bonds. Here's the real difference. When you buy a stock, you own a tiny piece of a company. If the company grows, your money grows with it. But if it tanks, so does your investment. A bond is completely different. You're lending money to a government or a company. They pay you back with interest over time. Lower risk, but lower reward. General rule? If you're young, lean more into stocks. You have time to ride out the ups and downs. As you get older, shift more into bonds for stability.",
+        "voiceover": "Stocks versus bonds. Let me clear this up once and for all. When you buy a stock, you own a tiny piece of a company. If that company grows, your money grows with it. But if it tanks, your investment goes down too. A bond is a completely different thing. You're basically lending money to a government or a company. They pay you back over time, with interest. Lower risk, but lower reward. Here's the general rule. If you're young, lean into stocks. You've got time to ride the ups and downs. As you get older, shift more into bonds for stability.",
         "keywords": ["Stocks", "Bonds", "Investing"],
     },
     {
         "title": "What an Emergency Fund Is and Why You Need One",
         "search_queries": [
-            "emergency cartoon", "car repair illustration", "hospital cartoon",
-            "umbrella rain cartoon", "safety net illustration", "broken car cartoon",
-            "money shield illustration", "piggy bank umbrella cartoon", "financial safety cartoon",
+            "car repair mechanic", "rainy day umbrella", "safety net",
+            "broken car road", "money jar", "piggy bank",
+            "hospital building", "wallet cash savings",
         ],
         "slides": [
             {"text": "Why you need an\nemergency fund", "duration": 3},
             {"text": "Your car breaks\ndown tomorrow", "duration": 2.5},
             {"text": "Repair costs\n$800", "duration": 2.5},
             {"text": "No emergency fund?\nThat goes on a\ncredit card", "duration": 3.5},
-            {"text": "At 24%% interest", "duration": 2},
+            {"text": "At 24 percent\ninterest", "duration": 2},
             {"text": "Now that $800\ncosts you $1,100", "duration": 3},
             {"text": "An emergency fund\nis 3 to 6 months\nof expenses", "duration": 3.5},
             {"text": "In a savings\naccount you\nnever touch", "duration": 3},
             {"text": "Not investing\nIts insurance", "duration": 3},
         ],
-        "voiceover": "Here's why you need an emergency fund. Imagine your car breaks down tomorrow. The repair costs eight hundred dollars. If you don't have an emergency fund, that goes on a credit card. At twenty four percent interest, that eight hundred dollar repair now costs you eleven hundred. An emergency fund is three to six months of your expenses, sitting in a savings account you don't touch. It's not investing. It's insurance. It's the difference between a bad week and a financial disaster.",
+        "voiceover": "Listen, here's why you need an emergency fund. Picture this. Your car breaks down tomorrow. Repair costs eight hundred dollars. Without an emergency fund, that eight hundred goes straight onto a credit card. At twenty four percent interest, that repair just became eleven hundred dollars. An emergency fund is three to six months of your expenses, sitting in a savings account you don't touch. It's not investing. It's insurance. It's the difference between a rough week and a full blown financial disaster.",
         "keywords": ["Emergency Fund", "Savings", "Finance"],
     },
     {
         "title": "What Is a Recession",
         "search_queries": [
-            "economic crisis illustration", "downward graph cartoon", "unemployment cartoon",
-            "closed shop illustration", "recession chart cartoon", "economy falling cartoon",
-            "financial crisis illustration", "stock crash cartoon", "business closed cartoon",
-            "recovery growth cartoon",
+            "empty office", "closed store", "unemployment line",
+            "stock chart down", "city skyline", "empty street",
+            "business meeting", "economic recovery", "growth chart up",
+            "people working",
         ],
         "slides": [
             {"text": "What is a\nrecession?", "duration": 2.5},
@@ -163,19 +163,19 @@ CONTENT_TOPICS = [
             {"text": "People spend less", "duration": 2},
             {"text": "Which means\ncompanies make\neven less", "duration": 3},
             {"text": "Its a cycle", "duration": 2},
-            {"text": "But here's\nthe thing", "duration": 2},
+            {"text": "But heres\nthe thing", "duration": 2},
             {"text": "Every single\nrecession in\nhistory ended", "duration": 3.5},
             {"text": "The economy\nalways recovered", "duration": 3},
         ],
-        "voiceover": "What is a recession? It's when the economy shrinks for six or more months in a row. Companies make less money, so they cut jobs. People have less income, so they spend less. Which means companies make even less. It's a downward cycle. But here's the thing most people forget. Every single recession in history has ended. The economy has always recovered. Always. The worst financial decision you can make during a recession is panic.",
+        "voiceover": "What is a recession? Let me explain it simply. It's when the economy shrinks for six or more months in a row. Companies start making less money, so they cut jobs. People have less income, so they spend less. Which means companies make even less. It's a downward cycle that feeds itself. But here's the thing that most people forget in the moment. Every single recession in history has ended. Every one. The economy has always recovered. The absolute worst financial decision you can make during a recession is to panic.",
         "keywords": ["Recession", "Economy", "Finance"],
     },
     {
         "title": "Assets vs Liabilities",
         "search_queries": [
-            "real estate cartoon", "luxury car illustration", "rental property cartoon",
-            "investment portfolio illustration", "house keys cartoon", "money in pocket cartoon",
-            "money out pocket cartoon", "wealthy person cartoon", "balance scale money cartoon",
+            "real estate house", "luxury car", "rental property",
+            "investment chart", "house keys hand", "wallet money",
+            "apartment building", "person saving money", "balance scale",
         ],
         "slides": [
             {"text": "Assets vs\nLiabilities", "duration": 2.5},
@@ -185,10 +185,10 @@ CONTENT_TOPICS = [
             {"text": "If you live in it\nit costs you\nmoney every month", "duration": 3.5},
             {"text": "Mortgage, taxes,\nmaintenance", "duration": 2.5},
             {"text": "If you rent it out\nand it makes\nmore than it costs", "duration": 3.5},
-            {"text": "Now it's\nan asset", "duration": 2.5},
+            {"text": "Now its\nan asset", "duration": 2.5},
             {"text": "Rich people buy\nassets first", "duration": 3},
         ],
-        "voiceover": "Assets versus liabilities. An asset puts money in your pocket. A liability takes money out. Simple. Your house? Well, it depends. If you live in it, it costs you money every month. Mortgage, taxes, maintenance. That's a liability. But if you rent it out, and it brings in more than it costs, now it's an asset. The difference between wealthy people and everyone else? Wealthy people buy assets first. They let those assets pay for their liabilities.",
+        "voiceover": "Assets versus liabilities. Let me make this crystal clear. An asset puts money into your pocket. A liability takes money out. That's it. Your house? Well, it depends. If you live in it, it costs you money every single month. Mortgage, taxes, maintenance. That's a liability. But if you rent it out, and it brings in more money than it costs you, now it's an asset. The difference between wealthy people and everyone else? Wealthy people buy assets first. They let those assets pay for their lifestyle.",
         "keywords": ["Assets", "Liabilities", "Wealth"],
     },
 ]
@@ -216,7 +216,7 @@ def fetch_pexels_images(queries, num_images, save_dir):
                 photos = data.get("photos", [])
                 if photos:
                     photo = photos[i % len(photos)]
-                    img_url = photo["src"]["large"]
+                    img_url = photo["src"].get("large2x", photo["src"]["large"])
                     img_resp = requests.get(img_url, timeout=15)
                     if img_resp.status_code == 200:
                         with open(img_path, 'wb') as f:
@@ -283,47 +283,65 @@ def escape_ffmpeg_text(text):
 
 
 def prep_slides(images, slides, scale, work_dir):
-    """Pre-render each slide as a JPEG with text burned in, then create concat list"""
+    """Pre-render each slide as a JPEG with text burned in via Pillow (faster, better fonts)"""
     os.makedirs(work_dir, exist_ok=True)
     concat_file = os.path.join(work_dir, "concat.txt")
 
+    from PIL import Image, ImageDraw, ImageFont
+
+    def get_font(size):
+        for name in ["DejaVuSans-Bold.ttf", "arial.ttf", "FreeSans.ttf", "LiberationSans-Bold.ttf"]:
+            try:
+                return ImageFont.truetype(name, size)
+            except Exception:
+                continue
+        try:
+            import matplotlib
+            font_path = os.path.join(os.path.dirname(matplotlib.__file__), "mpl-data", "fonts", "ttf", "DejaVuSans-Bold.ttf")
+            return ImageFont.truetype(font_path, size)
+        except Exception:
+            pass
+        return ImageFont.load_default()
+
+    title_font = get_font(64)
+    body_font = get_font(58)
+
     for idx, slide in enumerate(slides):
-        dur = slide['duration'] * scale
-        img = images[idx] if idx < len(images) else None
+        img_src = images[idx] if idx < len(images) else None
         out = os.path.join(work_dir, f"s_{idx}.jpg")
 
-        lines = slide['text'].split('\n')
-        num_lines = len(lines)
-
-        text_vf = []
-        text_vf.append("drawbox=x=0:y=0:w=1080:h=1920:color=black@0.5:t=fill")
-
-        start_y = (1920 // 2) - (num_lines * 40)
-        for li, line in enumerate(lines):
-            escaped = escape_ffmpeg_text(line)
-            y = start_y + li * 80
-            color = "white" if li == 0 else "0x00DDFF"
-            text_vf.append(
-                f"drawtext=text='{escaped}':x=(w-text_w)/2:y={y}:fontsize=62:fontcolor={color}:borderw=4:bordercolor=black"
-            )
-
-        vf = ",".join(text_vf)
-
-        if img and os.path.exists(img):
-            cmd = [
-                FFMPEG, '-y', '-i', img,
-                '-vf', f'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,{vf}',
-                '-frames:v', '1', '-q:v', '2', out
-            ]
+        if img_src and os.path.exists(img_src):
+            bg = Image.open(img_src).convert("RGB")
+            bg = bg.resize((1080, 1920), Image.LANCZOS)
         else:
-            cmd = [
-                FFMPEG, '-y', '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920',
-                '-vf', vf,
-                '-frames:v', '1', '-q:v', '2', out
-            ]
+            bg = Image.new("RGB", (1080, 1920), (10, 10, 46))
 
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        proc.communicate(timeout=15)
+        overlay = Image.new("RGBA", (1080, 1920), (0, 0, 0, 140))
+        bg = bg.convert("RGBA")
+        bg = Image.alpha_composite(bg, overlay).convert("RGB")
+
+        draw = ImageDraw.Draw(bg)
+        lines = slide['text'].split('\n')
+        line_h = 85
+        total_h = len(lines) * line_h
+        start_y = (1920 - total_h) // 2
+
+        for li, line in enumerate(lines):
+            font = title_font if li == 0 else body_font
+            color = (255, 255, 255) if li == 0 else (0, 221, 255)
+            bbox = draw.textbbox((0, 0), line, font=font)
+            tw = bbox[2] - bbox[0]
+            x = (1080 - tw) // 2
+            y = start_y + li * line_h
+
+            for ox in [-3, 0, 3]:
+                for oy in [-3, 0, 3]:
+                    if ox or oy:
+                        draw.text((x + ox, y + oy), line, font=font, fill=(0, 0, 0))
+            draw.text((x, y), line, font=font, fill=color)
+
+        bg.save(out, "JPEG", quality=90)
+        print(f"  slide {idx+1}/{len(slides)} ready")
 
     with open(concat_file, 'w') as f:
         for idx, slide in enumerate(slides):
@@ -441,10 +459,24 @@ def create_video_simple(slides, audio_file, output_file):
     return True
 
 
+def _get_next_topic_index():
+    counter_file = "topic_counter.txt"
+    try:
+        if os.path.exists(counter_file):
+            with open(counter_file) as f:
+                idx = int(f.read().strip())
+        else:
+            idx = 0
+    except Exception:
+        idx = 0
+    next_idx = (idx + 1) % len(CONTENT_TOPICS)
+    with open(counter_file, "w") as f:
+        f.write(str(next_idx))
+    return idx
+
+
 def generate_daily_video():
-    day_number = int(datetime.now().strftime("%j"))
-    hour = int(datetime.now().strftime("%H"))
-    index = (day_number * 3 + hour) % len(CONTENT_TOPICS)
+    index = _get_next_topic_index()
     topic = CONTENT_TOPICS[index]
 
     os.makedirs(CONFIG['output_dir'], exist_ok=True)

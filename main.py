@@ -67,8 +67,8 @@ def upload_to_youtube(video_path, title, description):
         body = {
             "snippet": {
                 "title": title[:100],
-                "description": f"{description}\n\n#AI #Money #Finance #SideHustle #TheAIDollar",
-                "tags": ["AI", "Money", "Finance", "SideHustle", "ChatGPT", "PassiveIncome"],
+                "description": f"{description}\n\nLearn finance in 60 seconds. Subscribe for daily tips!\n\n#Finance #Money #PersonalFinance #Investing #TheAIDollar",
+                "tags": ["Finance", "Personal Finance", "Money", "Investing", "Credit Score", "Budgeting", "Stocks", "TheAIDollar"],
                 "categoryId": "22",
             },
             "status": {
@@ -122,10 +122,13 @@ def post_video():
         print(f"\n3️⃣  Posting to Instagram...")
         caption = (
             f"{title}\n\n"
-            f"Subscribe to The AI Dollar for daily finance + AI tips!\n\n"
-            f"#AI #Money #Finance #SideHustle #ChatGPT #PassiveIncome #TheAIDollar"
+            f"Follow @theaidollar1741 for daily finance education!\n\n"
+            f"#Finance #Money #PersonalFinance #Investing #FinanceTips #TheAIDollar"
         )
         instagram_success = post_to_instagram(video_path, caption)
+
+        with open("last_post_time.txt", "w") as f:
+            f.write(str(time.time()))
 
         print(f"\n{'='*50}")
         print(f"✅ POSTING COMPLETE")
@@ -157,8 +160,21 @@ def main():
 
     schedule_jobs()
 
-    print("\n⏱️  Posting first video now...\n")
-    post_video()
+    last_post_file = "last_post_time.txt"
+    should_post = True
+    if os.path.exists(last_post_file):
+        try:
+            with open(last_post_file) as f:
+                last = float(f.read().strip())
+            if time.time() - last < 7200:
+                print("⏭️  Posted less than 2 hours ago — waiting for next schedule")
+                should_post = False
+        except Exception:
+            pass
+
+    if should_post:
+        print("\n⏱️  Posting first video now...\n")
+        post_video()
 
     print("\n⏰ Scheduler running (4 PM, 8 PM, 1 AM KSA)...")
     try:
