@@ -67,8 +67,8 @@ _patch_instagrapi_file()
 
 def post_to_instagram(video_path, caption):
     """Post video to Instagram using instagrapi"""
-    username = os.getenv("INSTAGRAM_USERNAME", "")
-    password = os.getenv("INSTAGRAM_PASSWORD", "")
+    username = os.getenv("INSTAGRAM_USERNAME", "") or os.getenv("INSTAGRAMUSERNAME", "")
+    password = os.getenv("INSTAGRAM_PASSWORD", "") or os.getenv("INSTAGRAMPASSWORD", "")
 
     if not username or not password or password == "your_password_here":
         print("⚠️  Instagram credentials not set — skipping")
@@ -103,7 +103,10 @@ def post_to_instagram(video_path, caption):
             print("✅ Instagram: logged in")
 
         print("📤 Uploading reel to Instagram...")
-        media = cl.video_upload(video_path, caption=caption)
+        try:
+            media = cl.clip_upload(video_path, caption=caption)
+        except Exception:
+            media = cl.video_upload(video_path, caption=caption)
         print(f"✅ Instagram posted! ID: {media.pk}")
         return True
 
