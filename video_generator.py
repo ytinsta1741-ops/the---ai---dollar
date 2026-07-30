@@ -216,7 +216,7 @@ def fetch_pexels_images(queries, num_images, save_dir):
                 photos = data.get("photos", [])
                 if photos:
                     photo = photos[i % len(photos)]
-                    img_url = photo["src"]["medium"]
+                    img_url = photo["src"]["large"]
                     img_resp = requests.get(img_url, timeout=15)
                     if img_resp.status_code == 200:
                         with open(img_path, 'wb') as f:
@@ -238,16 +238,24 @@ def fetch_pexels_images(queries, num_images, save_dir):
 def create_audio(text, output_path):
     try:
         import edge_tts
-        voice = "en-US-GuyNeural"
-        communicate = edge_tts.Communicate(text, voice, rate="-5%", pitch="-2Hz")
-        asyncio.run(communicate.save(output_path))
-        print(f"✅ Audio ready (voice: {voice})")
-        return True
+        for voice in ["en-US-GuyNeural", "en-US-ChristopherNeural", "en-US-AndrewNeural"]:
+            try:
+                communicate = edge_tts.Communicate(text, voice, rate="-5%", pitch="-2Hz")
+                loop = asyncio.new_event_loop()
+                loop.run_until_complete(communicate.save(output_path))
+                loop.close()
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+                    print(f"✅ Audio ready (voice: {voice})")
+                    return True
+            except Exception:
+                continue
+        raise Exception("All voices blocked")
     except Exception as e:
         print(f"⚠️ edge-tts failed ({e}), using gTTS")
         from gtts import gTTS
         tts = gTTS(text=text, lang='en', slow=False)
         tts.save(output_path)
+        print("✅ Audio ready (gTTS)")
         return True
 
 
@@ -288,37 +296,30 @@ def prep_slides(images, slides, scale, work_dir):
         num_lines = len(lines)
 
         text_vf = []
-        text_vf.append("drawbox=x=0:y=0:w=720:h=1280:color=black@0.45:t=fill")
-        text_vf.append(
-            "drawtext=text='THE AI DOLLAR':x=(w-text_w)/2:y=60:fontsize=28:fontcolor=0xFFD700:borderw=2:bordercolor=black"
-        )
+        text_vf.append("drawbox=x=0:y=0:w=1080:h=1920:color=black@0.5:t=fill")
 
-        start_y = (1280 // 2) - (num_lines * 28)
+        start_y = (1920 // 2) - (num_lines * 40)
         for li, line in enumerate(lines):
             escaped = escape_ffmpeg_text(line)
-            y = start_y + li * 56
+            y = start_y + li * 80
             color = "white" if li == 0 else "0x00DDFF"
             text_vf.append(
-                f"drawtext=text='{escaped}':x=(w-text_w)/2:y={y}:fontsize=40:fontcolor={color}:borderw=3:bordercolor=black"
+                f"drawtext=text='{escaped}':x=(w-text_w)/2:y={y}:fontsize=62:fontcolor={color}:borderw=4:bordercolor=black"
             )
-
-        text_vf.append(
-            "drawtext=text='@theaidollar1741':x=(w-text_w)/2:y=h-80:fontsize=22:fontcolor=0xFFD700:borderw=2:bordercolor=black"
-        )
 
         vf = ",".join(text_vf)
 
         if img and os.path.exists(img):
             cmd = [
                 FFMPEG, '-y', '-i', img,
-                '-vf', f'scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,{vf}',
-                '-frames:v', '1', '-q:v', '4', out
+                '-vf', f'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,{vf}',
+                '-frames:v', '1', '-q:v', '2', out
             ]
         else:
             cmd = [
-                FFMPEG, '-y', '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=720x1280',
+                FFMPEG, '-y', '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920',
                 '-vf', vf,
-                '-frames:v', '1', '-q:v', '4', out
+                '-frames:v', '1', '-q:v', '2', out
             ]
 
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -387,42 +388,31 @@ def create_video_simple(slides, audio_file, output_file):
     scale = audio_duration / total_slide_dur if total_slide_dur > 0 else 1.0
 
     filters = []
-    filters.append(
-        "drawtext=text='THE AI DOLLAR':"
-        "x=(w-text_w)/2:y=80:fontsize=30:fontcolor=0xFFD700:"
-        "borderw=3:bordercolor=black"
-    )
 
     t = 0
     for slide in slides:
         dur = slide['duration'] * scale
         lines = slide['text'].split('\n')
         num_lines = len(lines)
-        start_y = f"(h/2)-{(num_lines * 30)}"
+        start_y = f"(h/2)-{(num_lines * 40)}"
 
         for li, line in enumerate(lines):
             escaped = escape_ffmpeg_text(line)
-            y_pos = f"({start_y})+{li * 58}"
+            y_pos = f"({start_y})+{li * 80}"
             color = "white" if li == 0 else "0x00DDFF"
             filters.append(
                 f"drawtext=text='{escaped}':"
                 f"x=(w-text_w)/2:y={y_pos}:"
-                f"fontsize=42:fontcolor={color}:"
+                f"fontsize=62:fontcolor={color}:"
                 f"borderw=4:bordercolor=black:"
                 f"enable='between(t,{t:.2f},{t+dur:.2f})'"
             )
         t += dur
 
-    filters.append(
-        "drawtext=text='@theaidollar1741':"
-        "x=(w-text_w)/2:y=h-100:fontsize=22:fontcolor=0xFFD700:"
-        "borderw=2:bordercolor=black"
-    )
-
     vf = ",".join(filters)
     cmd = [
         FFMPEG, '-y',
-        '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=720x1280:rate=30',
+        '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=24',
         '-i', audio_file,
         '-vf', vf,
         '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
