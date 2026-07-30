@@ -291,7 +291,7 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         if img and os.path.exists(img):
             input_args.extend(['-i', img])
         else:
-            input_args.extend(['-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=30:d=0.1'])
+            input_args.extend(['-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=1080x1920:rate=24:d=0.1'])
 
     num_inputs = len(images)
     segments = []
@@ -299,27 +299,17 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
     for idx, slide in enumerate(slides):
         dur = slide['duration'] * scale
         inp_idx = idx if idx < num_inputs else idx % num_inputs
-        num_frames = max(int(dur * 30), 30)
 
         seg_label = f"seg{idx}"
-        zoom_label = f"zoom{idx}"
         dark_label = f"dark{idx}"
 
-        zoom_dir = idx % 3
-        if zoom_dir == 0:
-            zoom_expr = f"z='min(zoom+0.0003,1.15)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-        elif zoom_dir == 1:
-            zoom_expr = f"z='1.15-0.0003*on':x='iw/4':y='ih/2-(ih/zoom/2)'"
-        else:
-            zoom_expr = f"z='min(zoom+0.0002,1.12)':x='iw/3+on*0.3':y='ih/2-(ih/zoom/2)'"
-
         filter_parts.append(
-            f"[{inp_idx}:v]scale=2160:3840:force_original_aspect_ratio=increase,"
-            f"crop=2160:3840,zoompan={zoom_expr}:d={num_frames}:s=1080x1920:fps=30,"
-            f"setpts=PTS-STARTPTS[{zoom_label}]"
+            f"[{inp_idx}:v]scale=1080:1920:force_original_aspect_ratio=increase,"
+            f"crop=1080:1920,setsar=1,loop=loop={int(dur*24)}:size=1:start=0,"
+            f"fps=24,trim=duration={dur:.2f},setpts=PTS-STARTPTS[{seg_label}]"
         )
         filter_parts.append(
-            f"[{zoom_label}]drawbox=x=0:y=0:w=1080:h=1920:color=black@0.45:t=fill[{dark_label}]"
+            f"[{seg_label}]drawbox=x=0:y=0:w=1080:h=1920:color=black@0.45:t=fill[{dark_label}]"
         )
         segments.append(f"[{dark_label}]")
 
@@ -369,17 +359,17 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         '-i', audio_file,
         '-filter_complex', full_filter,
         '-map', '[outv]', '-map', f'{audio_input_idx}:a',
-        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
         '-c:a', 'aac', '-b:a', '128k',
         '-pix_fmt', 'yuv420p',
         '-shortest',
         output_file
     ]
 
-    print(f"🔧 Running FFmpeg ({len(slides)} animated slides)...")
+    print(f"🔧 Running FFmpeg ({len(slides)} slides with images)...")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
-        stdout, stderr = proc.communicate(timeout=300)
+        stdout, stderr = proc.communicate(timeout=120)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
@@ -388,7 +378,7 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
 
     if proc.returncode != 0:
         err = stderr.decode('utf-8', errors='replace')[-800:]
-        print(f"❌ FFmpeg animated mode failed: {err[-300:]}")
+        print(f"❌ FFmpeg image mode failed: {err[-300:]}")
         print("⚠️ Falling back to simple mode...")
         return create_video_simple(slides, audio_file, output_file)
 
