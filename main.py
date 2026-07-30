@@ -66,9 +66,9 @@ def upload_to_youtube(video_path, title, description):
 
         body = {
             "snippet": {
-                "title": title[:100],
-                "description": f"{description}\n\nLearn finance in 60 seconds. Subscribe for daily tips!\n\n#Finance #Money #PersonalFinance #Investing #TheAIDollar",
-                "tags": ["Finance", "Personal Finance", "Money", "Investing", "Credit Score", "Budgeting", "Stocks", "TheAIDollar"],
+                "title": title[:100] + " #Shorts",
+                "description": f"{description}\n\nLearn finance in 60 seconds. New video every few hours!\n\nSubscribe to The AI Dollar for daily finance education.\n\n#Finance #Money #PersonalFinance #Investing #Shorts #FinanceTips #MoneyTips #WealthBuilding #FinancialLiteracy #MoneyManagement #StockMarket #Budgeting #DebtFree #PassiveIncome #TheAIDollar",
+                "tags": ["Finance", "Personal Finance", "Money Tips", "Investing For Beginners", "Financial Literacy", "Money Management", "Stock Market", "Budgeting Tips", "Wealth Building", "Passive Income", "Credit Score", "Debt Free", "Savings Tips", "Financial Education", "Money Advice", "TheAIDollar", "Shorts"],
                 "categoryId": "22",
             },
             "status": {
@@ -139,10 +139,13 @@ def post_video():
 
 
 def schedule_jobs():
-    schedule.every().day.at("16:00").do(post_video)  # 4 PM KSA
-    schedule.every().day.at("20:00").do(post_video)  # 8 PM KSA
-    schedule.every().day.at("01:00").do(post_video)  # 1 AM KSA
-    print("✅ Jobs scheduled: 4 PM | 8 PM | 1 AM KSA")
+    schedule.every().day.at("10:00").do(post_video)  # 10 AM KSA = 3 AM EST (UK morning)
+    schedule.every().day.at("15:00").do(post_video)  # 3 PM KSA = 8 AM EST (US morning)
+    schedule.every().day.at("20:00").do(post_video)  # 8 PM KSA = 1 PM EST (US lunch)
+    schedule.every().day.at("23:00").do(post_video)  # 11 PM KSA = 4 PM EST (US after work)
+    schedule.every().day.at("02:00").do(post_video)  # 2 AM KSA = 7 PM EST (US PRIME TIME)
+    schedule.every().day.at("05:00").do(post_video)  # 5 AM KSA = 10 PM EST (US late night)
+    print("✅ Jobs scheduled: 10AM | 3PM | 8PM | 11PM | 2AM | 5AM KSA (optimized for US peak)")
 
 
 def main():
@@ -162,8 +165,8 @@ def main():
         try:
             with open(last_post_file) as f:
                 last = float(f.read().strip())
-            if time.time() - last < 7200:
-                print("⏭️  Posted less than 2 hours ago — waiting for next schedule")
+            if time.time() - last < 3600:
+                print("⏭️  Posted less than 1 hour ago — waiting for next schedule")
                 should_post = False
         except Exception:
             pass
