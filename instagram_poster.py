@@ -28,9 +28,9 @@ def _patch_pydantic_for_instagrapi():
                 if self.default is None:
                     self.required = False
         pydantic.fields.ModelField._set_default_and_type = _safe_set
-        print("✅ Patched pydantic for instagrapi compatibility")
+        print("[OK] Patched pydantic for instagrapi compatibility")
     except Exception as e:
-        print(f"⚠️ pydantic patch warning: {e}")
+        print(f"[WARN] pydantic patch warning: {e}")
 
 
 def _patch_instagrapi_file():
@@ -56,11 +56,11 @@ def _patch_instagrapi_file():
         if patched != content:
             with open(types_path, 'w', encoding='utf-8') as f:
                 f.write(patched)
-            print("✅ Patched instagrapi types.py (check_fields=False)")
+            print("[OK] Patched instagrapi types.py (check_fields=False)")
         else:
-            print("⚠️ instagrapi patch: no changes made")
+            print("[WARN] instagrapi patch: no changes made")
     except Exception as e:
-        print(f"⚠️ instagrapi patch warning: {e}")
+        print(f"[WARN] instagrapi patch warning: {e}")
 
 
 _patch_pydantic_for_instagrapi()
@@ -79,7 +79,7 @@ def _load_session_from_env():
         tmp.close()
         return tmp.name
     except Exception as e:
-        print(f"⚠️ Failed to decode INSTAGRAM_SESSION: {e}")
+        print(f"[WARN] Failed to decode INSTAGRAM_SESSION: {e}")
         return None
 
 
@@ -89,11 +89,11 @@ def post_to_instagram(video_path, caption):
     password = os.getenv("INSTAGRAM_PASSWORD", "") or os.getenv("INSTAGRAMPASSWORD", "")
 
     if not username or not password or password == "your_password_here":
-        print("⚠️  Instagram credentials not set — skipping")
+        print("[WARN] Instagram credentials not set -- skipping")
         return False
 
     if not video_path or not os.path.exists(video_path):
-        print(f"❌ Video file not found: {video_path}")
+        print(f"[ERR] Video file not found: {video_path}")
         return False
 
     try:
@@ -110,9 +110,9 @@ def post_to_instagram(video_path, caption):
                 cl.load_settings(session_file)
                 cl.login(username, password)
                 logged_in = True
-                print("✅ Instagram: resumed session from env var")
+                print("[OK] Instagram: resumed session from env var")
             except Exception as e:
-                print(f"⚠️ Session from env failed ({e}), trying fresh login...")
+                print(f"[WARN] Session from env failed ({e}), trying fresh login...")
                 cl = Client()
                 cl.delay_range = [1, 3]
             finally:
@@ -126,7 +126,7 @@ def post_to_instagram(video_path, caption):
                 cl.load_settings("instagram_session.json")
                 cl.login(username, password)
                 logged_in = True
-                print("✅ Instagram: resumed session from file")
+                print("[OK] Instagram: resumed session from file")
             except Exception:
                 cl = Client()
                 cl.delay_range = [1, 3]
@@ -134,15 +134,15 @@ def post_to_instagram(video_path, caption):
         if not logged_in:
             cl.login(username, password)
             cl.dump_settings("instagram_session.json")
-            print("✅ Instagram: logged in fresh")
+            print("[OK] Instagram: logged in fresh")
 
-        print("📤 Uploading reel to Instagram...")
+        print("[UPLOAD] Uploading reel to Instagram...")
         try:
             media = cl.clip_upload(video_path, caption=caption)
         except Exception as e:
-            print(f"⚠️ clip_upload failed ({e}), trying video_upload...")
+            print(f"[WARN] clip_upload failed ({e}), trying video_upload...")
             media = cl.video_upload(video_path, caption=caption)
-        print(f"✅ Instagram posted! ID: {media.pk}")
+        print(f"[OK] Instagram posted! ID: {media.pk}")
 
         try:
             cl.dump_settings("instagram_session.json")
@@ -152,7 +152,7 @@ def post_to_instagram(video_path, caption):
         return True
 
     except Exception as e:
-        print(f"❌ Instagram error: {e}")
+        print(f"[ERR] Instagram error: {e}")
         import traceback
         traceback.print_exc()
         return False

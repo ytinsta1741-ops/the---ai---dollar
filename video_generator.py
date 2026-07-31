@@ -17,10 +17,10 @@ load_dotenv()
 try:
     import imageio_ffmpeg
     FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
-    print(f"✅ FFmpeg ready: {FFMPEG}")
+    print(f"[OK] FFmpeg ready: {FFMPEG}")
 except Exception as e:
     FFMPEG = "ffmpeg"
-    print(f"⚠️ Using system ffmpeg: {e}")
+    print(f"[WARN] Using system ffmpeg: {e}")
 
 CONFIG = {"output_dir": "./videos"}
 
@@ -599,28 +599,27 @@ def fetch_pexels_images(queries, num_images, save_dir):
                         with open(img_path, 'wb') as f:
                             f.write(img_resp.content)
                         images.append(img_path)
-                        print(f"  📸 Image {i+1}: {query}")
+                        print(f"  [IMG] Image {i+1}: {query}")
                         continue
 
-            print(f"  ⚠️ Pexels {resp.status_code}: {resp.text[:150]}")
+            print(f"  [WARN] Pexels {resp.status_code}: {resp.text[:150]}")
             images.append(None)
 
         except Exception as e:
-            print(f"  ⚠️ Image error: {e}")
+            print(f"  [WARN] Image error: {e}")
             images.append(None)
 
     return images
 
 
 def create_audio(text, output_path):
-    # Try edge-tts first — DavisNeural is the deepest free male voice
     try:
         import edge_tts
         voices = [
-            ("en-US-DavisNeural", "+10%", "-4Hz"),
-            ("en-US-GuyNeural", "+10%", "-3Hz"),
-            ("en-US-ChristopherNeural", "+10%", "-2Hz"),
-            ("en-GB-RyanNeural", "+10%", "-3Hz"),
+            ("en-US-DavisNeural", "+30%", "-6Hz"),
+            ("en-US-GuyNeural", "+30%", "-5Hz"),
+            ("en-US-ChristopherNeural", "+30%", "-4Hz"),
+            ("en-GB-RyanNeural", "+30%", "-5Hz"),
         ]
         for voice, rate, pitch in voices:
             try:
@@ -629,15 +628,14 @@ def create_audio(text, output_path):
                 loop.run_until_complete(communicate.save(output_path))
                 loop.close()
                 if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-                    print(f"✅ Audio ready (deep voice: {voice})")
+                    print(f"[OK] Audio ready (deep voice: {voice})")
                     return True
             except Exception:
                 continue
         raise Exception("All edge-tts voices failed")
     except Exception as e:
-        print(f"⚠️ edge-tts failed ({e}), trying piper-tts...")
+        print(f"[WARN] edge-tts failed ({e}), trying piper-tts...")
 
-    # Piper TTS fallback — offline, works on Render
     try:
         import wave
         from piper import PiperVoice
@@ -651,18 +649,31 @@ def create_audio(text, output_path):
             subprocess.run(cmd, capture_output=True, timeout=30)
             os.remove(wav_path)
             if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-                print("✅ Audio ready (Piper TTS)")
+                print("[OK] Audio ready (Piper TTS)")
                 return True
         raise Exception("No piper model found")
     except Exception as e2:
-        print(f"⚠️ piper-tts failed ({e2}), using gTTS")
+        print(f"[WARN] piper-tts failed ({e2}), using gTTS")
 
-    # Final fallback
     from gtts import gTTS
     tts = gTTS(text=text, lang='en', slow=False)
     tts.save(output_path)
-    print("✅ Audio ready (gTTS fallback)")
+    print("[OK] Audio ready (gTTS fallback)")
     return True
+
+
+def generate_bg_music(output_path, duration):
+    """Generate subtle ambient background music using FFmpeg synthesis"""
+    cmd = [
+        FFMPEG, '-y',
+        '-f', 'lavfi', '-i',
+        f'anoisesrc=d={duration}:c=pink:r=44100:a=0.015',
+        '-af', 'lowpass=f=300,highpass=f=80,volume=0.4',
+        '-c:a', 'aac', '-b:a', '64k',
+        output_path
+    ]
+    proc = subprocess.run(cmd, capture_output=True, timeout=30)
+    return proc.returncode == 0 and os.path.exists(output_path)
 
 
 def get_audio_duration(audio_path):
@@ -678,20 +689,9 @@ def get_audio_duration(audio_path):
     return 25
 
 
-def escape_ffmpeg_text(text):
-    text = text.replace("'", "")
-    text = text.replace(":", "\\:")
-    text = text.replace("$", "\\$")
-    text = text.replace("%", "%%")
-    text = text.replace('"', "")
-    text = text.replace(";", "\\;")
-    return text
-
-
 def prep_slides(images, slides, scale, work_dir):
-    """Pre-render each slide as a JPEG with text burned in via Pillow (faster, better fonts)"""
+    """Pre-render each slide as a JPEG with text burned in via Pillow at 120% size for zoom"""
     os.makedirs(work_dir, exist_ok=True)
-    concat_file = os.path.join(work_dir, "concat.txt")
 
     from PIL import Image, ImageDraw, ImageFont
 
@@ -713,10 +713,13 @@ def prep_slides(images, slides, scale, work_dir):
                 continue
         return ImageFont.load_default()
 
-    font_big = get_font(58)
-    font_med = get_font(50)
+    W, H = 864, 1536
+    OUT_W, OUT_H = 720, 1280
 
-    W, H = 720, 1280
+    font_big = get_font(int(58 * W / OUT_W))
+    font_med = get_font(int(50 * W / OUT_W))
+
+    durations = []
 
     for idx, slide in enumerate(slides):
         img_src = images[idx] if idx < len(images) else None
@@ -747,9 +750,9 @@ def prep_slides(images, slides, scale, work_dir):
 
         draw = ImageDraw.Draw(bg)
         lines = slide['text'].upper().split('\n')
-        line_h = 80
+        line_h = int(80 * H / OUT_H)
         total_h = len(lines) * line_h
-        start_y = H - total_h - 120
+        start_y = H - total_h - int(120 * H / OUT_H)
 
         for li, line in enumerate(lines):
             font = font_big if li == 0 else font_med
@@ -758,30 +761,23 @@ def prep_slides(images, slides, scale, work_dir):
             x = (W - tw) // 2
             y = start_y + li * line_h
 
-            for ox in range(-4, 5):
-                for oy in range(-4, 5):
+            for ox in range(-5, 6):
+                for oy in range(-5, 6):
                     if abs(ox) + abs(oy) > 0:
                         draw.text((x + ox, y + oy), line, font=font, fill=(0, 0, 0))
 
-            if li == 0:
-                color = (255, 255, 255)
-            else:
-                color = (255, 255, 50)
+            color = (255, 255, 255) if li == 0 else (255, 255, 50)
             draw.text((x, y), line, font=font, fill=color)
 
-        bg.save(out, "JPEG", quality=90)
+        bg.save(out, "JPEG", quality=92)
         del draw, bg
         gc.collect()
+
+        dur = slide['duration'] * scale
+        durations.append(dur)
         print(f"  slide {idx+1}/{len(slides)} ready")
 
-    with open(concat_file, 'w') as f:
-        for idx, slide in enumerate(slides):
-            dur = slide['duration'] * scale
-            f.write(f"file 's_{idx}.jpg'\n")
-            f.write(f"duration {dur:.2f}\n")
-        f.write(f"file 's_{len(slides)-1}.jpg'\n")
-
-    return concat_file
+    return durations
 
 
 def create_video_ffmpeg(slides, images, audio_file, output_file):
@@ -794,40 +790,143 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         return create_video_simple(slides, audio_file, output_file)
 
     work_dir = output_file + "_work"
-    print("🖼️ Preparing slides with text...")
-    concat_file = prep_slides(images, slides, scale, work_dir)
+    print("[BUILD] Preparing slides with text + zoom...")
+    durations = prep_slides(images, slides, scale, work_dir)
 
-    cmd = [
-        FFMPEG, '-y',
-        '-f', 'concat', '-safe', '0', '-i', concat_file,
-        '-i', audio_file,
-        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
-        '-c:a', 'aac', '-b:a', '128k',
-        '-pix_fmt', 'yuv420p',
-        '-shortest',
-        '-vsync', 'vfr',
-        output_file
-    ]
+    FPS = 20
+    FADE_DUR = 0.4
+    n = len(slides)
 
-    print(f"🔧 Running FFmpeg (concat {len(slides)} slides)...")
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    try:
-        stdout, stderr = proc.communicate(timeout=60)
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.communicate()
-        print("❌ FFmpeg timed out")
-        return create_video_simple(slides, audio_file, output_file)
+    print("[BUILD] Creating zoom clips...")
+    clip_paths = []
+    for idx in range(n):
+        clip_path = os.path.join(work_dir, f"clip_{idx}.mp4")
+        dur = durations[idx]
+        total_frames = int(dur * FPS)
+        if total_frames < 2:
+            total_frames = 2
+
+        zoom_dir = "in" if idx % 2 == 0 else "out"
+        if zoom_dir == "in":
+            zexpr = f"min(zoom+0.0008,1.12)"
+        else:
+            zexpr = f"if(eq(on\\,0)\\,1.12\\,max(zoom-0.0008\\,1.0))"
+
+        cmd = [
+            FFMPEG, '-y',
+            '-loop', '1', '-i', os.path.join(work_dir, f"s_{idx}.jpg"),
+            '-vf', f"zoompan=z='{zexpr}':x='(iw-iw/zoom)/2':y='(ih-ih/zoom)/2':d={total_frames}:s=720x1280:fps={FPS}",
+            '-t', f"{dur:.2f}",
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
+            '-pix_fmt', 'yuv420p',
+            clip_path
+        ]
+        proc = subprocess.run(cmd, capture_output=True, timeout=30)
+        if proc.returncode != 0:
+            err = proc.stderr.decode('utf-8', errors='replace')[-200:]
+            print(f"  [WARN] Zoom clip {idx} failed: {err}")
+            cmd_simple = [
+                FFMPEG, '-y',
+                '-loop', '1', '-i', os.path.join(work_dir, f"s_{idx}.jpg"),
+                '-vf', f"scale=720:1280",
+                '-t', f"{dur:.2f}", '-r', str(FPS),
+                '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
+                '-pix_fmt', 'yuv420p',
+                clip_path
+            ]
+            subprocess.run(cmd_simple, capture_output=True, timeout=30)
+
+        clip_paths.append(clip_path)
+
+    print("[BUILD] Joining clips with crossfade...")
+    if n == 1:
+        import shutil as _sh
+        _sh.copy2(clip_paths[0], os.path.join(work_dir, "joined.mp4"))
+    else:
+        inputs = []
+        for cp in clip_paths:
+            inputs.extend(['-i', cp])
+
+        fc_parts = []
+        offset = durations[0] - FADE_DUR
+        prev = "[0:v]"
+        for i in range(1, n):
+            out_label = f"[v{i}]"
+            fc_parts.append(
+                f"{prev}[{i}:v]xfade=transition=fade:duration={FADE_DUR}:offset={max(0, offset):.2f}{out_label}"
+            )
+            prev = out_label
+            if i < n - 1:
+                offset += durations[i] - FADE_DUR
+
+        filter_complex = ";".join(fc_parts)
+        joined_path = os.path.join(work_dir, "joined.mp4")
+        cmd = [FFMPEG, '-y'] + inputs + [
+            '-filter_complex', filter_complex,
+            '-map', prev,
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
+            '-pix_fmt', 'yuv420p',
+            joined_path
+        ]
+        proc = subprocess.run(cmd, capture_output=True, timeout=120)
+        if proc.returncode != 0:
+            err = proc.stderr.decode('utf-8', errors='replace')[-300:]
+            print(f"[WARN] Crossfade failed ({err}), using simple concat...")
+            concat_file = os.path.join(work_dir, "concat.txt")
+            with open(concat_file, 'w') as f:
+                for cp in clip_paths:
+                    f.write(f"file '{os.path.basename(cp)}'\n")
+            cmd = [
+                FFMPEG, '-y',
+                '-f', 'concat', '-safe', '0', '-i', concat_file,
+                '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
+                '-pix_fmt', 'yuv420p',
+                joined_path
+            ]
+            subprocess.run(cmd, capture_output=True, timeout=60)
+
+    joined_path = os.path.join(work_dir, "joined.mp4")
+
+    print("[BUILD] Mixing voiceover + background music...")
+    bg_music_path = os.path.join(work_dir, "bgmusic.m4a")
+    has_music = generate_bg_music(bg_music_path, audio_duration + 2)
+
+    if has_music:
+        cmd = [
+            FFMPEG, '-y',
+            '-i', joined_path,
+            '-i', audio_file,
+            '-i', bg_music_path,
+            '-filter_complex',
+            '[2:a]volume=0.12[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
+            '-map', '0:v', '-map', '[aout]',
+            '-c:v', 'copy',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-shortest',
+            output_file
+        ]
+    else:
+        cmd = [
+            FFMPEG, '-y',
+            '-i', joined_path,
+            '-i', audio_file,
+            '-c:v', 'copy',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-shortest',
+            output_file
+        ]
+
+    proc = subprocess.run(cmd, capture_output=True, timeout=60)
 
     import shutil
     shutil.rmtree(work_dir, ignore_errors=True)
 
     if proc.returncode != 0:
-        err = stderr.decode('utf-8', errors='replace')[-500:]
-        print(f"❌ FFmpeg failed: {err[-300:]}")
+        err = proc.stderr.decode('utf-8', errors='replace')[-300:]
+        print(f"[ERR] Final merge failed: {err}")
         return create_video_simple(slides, audio_file, output_file)
 
-    print("✅ Video created with animated images!")
+    print("[OK] Video created with zoom + crossfade + music!")
     return True
 
 
@@ -837,16 +936,14 @@ def create_video_simple(slides, audio_file, output_file):
     scale = audio_duration / total_slide_dur if total_slide_dur > 0 else 1.0
 
     filters = []
-
     t = 0
     for slide in slides:
         dur = slide['duration'] * scale
         lines = slide['text'].split('\n')
         num_lines = len(lines)
         start_y = f"(h/2)-{(num_lines * 30)}"
-
         for li, line in enumerate(lines):
-            escaped = escape_ffmpeg_text(line)
+            escaped = line.replace("'", "").replace(":", "\\:").replace("$", "\\$").replace("%", "%%").replace('"', "").replace(";", "\\;")
             y_pos = f"({start_y})+{li * 60}"
             color = "white" if li == 0 else "0x00DDFF"
             filters.append(
@@ -871,22 +968,21 @@ def create_video_simple(slides, audio_file, output_file):
         output_file
     ]
 
-    print(f"🔧 Running FFmpeg (simple mode)...")
+    print("[BUILD] Running FFmpeg (simple mode)...")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
         stdout, stderr = proc.communicate(timeout=240)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
-        print("❌ FFmpeg timed out")
+        print("[ERR] FFmpeg timed out")
         return False
 
     if proc.returncode != 0:
-        print(f"❌ FFmpeg failed")
-        print(stderr.decode('utf-8', errors='replace')[-500:])
+        print("[ERR] FFmpeg failed")
         return False
 
-    print("✅ Video created (simple mode)")
+    print("[OK] Video created (simple mode)")
     return True
 
 
@@ -918,28 +1014,28 @@ def generate_daily_video():
     img_dir = f"{CONFIG['output_dir']}/imgs_{timestamp}"
 
     try:
-        print("🎤 Generating voiceover...")
+        print("[TTS] Generating voiceover...")
         create_audio(topic['voiceover'], audio_file)
 
         images = []
         if PEXELS_API_KEY:
-            print("📸 Fetching images from Pexels...")
+            print("[IMG] Fetching images from Pexels...")
             images = fetch_pexels_images(
                 topic['search_queries'],
                 len(topic['slides']),
                 img_dir
             )
-            print(f"✅ Got {sum(1 for i in images if i)} images")
+            print(f"[OK] Got {sum(1 for i in images if i)} images")
         else:
-            print("⚠️ No PEXELS_API_KEY, using color background")
+            print("[WARN] No PEXELS_API_KEY, using color background")
 
-        print("🎬 Creating animated video...")
+        print("[VIDEO] Creating animated video...")
         ok = create_video_ffmpeg(topic['slides'], images, audio_file, output_file)
 
         if not ok:
             return {"status": "error", "message": "Video creation failed"}
 
-        print(f"✅ Video created: {output_file}")
+        print(f"[OK] Video created: {output_file}")
 
         try:
             os.remove(audio_file)
@@ -960,7 +1056,7 @@ def generate_daily_video():
         }
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERR] Error: {e}")
         import traceback
         traceback.print_exc()
         return {"status": "error", "message": str(e)}
