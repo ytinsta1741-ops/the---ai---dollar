@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 The AI Dollar - Video Generator
-Finance education Shorts with cartoon/illustration backgrounds + animated zoom + deep male TTS
+Finance education Shorts with per-slide audio sync + zoom + crossfade + deep male TTS
 """
 
 import os
@@ -9,6 +9,7 @@ import gc
 import subprocess
 import asyncio
 import requests
+import urllib.parse
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -30,596 +31,642 @@ PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
 CONTENT_TOPICS = [
     {
         "title": "Your $100 Is Now Worth $93",
-        "search_queries": ["hundred dollar bill close up", "grocery store prices rising", "cash money wallet", "burning money fire", "mattress bedroom cozy", "stock market chart green", "index fund investing phone", "person saving money jar", "financial growth chart upward", "dollar losing value"],
         "slides": [
-            {"text": "Your $100\nis now worth $93", "duration": 5},
-            {"text": "Prices went up\n7% this year", "duration": 5},
-            {"text": "Your cash\nstayed the same", "duration": 4},
-            {"text": "Thats $7 gone\nfor doing nothing", "duration": 5},
-            {"text": "Cash under your\nmattress loses\nvalue every day", "duration": 5},
-            {"text": "So what actually\nbeats inflation?", "duration": 4},
-            {"text": "Investing in\nstocks and\nindex funds", "duration": 5},
-            {"text": "The S&P 500 averages\n10% per year\nInflation is only 3%", "duration": 6},
-            {"text": "Your money grows\nfaster than\nprices rise", "duration": 5},
-            {"text": "Saving protects\nyour money\nInvesting grows it\nYou need both", "duration": 6},
+            {"text": "Your $100\nis now worth $93", "speech": "Your hundred dollars is now worth ninety three bucks. Let that sink in.", "img": "a crisp hundred dollar bill slowly dissolving into dust on a dark surface"},
+            {"text": "Prices went up\n7% this year", "speech": "Prices went up seven percent this year but your cash stayed the exact same.", "img": "grocery store shelf with glowing red price tags showing rising numbers"},
+            {"text": "Your cash\nstayed the same", "speech": "That's seven dollars gone just for doing absolutely nothing.", "img": "an open empty leather wallet under a single spotlight in darkness"},
+            {"text": "Thats $7 gone\nfor doing nothing", "speech": "And this happens every single year.", "img": "paper money catching fire with orange flames against a black background"},
+            {"text": "Cash under your\nmattress loses\nvalue every day", "speech": "Keeping cash under your mattress or in a regular savings account means you are literally losing money every single day.", "img": "cash bills hidden under a white mattress in a dim bedroom"},
+            {"text": "So what actually\nbeats inflation?", "speech": "So what actually beats inflation? The answer is investing.", "img": "a glowing golden question mark floating above a pile of coins"},
+            {"text": "Investing in\nstocks and\nindex funds", "speech": "Specifically stocks and index funds. The S and P five hundred tracks the top five hundred American companies.", "img": "a futuristic stock trading screen with green charts and neon data"},
+            {"text": "The S&P 500 averages\n10% per year\nInflation is only 3%", "speech": "It averages about ten percent per year. Inflation is usually around three percent. Your money grows faster than prices rise.", "img": "a dramatic green upward chart line breaking through clouds into sunlight"},
+            {"text": "Your money grows\nfaster than\nprices rise", "speech": "That's how you beat the system. Saving protects your money but investing is what actually grows it.", "img": "a tiny seedling growing from a pile of gold coins with light beams"},
+            {"text": "Saving protects\nyour money\nInvesting grows it\nYou need both", "speech": "You need both working together. Start as early as you can, even with small amounts, because time is your biggest advantage.", "img": "a golden piggy bank next to a growing stack of coins with sparkles"},
         ],
-        "voiceover": "Your hundred dollars is now worth ninety three bucks. Let that sink in. Prices went up seven percent this year but your cash stayed the exact same. That's seven dollars gone just for doing absolutely nothing. And this happens every single year. Keeping cash under your mattress or in a regular savings account means you are literally losing money every single day. So what actually beats inflation? The answer is investing. Specifically stocks and index funds. The S and P five hundred, which tracks the top five hundred American companies, averages about ten percent per year. Inflation is usually around three percent. So when your investments grow at ten and prices only go up by three, your money is actually getting more powerful over time, not less. That's how you beat the system. Saving is important, it protects your money. But investing is what actually grows it. You need both working together. Start as early as you can, even with small amounts, because time is your biggest advantage.",
         "keywords": ["Inflation", "Finance", "Money", "Investing"],
     },
     {
         "title": "How $5 a Day Makes You a Millionaire",
-        "search_queries": ["gold coins stacked", "coffee cup latte art", "stock chart growth upward", "calculator money desk", "calendar planner monthly", "luxury mansion pool", "compound interest graph", "person celebrating success", "investment portfolio screen", "snowball rolling bigger"],
         "slides": [
-            {"text": "$5 a day\ncan make you\na millionaire", "duration": 5},
-            {"text": "Thats your\nmorning coffee", "duration": 4},
-            {"text": "Invest $5 daily\nat 10% returns", "duration": 5},
-            {"text": "After 10 years\n$30,727", "duration": 5},
-            {"text": "After 30 years\n$339,073", "duration": 5},
-            {"text": "After 40 years\n$1,062,000", "duration": 5},
-            {"text": "The secret?\nCompound interest", "duration": 4},
-            {"text": "Your interest\nearns its own\ninterest", "duration": 5},
-            {"text": "It snowballs\nbigger and bigger\nover time", "duration": 5},
-            {"text": "Every day you wait\ncosts you thousands\nStart today", "duration": 6},
+            {"text": "$5 a day\ncan make you\na millionaire", "speech": "Five dollars a day can literally make you a millionaire. And that's not some motivational nonsense, that's actual math.", "img": "towering stack of gold coins reaching into clouds with dramatic lighting"},
+            {"text": "Thats your\nmorning coffee", "speech": "Five dollars is your morning coffee.", "img": "a steaming latte on a cafe table with a five dollar bill beside it"},
+            {"text": "Invest $5 daily\nat 10% returns", "speech": "If you invest five dollars every single day into an index fund that averages ten percent returns per year.", "img": "a smartphone showing a green investment chart with coins dropping in"},
+            {"text": "After 10 years\n$30,727", "speech": "After ten years you'd have over thirty thousand dollars.", "img": "a growing mountain of cash bills stacking higher and higher"},
+            {"text": "After 30 years\n$339,073", "speech": "After thirty years, three hundred thirty nine thousand.", "img": "a luxurious penthouse view overlooking a glittering city skyline at night"},
+            {"text": "After 40 years\n$1,062,000", "speech": "And after forty years, over one million dollars. From just five bucks a day.", "img": "a vault door opening to reveal stacks of gold bars and cash"},
+            {"text": "The secret?\nCompound interest", "speech": "The secret behind this is compound interest. Your money earns returns, and then those returns earn their own returns.", "img": "an exponential curve chart glowing green shooting upward dramatically"},
+            {"text": "Your interest\nearns its own\ninterest", "speech": "It snowballs. It starts slow, but after twenty years it explodes. The curve goes almost straight up.", "img": "a giant glowing snowball rolling downhill getting bigger and bigger"},
+            {"text": "It snowballs\nbigger and bigger\nover time", "speech": "Here's the part that should scare you though. Every single day you wait to start costs you thousands of dollars in the long run.", "img": "a large hourglass with golden sand running out in dramatic red light"},
+            {"text": "Every day you wait\ncosts you thousands\nStart today", "speech": "A twenty year old who invests five dollars a day will have three times more money at retirement than a thirty year old doing the exact same thing. Start today.", "img": "a confident young person standing on top of a mountain at sunrise"},
         ],
-        "voiceover": "Five dollars a day can literally make you a millionaire. And that's not some motivational nonsense, that's actual math. Five dollars is your morning coffee. If you invest five dollars every single day into an index fund that averages ten percent returns per year, after ten years you'd have over thirty thousand dollars. After thirty years, three hundred thirty nine thousand. And after forty years, over one million dollars. From just five bucks a day. The secret behind this is compound interest. Your money earns returns, and then those returns earn their own returns. It snowballs. It starts slow, but after twenty years it explodes. The curve goes almost straight up. Here's the part that should scare you though. Every single day you wait to start costs you thousands of dollars in the long run. A twenty year old who invests five dollars a day will have three times more money at retirement than a thirty year old doing the exact same thing. Start today. Not next week. Not next month. Today.",
         "keywords": ["Compound Interest", "Investing", "Millionaire"],
     },
     {
         "title": "Bad Credit Costs You $100,000",
-        "search_queries": ["credit card close up", "house exterior real estate", "bank building tall", "person stressed bills", "money stack hundred", "credit score phone screen", "person paying bills on time", "old credit cards wallet", "happy homeowner keys", "interest rate comparison"],
         "slides": [
-            {"text": "Bad credit\ncosts you\n$100,000", "duration": 5},
-            {"text": "On a $300K\nmortgage", "duration": 4},
-            {"text": "Score above 740\nyou pay 6.5%", "duration": 5},
-            {"text": "Score below 580\nyou pay 9.5%", "duration": 5},
-            {"text": "Thats $100,000\nextra in interest\nover 30 years", "duration": 5},
-            {"text": "How to fix it?\n3 simple rules", "duration": 4},
-            {"text": "Rule 1\nAlways pay\non time even\nthe minimum", "duration": 5},
-            {"text": "Rule 2\nKeep balances\nbelow 30% of\nyour limit", "duration": 5},
-            {"text": "Rule 3\nNever close\nyour oldest card\nit helps history", "duration": 6},
-            {"text": "Your credit score\nis your financial\nreputation\nProtect it", "duration": 6},
+            {"text": "Bad credit\ncosts you\n$100,000", "speech": "Bad credit doesn't just hurt your pride. It costs you real money. We're talking a hundred thousand dollars or more over your lifetime.", "img": "a credit score meter in the red zone glowing ominously on a dark screen"},
+            {"text": "On a $300K\nmortgage", "speech": "Here's exactly how. When you apply for a three hundred thousand dollar mortgage.", "img": "a beautiful suburban house with a sold sign in the front yard at dusk"},
+            {"text": "Score above 740\nyou pay 6.5%", "speech": "A credit score above seven forty gets you six point five percent interest.", "img": "a glowing green checkmark with a high credit score number above it"},
+            {"text": "Score below 580\nyou pay 9.5%", "speech": "But a score below five eighty? You're looking at nine point five percent or higher.", "img": "a flashing red warning triangle with an exclamation mark in darkness"},
+            {"text": "Thats $100,000\nextra in interest\nover 30 years", "speech": "Over thirty years, that three percent difference adds up to over a hundred thousand dollars in extra interest. Same house, way more money.", "img": "hundred dollar bills being swept away by wind into a dark void"},
+            {"text": "How to fix it?\n3 simple rules", "speech": "So how do you fix your credit? Three simple rules.", "img": "a glowing checklist with three items on a clipboard in blue light"},
+            {"text": "Rule 1\nAlways pay\non time even\nthe minimum", "speech": "Rule one, always pay on time, even if it's just the minimum payment. Payment history is thirty five percent of your score.", "img": "a calendar page with a payment due date circled in red marker"},
+            {"text": "Rule 2\nKeep balances\nbelow 30% of\nyour limit", "speech": "Rule two, keep your credit card balances below thirty percent of your limit. If your limit is a thousand, never carry more than three hundred.", "img": "a credit card with a low balance meter bar showing green safe zone"},
+            {"text": "Rule 3\nNever close\nyour oldest card\nit helps history", "speech": "Rule three, never close your oldest credit card. The length of your credit history matters.", "img": "a vintage worn credit card on a leather surface with a timeline behind it"},
+            {"text": "Your credit score\nis your financial\nreputation\nProtect it", "speech": "Your credit score is your financial reputation. It follows you everywhere. Protect it like your life depends on it, because financially, it does.", "img": "a glowing golden shield protecting a stack of coins from danger"},
         ],
-        "voiceover": "Bad credit doesn't just hurt your pride. It costs you real money. We're talking a hundred thousand dollars or more over your lifetime. Here's exactly how. When you apply for a three hundred thousand dollar mortgage, a credit score above seven forty gets you six point five percent interest. But a score below five eighty? You're looking at nine point five percent or higher. Over thirty years, that three percent difference adds up to over a hundred thousand dollars in extra interest. You're paying for the exact same house, just way more of it. So how do you fix your credit? Three simple rules. Rule one, always pay on time, even if it's just the minimum payment. Payment history is thirty five percent of your score. Rule two, keep your credit card balances below thirty percent of your limit. If your limit is a thousand, never carry more than three hundred. Rule three, never close your oldest credit card. The length of your credit history matters. Your credit score is your financial reputation. It follows you everywhere. Protect it like your life depends on it, because financially, it does.",
         "keywords": ["Credit Score", "Finance", "Mortgage", "Money"],
     },
     {
         "title": "The 50/30/20 Rule Changed My Life",
-        "search_queries": ["paycheck salary money", "rent apartment building", "grocery shopping cart", "shopping bags colorful", "restaurant eating out", "piggy bank savings gold", "automatic bank transfer", "wealthy person confident", "financial freedom beach", "budget planner notebook"],
         "slides": [
-            {"text": "This budget rule\nchanged my life", "duration": 5},
-            {"text": "Take your\npaycheck\nany amount works", "duration": 5},
-            {"text": "50% goes to needs\nrent food bills\ntransportation", "duration": 5},
-            {"text": "30% goes to wants\nfun shopping\neating out", "duration": 5},
-            {"text": "20% goes straight\nto savings\nand investing", "duration": 5},
-            {"text": "The key?\nPay savings FIRST\nnot last", "duration": 5},
-            {"text": "Automate it\nthe day you\nget paid", "duration": 5},
-            {"text": "You will adjust\nto spending less\nwithin one month", "duration": 5},
-            {"text": "Most millionaires\nstarted with\nthis exact rule", "duration": 5},
-            {"text": "No fancy apps needed\nJust 3 numbers\n50 30 20", "duration": 5},
+            {"text": "This budget rule\nchanged my life", "speech": "This budget rule literally changed my entire financial life and it can change yours too.", "img": "an open budget planner notebook on a clean desk with a golden pen"},
+            {"text": "Take your\npaycheck\nany amount works", "speech": "Take your paycheck, any amount works, it doesn't matter how much you make.", "img": "a paycheck envelope being opened with cash visible inside"},
+            {"text": "50% goes to needs\nrent food bills\ntransportation", "speech": "Fifty percent goes to needs. That's rent, food, bills, and transportation. The stuff you have to pay no matter what.", "img": "a modern apartment building exterior at sunset with warm window lights"},
+            {"text": "30% goes to wants\nfun shopping\neating out", "speech": "Thirty percent goes to wants. Fun stuff, shopping, eating out, entertainment. Yes you're allowed to enjoy your money.", "img": "colorful shopping bags and gift boxes on a table with warm lighting"},
+            {"text": "20% goes straight\nto savings\nand investing", "speech": "And twenty percent goes straight to savings and investing.", "img": "a glass jar overflowing with gold coins next to a growing green plant"},
+            {"text": "The key?\nPay savings FIRST\nnot last", "speech": "Here's the key though. Pay your savings first, not last. The second your paycheck hits your account, move twenty percent into savings automatically.", "img": "a smartphone screen showing an automated bank transfer in progress"},
+            {"text": "Automate it\nthe day you\nget paid", "speech": "Set it up so you never even see that money.", "img": "a robotic hand pressing a button labeled automate on a glowing screen"},
+            {"text": "You will adjust\nto spending less\nwithin one month", "speech": "You will adjust to spending less within about one month, I promise. It feels tight at first but then it becomes completely normal.", "img": "a peaceful person sitting comfortably on a couch looking relaxed and content"},
+            {"text": "Most millionaires\nstarted with\nthis exact rule", "speech": "Most millionaires didn't get rich with complicated strategies. They started with this exact simple rule.", "img": "a silhouette of a successful person overlooking a city skyline at dusk"},
+            {"text": "No fancy apps needed\nJust 3 numbers\n50 30 20", "speech": "No fancy budgeting apps needed. Just three numbers. Fifty. Thirty. Twenty. That's the entire system.", "img": "three glowing golden numbers 50 30 20 floating in a dark space"},
         ],
-        "voiceover": "This budget rule literally changed my entire financial life and it can change yours too. Take your paycheck, any amount works, it doesn't matter how much you make. Fifty percent goes to needs. That's rent, food, bills, and transportation. The stuff you have to pay no matter what. Thirty percent goes to wants. Fun stuff, shopping, eating out, entertainment. Yes you're allowed to enjoy your money. And twenty percent goes straight to savings and investing. Here's the key though, and most people get this wrong. Pay your savings first, not last. The second your paycheck hits your account, move twenty percent into savings automatically. Set it up so you never even see that money. You will adjust to spending less within about one month, I promise. It feels tight at first but then it becomes completely normal. Most millionaires didn't get rich with complicated strategies. They started with this exact simple rule. No fancy budgeting apps needed. Just three numbers. Fifty. Thirty. Twenty. That's the entire system.",
         "keywords": ["Budgeting", "50/30/20", "Personal Finance"],
     },
     {
         "title": "Stocks vs Bonds Explained",
-        "search_queries": ["stock market trading screen", "business office building", "handshake business deal", "roller coaster ride", "calm ocean sunset", "young person investing phone", "elderly couple retirement", "diversified portfolio chart", "balance scale golden", "risk reward sign"],
         "slides": [
-            {"text": "Stocks vs Bonds\nfinally explained", "duration": 5},
-            {"text": "A stock means\nyou OWN a piece\nof a company", "duration": 5},
-            {"text": "If it grows\nyour money grows\nIf it tanks you lose", "duration": 5},
-            {"text": "Stocks average\n10% per year\nbut its a bumpy ride", "duration": 5},
-            {"text": "A bond means\nyou LEND money\nto a government\nor company", "duration": 5},
-            {"text": "They pay you\nback with interest\nsteady and safe", "duration": 5},
-            {"text": "Bonds average\n4-5% per year\nmuch smoother ride", "duration": 5},
-            {"text": "Best strategy?\nMix both", "duration": 4},
-            {"text": "Young? 80% stocks\n20% bonds\nYou have time\nto recover", "duration": 6},
-            {"text": "Older? Flip it\nMore bonds\nfor stability", "duration": 5},
+            {"text": "Stocks vs Bonds\nfinally explained", "speech": "Stocks versus bonds, finally explained so anyone can understand.", "img": "the Wall Street bull statue in golden light with stock ticker data"},
+            {"text": "A stock means\nyou OWN a piece\nof a company", "speech": "When you buy a stock, you own a tiny piece of a real company. If that company grows, your investment grows too.", "img": "a gleaming corporate skyscraper reflecting sunset light from below"},
+            {"text": "If it grows\nyour money grows\nIf it tanks you lose", "speech": "But if it tanks, you lose money.", "img": "a dramatic roller coaster track with sharp peaks and valleys at night"},
+            {"text": "Stocks average\n10% per year\nbut its a bumpy ride", "speech": "Stocks have averaged about ten percent per year historically, but it's a bumpy ride with lots of ups and downs.", "img": "a volatile zigzag stock chart line glowing neon green on dark background"},
+            {"text": "A bond means\nyou LEND money\nto a government\nor company", "speech": "A bond is completely different. When you buy a bond, you're lending money to a government or a company. They promise to pay you back with interest.", "img": "a grand government treasury building with classical columns at dusk"},
+            {"text": "They pay you\nback with interest\nsteady and safe", "speech": "It's steady and predictable.", "img": "a calm turquoise ocean at sunset with golden sky and peaceful waves"},
+            {"text": "Bonds average\n4-5% per year\nmuch smoother ride", "speech": "Bonds average about four to five percent per year, much smoother than stocks but lower returns.", "img": "a smooth straight road stretching into the horizon through open plains"},
+            {"text": "Best strategy?\nMix both", "speech": "So what's the best strategy? Mix both.", "img": "a golden balance scale with coins on both sides perfectly balanced"},
+            {"text": "Young? 80% stocks\n20% bonds\nYou have time\nto recover", "speech": "If you're young, go about eighty percent stocks and twenty percent bonds. You have decades to recover from any crashes.", "img": "a young confident investor looking at rising charts on multiple screens"},
+            {"text": "Older? Flip it\nMore bonds\nfor stability", "speech": "As you get older, flip it. More bonds for stability since you'll need that money sooner. This is called asset allocation.", "img": "a retired couple relaxing on a porch overlooking a beautiful garden"},
         ],
-        "voiceover": "Stocks versus bonds, finally explained so anyone can understand. When you buy a stock, you own a tiny piece of a real company. If that company grows and makes money, your investment grows too. But if it tanks, you lose money. Stocks have averaged about ten percent per year historically, but it's a bumpy ride with lots of ups and downs. A bond is completely different. When you buy a bond, you're lending money to a government or a company. They promise to pay you back over time with interest. It's steady and predictable. Bonds average about four to five percent per year, much smoother than stocks but lower returns. So what's the best strategy? Mix both. If you're young, go about eighty percent stocks and twenty percent bonds. You have decades to recover from any crashes. The ups and downs don't matter when you're not retiring for thirty years. As you get older, flip it. More bonds for stability since you'll need that money sooner. This is called asset allocation, and it's how the smartest investors manage risk.",
         "keywords": ["Stocks", "Bonds", "Investing", "Asset Allocation"],
     },
     {
         "title": "No Emergency Fund? Heres Why You Need One",
-        "search_queries": ["warning sign red", "broken car roadside", "credit card payment terminal", "money burning fire", "glass jar coins savings", "person opening savings account", "safety net trapeze", "bank account phone app", "relieved person smiling", "high yield savings screen"],
         "slides": [
-            {"text": "No emergency fund?\nHeres what happens", "duration": 5},
-            {"text": "Your car\nbreaks down\n$800 repair", "duration": 5},
-            {"text": "No savings?\nCredit card at\n24% interest", "duration": 5},
-            {"text": "That $800\njust became $1,100", "duration": 5},
-            {"text": "An emergency fund\nprevents this\ncompletely", "duration": 5},
-            {"text": "Save 3 to 6 months\nof expenses", "duration": 5},
-            {"text": "Put it in a high\nyield savings account\n4-5% interest", "duration": 5},
-            {"text": "Your money earns\nmoney while it\nprotects you", "duration": 5},
-            {"text": "Start with just $500\nthen add $50\nevery paycheck", "duration": 5},
-            {"text": "In one year youll\nhave a real\nsafety net", "duration": 5},
+            {"text": "No emergency fund?\nHeres what happens", "speech": "No emergency fund? Let me show you exactly what happens.", "img": "a glowing red emergency alarm light flashing in a dark corridor"},
+            {"text": "Your car\nbreaks down\n$800 repair", "speech": "Your car breaks down tomorrow. Eight hundred dollar repair bill.", "img": "a car with its hood open and smoke rising in a dark parking lot"},
+            {"text": "No savings?\nCredit card at\n24% interest", "speech": "Without any savings, that goes straight onto a credit card at twenty four percent interest.", "img": "a credit card being swiped with red danger sparks flying from it"},
+            {"text": "That $800\njust became $1,100", "speech": "That eight hundred dollar problem just became eleven hundred dollars by the time you pay it off. And that's just one emergency.", "img": "a calculator showing growing numbers with stacks of bills being consumed"},
+            {"text": "An emergency fund\nprevents this\ncompletely", "speech": "An emergency fund prevents this completely. It's your financial safety net.", "img": "a strong safety net catching falling coins against a dramatic sky"},
+            {"text": "Save 3 to 6 months\nof expenses", "speech": "The goal is to save three to six months of your living expenses.", "img": "six calendar pages fanned out with golden coins stacked on each"},
+            {"text": "Put it in a high\nyield savings account\n4-5% interest", "speech": "Put it in a high yield savings account where it earns four to five percent interest. Your money earns money while it protects you.", "img": "a smartphone showing a savings account with a growing green interest bar"},
+            {"text": "Your money earns\nmoney while it\nprotects you", "speech": "You don't need to build it overnight.", "img": "a small green plant sprouting from a pile of coins with golden light"},
+            {"text": "Start with just $500\nthen add $50\nevery paycheck", "speech": "Start with just five hundred dollars. Then add fifty dollars from every single paycheck.", "img": "coins being stacked one by one into a tall growing tower"},
+            {"text": "In one year youll\nhave a real\nsafety net", "speech": "In about one year you'll have a solid safety net that can handle any emergency without destroying your finances. The peace of mind alone is worth it.", "img": "a person sitting peacefully on a park bench with a sunset behind them"},
         ],
-        "voiceover": "No emergency fund? Let me show you exactly what happens. Your car breaks down tomorrow. Eight hundred dollar repair bill. Without any savings, that goes straight onto a credit card at twenty four percent interest. That eight hundred dollar problem just became eleven hundred dollars by the time you pay it off. And that's just one emergency. An emergency fund prevents this completely. It's your financial safety net. The goal is to save three to six months of your living expenses. Put it in a high yield savings account where it earns four to five percent interest. That means your money is earning money for you while it sits there protecting you. You don't need to build it overnight. Start with just five hundred dollars. Then add fifty dollars from every single paycheck. In about one year you'll have a solid safety net that can handle a car repair, a medical bill, or even a job loss without destroying your finances. The peace of mind alone is worth it. No more stress about unexpected bills.",
         "keywords": ["Emergency Fund", "Savings", "High Yield Savings"],
     },
     {
         "title": "What Happens in a Recession",
-        "search_queries": ["storm clouds dark sky", "empty office desks", "unemployment job search", "shopping cart empty store", "stock chart recovery green", "person looking at stocks phone", "investor buying stocks cheap", "economy growing city", "financial planning notebook", "history repeating pattern"],
         "slides": [
-            {"text": "A recession\nis coming\nheres what happens", "duration": 5},
-            {"text": "Companies make\nless money\nand start cutting", "duration": 5},
-            {"text": "They lay off\nworkers to\nsave money", "duration": 5},
-            {"text": "People spend less\nbecause they have\nless income", "duration": 5},
-            {"text": "Which means companies\nmake even less\nThe cycle repeats", "duration": 5},
-            {"text": "But every single\nrecession in history\nhas ended", "duration": 5},
-            {"text": "The average recession\nlasts 10 months\nnot forever", "duration": 5},
-            {"text": "The worst move\nis panic selling\nyou lock in losses", "duration": 5},
-            {"text": "The best move\nis keep investing\nStocks are on sale", "duration": 5},
-            {"text": "Those who invest\nduring recessions\nget rich in\nthe recovery", "duration": 6},
+            {"text": "A recession\nis coming\nheres what happens", "speech": "A recession might be coming. Here's exactly what happens and what you should do.", "img": "massive dark storm clouds rolling over a city skyline with lightning"},
+            {"text": "Companies make\nless money\nand start cutting", "speech": "Companies start making less money, so they cut costs. That means layoffs.", "img": "a dark empty corporate office with abandoned desks and dim lights"},
+            {"text": "They lay off\nworkers to\nsave money", "speech": "Workers lose their jobs, so they have less income and spend less.", "img": "a person holding a cardboard box leaving an office building at night"},
+            {"text": "People spend less\nbecause they have\nless income", "speech": "When people spend less, companies make even less money. It's a downward cycle that feeds on itself.", "img": "an empty abandoned shopping mall with closed stores and dark lighting"},
+            {"text": "Which means companies\nmake even less\nThe cycle repeats", "speech": "Sounds scary, right? But here's what nobody tells you during a recession.", "img": "a glowing red downward spiral arrow against a dark stormy background"},
+            {"text": "But every single\nrecession in history\nhas ended", "speech": "Every single recession in history has ended. Every one. The average recession only lasts about ten months.", "img": "a brilliant golden sunrise breaking through dark storm clouds over water"},
+            {"text": "The average recession\nlasts 10 months\nnot forever", "speech": "Not years, not decades, ten months.", "img": "a short timeline bar showing ten months highlighted against a long scale"},
+            {"text": "The worst move\nis panic selling\nyou lock in losses", "speech": "The absolute worst move you can make is panic selling your investments. When you sell during a crash, you lock in your losses permanently.", "img": "a panicking person at a computer with red stock charts crashing"},
+            {"text": "The best move\nis keep investing\nStocks are on sale", "speech": "The best move is to keep investing consistently. Stocks are literally on sale during a recession. You're buying the same companies at a discount.", "img": "a glowing green sale tag on a stock chart with discount prices"},
+            {"text": "Those who invest\nduring recessions\nget rich in\nthe recovery", "speech": "Those who have the courage to keep investing during recessions are the ones who get wealthy during the recovery. History proves this over and over again.", "img": "a stock chart showing a dramatic V-shaped recovery shooting upward green"},
         ],
-        "voiceover": "A recession might be coming. Here's exactly what happens and what you should do. Companies start making less money, so they cut costs. That means layoffs. Workers lose their jobs, so they have less income and spend less. When people spend less, companies make even less money. It's a downward cycle that feeds on itself. Sounds scary, right? But here's what nobody tells you during a recession. Every single recession in history has ended. Every one. The average recession only lasts about ten months. Not years, not decades, ten months. The absolute worst move you can make is panic selling your investments. When you sell during a crash, you lock in your losses permanently. The best move is to keep investing consistently. Stocks are literally on sale during a recession. You're buying the same companies at a discount. Those who have the courage to keep investing during recessions are the ones who get wealthy during the recovery. The stock market has recovered from every single crash and gone on to reach new highs. History proves this over and over again.",
         "keywords": ["Recession", "Economy", "Bear Market", "Investing"],
     },
     {
         "title": "Rich People Buy Assets Not Stuff",
-        "search_queries": ["luxury mansion aerial", "wallet money cash", "money flying away wind", "sports car expensive", "rental apartment building", "dividend stock screen", "passive income laptop", "wealthy lifestyle freedom", "real estate investment sign", "financial freedom sunset"],
         "slides": [
-            {"text": "Rich people buy\nassets not stuff", "duration": 5},
-            {"text": "An asset puts\nmoney IN\nyour pocket", "duration": 5},
-            {"text": "A liability takes\nmoney OUT\nof your pocket", "duration": 5},
-            {"text": "Your fancy car?\nThats a liability", "duration": 5},
-            {"text": "Insurance gas\ndepreciation\nit costs you\nevery month", "duration": 5},
-            {"text": "A rental property\nthat earns income?\nThats an asset", "duration": 5},
-            {"text": "Dividend stocks\nthat pay you\nevery quarter?\nAsset", "duration": 5},
-            {"text": "A business that\nruns without you?\nAsset", "duration": 5},
-            {"text": "Buy assets first\nthen let assets\npay for your stuff", "duration": 5},
-            {"text": "Thats the\nmillionaire formula\nAssets before\nlifestyle", "duration": 5},
+            {"text": "Rich people buy\nassets not stuff", "speech": "Rich people don't buy stuff. They buy assets. And that one difference is what separates the wealthy from everyone else.", "img": "an aerial view of a luxurious mansion estate with manicured gardens"},
+            {"text": "An asset puts\nmoney IN\nyour pocket", "speech": "Here's the distinction. An asset puts money into your pocket.", "img": "golden coins flowing into an open wallet with a green glowing arrow up"},
+            {"text": "A liability takes\nmoney OUT\nof your pocket", "speech": "A liability takes money out of your pocket.", "img": "money bills flying out of a wallet into darkness with red arrow down"},
+            {"text": "Your fancy car?\nThats a liability", "speech": "Your fancy car? That's a liability. Insurance, gas, maintenance, depreciation. It costs you money every single month.", "img": "a sleek red sports car in a showroom with a price tag dangling"},
+            {"text": "Insurance gas\ndepreciation\nit costs you\nevery month", "speech": "And it's worth less every year.", "img": "a car dashboard with a declining value meter and money symbols fading"},
+            {"text": "A rental property\nthat earns income?\nThats an asset", "speech": "But a rental property that brings in more rent than it costs you? That's an asset.", "img": "a modern apartment building with glowing windows and rent checks flowing in"},
+            {"text": "Dividend stocks\nthat pay you\nevery quarter?\nAsset", "speech": "Dividend stocks that pay you cash every three months just for holding them? That's an asset.", "img": "a stock portfolio screen showing dividend payments with green cash icons"},
+            {"text": "A business that\nruns without you?\nAsset", "speech": "A business that generates income even when you're not working? That's an asset.", "img": "a laptop showing business revenue growing while owner relaxes on a beach"},
+            {"text": "Buy assets first\nthen let assets\npay for your stuff", "speech": "The secret of wealthy people is simple. They buy assets first. Then they let those assets generate income to pay for their lifestyle.", "img": "a tree with golden fruit growing from a pile of investment documents"},
+            {"text": "Thats the\nmillionaire formula\nAssets before\nlifestyle", "speech": "Assets before lifestyle. That's the millionaire formula. Start small. Buy your first index fund. Let your money work harder than you do.", "img": "a person standing at the top of stairs made of golden coins at sunrise"},
         ],
-        "voiceover": "Rich people don't buy stuff. They buy assets. And that one difference is what separates the wealthy from everyone else. Here's the distinction. An asset puts money into your pocket. A liability takes money out of your pocket. Your fancy car? That's a liability. Insurance, gas, maintenance, depreciation. It costs you money every single month and it's worth less every year. But a rental property that brings in more rent than it costs you? That's an asset. Dividend stocks that pay you cash every three months just for holding them? That's an asset. A business that generates income even when you're not working? That's an asset. The secret of wealthy people is simple. They buy assets first. Then they let those assets generate income. Then they use that income to pay for their lifestyle. They don't buy the luxury car until their investments are paying for it. Assets before lifestyle. That's the millionaire formula. Start small. Buy your first index fund. Let it grow. Then buy more. Let your money work harder than you do.",
         "keywords": ["Assets", "Liabilities", "Wealth Building"],
     },
     {
         "title": "What Is the S&P 500",
-        "search_queries": ["wall street sign new york", "stock market trading floor", "apple google amazon logos", "chart line going up green", "person investing laptop", "warren buffett portrait", "index fund vanguard screen", "dollar bills growing plant", "retirement savings graph", "phone brokerage app"],
         "slides": [
-            {"text": "What is the\nS&P 500?", "duration": 5},
-            {"text": "Its the top 500\ncompanies in\nAmerica combined", "duration": 5},
-            {"text": "Apple Google\nAmazon Tesla\nMicrosoft all in one", "duration": 5},
-            {"text": "You buy 1 fund\nyou own a piece\nof all 500", "duration": 5},
-            {"text": "Average return\n10% per year\nfor over 100 years", "duration": 5},
-            {"text": "It survived\nthe Great Depression\n2008 crash and Covid", "duration": 6},
-            {"text": "Warren Buffett says\nmost people should\njust buy this", "duration": 5},
-            {"text": "How? Open a\nbrokerage account\nbuy VOO or SPY", "duration": 5},
-            {"text": "Start with $50 or\n$100 it doesnt matter\njust start", "duration": 5},
-            {"text": "A hundred today\ncould be $1,745\nin 30 years\njust sitting there", "duration": 6},
+            {"text": "What is the\nS&P 500?", "speech": "What is the S and P five hundred and why does everyone keep talking about it?", "img": "the iconic Wall Street street sign in New York City with buildings"},
+            {"text": "Its the top 500\ncompanies in\nAmerica combined", "speech": "It's the top five hundred companies in America combined into one single investment.", "img": "a dramatic city skyline of corporate skyscrapers lit up at night"},
+            {"text": "Apple Google\nAmazon Tesla\nMicrosoft all in one", "speech": "Apple, Google, Amazon, Tesla, Microsoft, all of them in one place.", "img": "glowing futuristic holographic icons of major tech companies floating"},
+            {"text": "You buy 1 fund\nyou own a piece\nof all 500", "speech": "When you buy one S and P five hundred fund, you instantly own a tiny piece of all five hundred companies.", "img": "a woven basket overflowing with miniature company buildings and coins"},
+            {"text": "Average return\n10% per year\nfor over 100 years", "speech": "The average return has been about ten percent per year for over a hundred years.", "img": "a long-term growth chart spanning decades showing steady upward climb"},
+            {"text": "It survived\nthe Great Depression\n2008 crash and Covid", "speech": "It has survived the Great Depression, the two thousand eight financial crisis, and the Covid crash. Every single time it recovered.", "img": "a phoenix rising from flames symbolizing market recovery and resilience"},
+            {"text": "Warren Buffett says\nmost people should\njust buy this", "speech": "Even Warren Buffett, the greatest investor alive, says most people should just buy an S and P five hundred index fund.", "img": "a wise elderly investor in a suit gesturing wisely with golden backdrop"},
+            {"text": "How? Open a\nbrokerage account\nbuy VOO or SPY", "speech": "How do you buy it? Open a free brokerage account at Fidelity, Schwab, or Vanguard. Then buy a fund called V O O or S P Y.", "img": "a smartphone showing a brokerage app with a buy button glowing green"},
+            {"text": "Start with $50 or\n$100 it doesnt matter\njust start", "speech": "You can start with fifty or a hundred dollars, it doesn't matter. Just start.", "img": "a small pile of coins on a table with one coin being placed on top"},
+            {"text": "A hundred today\ncould be $1,745\nin 30 years\njust sitting there", "speech": "A hundred dollars invested today could be worth over seventeen hundred in thirty years just sitting there growing on its own.", "img": "a magical money tree with golden leaves growing taller in sunlight"},
         ],
-        "voiceover": "What is the S and P five hundred and why does everyone keep talking about it? It's the top five hundred companies in America combined into one single investment. Apple, Google, Amazon, Tesla, Microsoft, all of them in one place. When you buy one S and P five hundred fund, you instantly own a tiny piece of all five hundred companies. The average return has been about ten percent per year for over a hundred years. It has survived the Great Depression, the two thousand eight financial crisis, and the Covid crash. Every single time it recovered and went higher. Even Warren Buffett, the greatest investor alive, says most people should just buy an S and P five hundred index fund and never touch it. How do you actually buy it? Open a free brokerage account at Fidelity, Schwab, or Vanguard. Then buy a fund called V O O or S P Y. Those track the S and P five hundred. You can start with fifty or a hundred dollars, it doesn't matter. Just start. A hundred dollars invested today could be worth over seventeen hundred in thirty years just sitting there growing on its own.",
         "keywords": ["S&P 500", "Index Fund", "VOO", "Investing"],
     },
     {
         "title": "How Taxes Actually Work",
-        "search_queries": ["tax form documents", "paycheck stub closeup", "money divided portions", "calculator tax season", "staircase steps climbing", "person happy refund check", "income bracket chart", "dollar bills sorted piles", "thumbs up celebration", "myth busted sign"],
         "slides": [
-            {"text": "You DONT pay 30%\non everything\nyou earn", "duration": 5},
-            {"text": "Thats the biggest\nmyth in finance", "duration": 4},
-            {"text": "Taxes work\nin brackets\nlike a staircase", "duration": 5},
-            {"text": "First $11,000\nyou earn?\nOnly 10% tax", "duration": 5},
-            {"text": "Next $34,000\ntaxed at 12%", "duration": 5},
-            {"text": "$45K to $95K\ntaxed at 22%", "duration": 5},
-            {"text": "Only money ABOVE\neach step gets\nthe higher rate", "duration": 5},
-            {"text": "Earn $50K?\nYou pay about\n$6,600 in tax\nnot $11,000", "duration": 6},
-            {"text": "Your effective rate\nis about 13%\nnot 22%", "duration": 5},
-            {"text": "A raise will NEVER\nmake you lose money\nThats a myth", "duration": 5},
+            {"text": "You DONT pay 30%\non everything\nyou earn", "speech": "You do not pay thirty percent on everything you earn. That is the biggest myth in finance.", "img": "a tax form document with a red X stamped over a thirty percent label"},
+            {"text": "Thats the biggest\nmyth in finance", "speech": "And it stops people from making more money. Here's how taxes actually work.", "img": "a shattered glass sign reading myth with dramatic fragments flying"},
+            {"text": "Taxes work\nin brackets\nlike a staircase", "speech": "They work in brackets, like a staircase. Each step has a different rate.", "img": "a grand marble staircase with each step labeled a different percentage"},
+            {"text": "First $11,000\nyou earn?\nOnly 10% tax", "speech": "The first eleven thousand dollars you earn is only taxed at ten percent.", "img": "a small neat pile of bills on a desk with a ten percent tag"},
+            {"text": "Next $34,000\ntaxed at 12%", "speech": "The next thirty four thousand is taxed at twelve percent.", "img": "a calculator showing tax percentages with golden coins beside it"},
+            {"text": "$45K to $95K\ntaxed at 22%", "speech": "Money between forty five and ninety five thousand is taxed at twenty two percent. Only the money above each step gets the higher rate.", "img": "a layered bar chart showing income brackets at different color levels"},
+            {"text": "Only money ABOVE\neach step gets\nthe higher rate", "speech": "So if you earn fifty thousand dollars, you don't pay twenty two percent on all of it.", "img": "a staircase with money on each step and arrows pointing to different rates"},
+            {"text": "Earn $50K?\nYou pay about\n$6,600 in tax\nnot $11,000", "speech": "You pay ten percent on the first chunk, twelve on the next, and twenty two only on the last portion. Your total tax is about sixty six hundred.", "img": "money divided into three color coded portions on a dark table"},
+            {"text": "Your effective rate\nis about 13%\nnot 22%", "speech": "Which is an effective rate of about thirteen percent, not twenty two.", "img": "a percentage display showing thirteen in green instead of twenty two in red"},
+            {"text": "A raise will NEVER\nmake you lose money\nThats a myth", "speech": "A raise will never make you lose money overall. That is a complete myth. Never turn down more money because you think you'll lose it to taxes.", "img": "a person celebrating a pay raise with confetti and a bigger paycheck"},
         ],
-        "voiceover": "You do not pay thirty percent on everything you earn. That is the biggest myth in finance and it stops people from making more money. Here's how taxes actually work. They work in brackets, like a staircase. Each step has a different rate. The first eleven thousand dollars you earn is only taxed at ten percent. The next thirty four thousand is taxed at twelve percent. Money between forty five and ninety five thousand is taxed at twenty two percent. The key is that only the money above each step gets the higher rate. Not all of your income. So if you earn fifty thousand dollars, you don't pay twenty two percent on all of it. You pay ten percent on the first chunk, twelve on the next, and twenty two only on the last portion. Your actual total tax is about sixty six hundred, which is an effective rate of about thirteen percent, not twenty two. A raise will never make you lose money overall. That is a complete myth. Never turn down more money because you think you'll lose it to taxes. You won't. You always keep more than you give.",
         "keywords": ["Taxes", "Tax Brackets", "Income Tax"],
     },
     {
         "title": "Debt Snowball vs Avalanche",
-        "search_queries": ["snowball rolling downhill", "credit card debt pile", "list notebook planning", "celebration confetti win", "avalanche mountain snow", "debt free happy person", "calculator paying bills", "person crossing finish line", "weight lifted shoulders", "money freedom chains broken"],
         "slides": [
-            {"text": "Got debt?\n2 proven ways\nto destroy it", "duration": 5},
-            {"text": "Method 1\nDebt Snowball", "duration": 4},
-            {"text": "List all debts\nsmallest to largest\nIgnore interest rates", "duration": 5},
-            {"text": "Pay off the\nsmallest one first\nget a quick win", "duration": 5},
-            {"text": "Then roll that\npayment into\nthe next debt", "duration": 5},
-            {"text": "Method 2\nDebt Avalanche", "duration": 4},
-            {"text": "Pay off the\nhighest interest\nrate first", "duration": 5},
-            {"text": "You save the\nmost money\non interest", "duration": 5},
-            {"text": "Snowball wins\non motivation\nAvalanche wins\non math", "duration": 6},
-            {"text": "Pick one today\nand stick with it\nBoth work\nconsistency wins", "duration": 6},
+            {"text": "Got debt?\n2 proven ways\nto destroy it", "speech": "Got debt? There are two proven ways to destroy it.", "img": "a pile of overdue bills and credit cards on a table with dramatic red light"},
+            {"text": "Method 1\nDebt Snowball", "speech": "Method one is the debt snowball.", "img": "a glowing white snowball rolling downhill growing massive in moonlight"},
+            {"text": "List all debts\nsmallest to largest\nIgnore interest rates", "speech": "List all your debts from smallest balance to largest. Ignore the interest rates completely. Pay the minimum on everything except the smallest debt.", "img": "a notebook with a ranked list of debts from small to large amounts"},
+            {"text": "Pay off the\nsmallest one first\nget a quick win", "speech": "Throw every extra dollar at that smallest one. When it's paid off, take that entire payment and roll it into the next smallest debt. You get quick wins that keep you motivated.", "img": "a golden trophy being lifted in celebration with sparkles and light"},
+            {"text": "Then roll that\npayment into\nthe next debt", "speech": "Method two is the debt avalanche.", "img": "a powerful snow avalanche crashing down a mountain with dramatic force"},
+            {"text": "Method 2\nDebt Avalanche", "speech": "Instead of smallest balance, you target the debt with the highest interest rate first.", "img": "a red bullseye target with an arrow hitting the center precisely"},
+            {"text": "Pay off the\nhighest interest\nrate first", "speech": "This saves you the most money on interest over time because you're eliminating the most expensive debt first.", "img": "a large red percentage symbol being smashed and crumbling apart"},
+            {"text": "You save the\nmost money\non interest", "speech": "Snowball wins on motivation. When you see debts disappearing quickly, it feels amazing.", "img": "a happy person pumping their fist in triumph with a glowing background"},
+            {"text": "Snowball wins\non motivation\nAvalanche wins\non math", "speech": "Avalanche wins on pure math. You pay less total interest. Honestly, both methods work.", "img": "a split screen showing heart versus calculator representing emotion versus math"},
+            {"text": "Pick one today\nand stick with it\nBoth work\nconsistency wins", "speech": "The best one is whichever one you'll actually stick with. Pick one today and commit to it. Consistency beats perfection every time.", "img": "a determined person walking a straight path toward a glowing finish line"},
         ],
-        "voiceover": "Got debt? There are two proven ways to destroy it. Method one is the debt snowball. List all your debts from smallest balance to largest. Ignore the interest rates completely. Pay the minimum on everything except the smallest debt. Throw every extra dollar at that smallest one. When it's paid off, take that entire payment and roll it into the next smallest debt. You get quick wins that keep you motivated. Method two is the debt avalanche. Instead of smallest balance, you target the debt with the highest interest rate first. This saves you the most money on interest over time because you're eliminating the most expensive debt first. Snowball wins on motivation. When you see debts disappearing quickly, it feels amazing and keeps you going. Avalanche wins on pure math. You pay less total interest. Honestly, both methods work. The best one is whichever one you'll actually stick with. Pick one today and commit to it. Consistency beats perfection every time. The worst thing you can do is nothing. Start attacking your debt this week.",
         "keywords": ["Debt Snowball", "Debt Avalanche", "Debt Free"],
     },
     {
         "title": "Why You Need a Roth IRA",
-        "search_queries": ["retirement elderly happy", "piggy bank growing gold", "tax documents money", "young person phone investing", "beach retirement sunset", "million dollars cash stack", "tax free stamp green", "brokerage account screen", "couple retiring happy", "clock time growing money"],
         "slides": [
-            {"text": "A Roth IRA is\nthe biggest\ncheat code\nin finance", "duration": 5},
-            {"text": "You put in money\nyou already\npaid tax on", "duration": 5},
-            {"text": "It grows\ncompletely\ntax FREE forever", "duration": 5},
-            {"text": "You withdraw it\ntax FREE\nin retirement", "duration": 5},
-            {"text": "The government gets\nNOTHING when\nyou take it out", "duration": 5},
-            {"text": "Max contribution\n$7,000 per year", "duration": 5},
-            {"text": "Start at 18\nput in $7K yearly", "duration": 5},
-            {"text": "By 65 you could\nhave $1.9 million\nTAX FREE", "duration": 5},
-            {"text": "Open one at\nFidelity Schwab\nor Vanguard\nits free", "duration": 5},
-            {"text": "10 minutes to set up\nA lifetime of\ntax free wealth", "duration": 5},
+            {"text": "A Roth IRA is\nthe biggest\ncheat code\nin finance", "speech": "A Roth IRA is the single biggest cheat code in personal finance. Let me explain exactly how it works.", "img": "a golden key unlocking a treasure chest overflowing with glowing coins"},
+            {"text": "You put in money\nyou already\npaid tax on", "speech": "You put in money that you've already paid taxes on. Normal after tax dollars from your paycheck.", "img": "a paycheck with dollar bills coming out of it after tax deductions"},
+            {"text": "It grows\ncompletely\ntax FREE forever", "speech": "Then that money grows completely tax free. Forever.", "img": "a glowing green upward growth chart stretching infinitely into the sky"},
+            {"text": "You withdraw it\ntax FREE\nin retirement", "speech": "And when you retire and take the money out, you pay zero taxes on it. Nothing.", "img": "a person relaxing on a tropical beach with a sunset and palm trees"},
+            {"text": "The government gets\nNOTHING when\nyou take it out", "speech": "The government doesn't get a single penny of your gains.", "img": "a large zero symbol glowing gold next to a stack of tax-free money"},
+            {"text": "Max contribution\n$7,000 per year", "speech": "You can contribute up to seven thousand dollars per year.", "img": "a glass jar filled to the brim with seven thousand dollars in cash"},
+            {"text": "Start at 18\nput in $7K yearly", "speech": "If you start at eighteen and put in seven thousand every year into an S and P five hundred index fund.", "img": "a young adult at a desk opening their first investment account excited"},
+            {"text": "By 65 you could\nhave $1.9 million\nTAX FREE", "speech": "By sixty five you could have one point nine million dollars. Completely tax free. Not a dollar goes to taxes.", "img": "stacks of gold bars and cash in a vault with the number 1.9 million"},
+            {"text": "Open one at\nFidelity Schwab\nor Vanguard\nits free", "speech": "Go to Fidelity, Schwab, or Vanguard online. It's completely free to open. Pick an S and P five hundred index fund.", "img": "a smartphone showing a brokerage app account creation screen glowing"},
+            {"text": "10 minutes to set up\nA lifetime of\ntax free wealth", "speech": "The entire process takes about ten minutes. Ten minutes of setup for a lifetime of tax free wealth. Open it today.", "img": "a clock showing ten minutes next to a lifetime of growing wealth"},
         ],
-        "voiceover": "A Roth IRA is the single biggest cheat code in personal finance. Let me explain exactly how it works. You put in money that you've already paid taxes on. Normal after tax dollars from your paycheck. Then that money grows completely tax free. Forever. And here's the best part. When you retire and take the money out, you pay zero taxes on it. Nothing. The government doesn't get a single penny of your gains. You can contribute up to seven thousand dollars per year. If you start at eighteen and put in seven thousand every year into an S and P five hundred index fund, by sixty five you could have one point nine million dollars. Completely tax free. Not a dollar of that goes to taxes. How do you open one? Go to Fidelity, Schwab, or Vanguard online. It's completely free to open. Pick an S and P five hundred index fund. Set up automatic monthly contributions. The entire process takes about ten minutes. Ten minutes of setup for a lifetime of tax free wealth. If you're under fifty nine and a half, there's no excuse not to have one. Open it today.",
         "keywords": ["Roth IRA", "Retirement", "Tax Free Investing"],
     },
     {
         "title": "Dollar Cost Averaging Explained",
-        "search_queries": ["stock chart up and down zigzag", "person buying phone app", "market crash red screen", "shopping sale discount signs", "calendar monthly reminder", "portfolio growth chart long", "autopilot airplane cockpit", "consistent routine morning", "long road highway distance", "tortoise winning race"],
         "slides": [
-            {"text": "Stop trying to\ntime the market\nNobody can do it", "duration": 5},
-            {"text": "Not even experts\nhedge funds or\nTV analysts", "duration": 5},
-            {"text": "Instead invest\nthe same amount\nevery single month", "duration": 5},
-            {"text": "Market goes up?\nYou buy\nfewer shares", "duration": 5},
-            {"text": "Market crashes?\nYou buy MORE\ncheaper shares", "duration": 5},
-            {"text": "Over time your\naverage cost\nevens out", "duration": 5},
-            {"text": "This is called\nDollar Cost\nAveraging", "duration": 5},
-            {"text": "Set up automatic\ninvesting and\nforget about it", "duration": 5},
-            {"text": "Check it once a year\nnot every day", "duration": 5},
-            {"text": "Slow and steady\nwins the\nwealth race", "duration": 5},
+            {"text": "Stop trying to\ntime the market\nNobody can do it", "speech": "Stop trying to time the stock market. Nobody can do it consistently.", "img": "a broken clock next to a chaotic stock chart showing impossible timing"},
+            {"text": "Not even experts\nhedge funds or\nTV analysts", "speech": "Not hedge fund managers, not TV analysts, not your friend who says he always buys at the bottom. Nobody.", "img": "a financial news studio with screens showing conflicting market predictions"},
+            {"text": "Instead invest\nthe same amount\nevery single month", "speech": "Instead, do what actually works. Invest the exact same amount of money every single month, no matter what the market is doing.", "img": "a calendar with monthly investment dates marked and coins dropping in"},
+            {"text": "Market goes up?\nYou buy\nfewer shares", "speech": "When the market goes up, your money buys fewer shares because they're more expensive.", "img": "a rising green stock chart with fewer coins being collected at the top"},
+            {"text": "Market crashes?\nYou buy MORE\ncheaper shares", "speech": "When the market crashes, your money buys more shares because they're cheaper.", "img": "a crashed red stock chart with many coins being scooped up at a discount"},
+            {"text": "Over time your\naverage cost\nevens out", "speech": "Over time, your average cost per share evens out. This strategy is called dollar cost averaging.", "img": "a smoothed out average line running through volatile chart peaks and valleys"},
+            {"text": "This is called\nDollar Cost\nAveraging", "speech": "It removes all emotion from investing. No more panicking during crashes, no more guessing when to buy.", "img": "a calm zen person meditating surrounded by floating stock charts"},
+            {"text": "Set up automatic\ninvesting and\nforget about it", "speech": "Set up automatic monthly investing into an index fund and literally forget about it. Let it run on autopilot.", "img": "a phone with autopilot mode enabled showing automatic investment transfers"},
+            {"text": "Check it once a year\nnot every day", "speech": "Check your portfolio maybe once a year, not every single day. Studies show that investors who check daily actually earn less.", "img": "a single calendar page circled once per year in a peaceful setting"},
+            {"text": "Slow and steady\nwins the\nwealth race", "speech": "Slow and steady wins the wealth race. Consistency beats timing every single time.", "img": "a determined tortoise crossing a golden finish line ahead of a hare"},
         ],
-        "voiceover": "Stop trying to time the stock market. Nobody can do it consistently. Not hedge fund managers, not TV analysts, not your friend who says he always buys at the bottom. Nobody. Instead, do what actually works. Invest the exact same amount of money every single month, no matter what the market is doing. When the market goes up, your money buys fewer shares because they're more expensive. When the market crashes, your money buys more shares because they're cheaper. Over time, your average cost per share evens out. This strategy is called dollar cost averaging. It removes all emotion from investing. No more panicking during crashes, no more guessing when to buy. Set up automatic monthly investing into an index fund and literally forget about it. Let it run on autopilot. Check your portfolio maybe once a year, not every single day. Studies show that investors who check their portfolio daily actually earn less than those who check once a year because they panic and make bad decisions. Slow and steady wins the wealth race. Consistency beats timing every single time.",
         "keywords": ["Dollar Cost Averaging", "Investing Strategy", "Passive Investing"],
     },
     {
         "title": "How Banks Make Money From You",
-        "search_queries": ["bank building exterior grand", "credit card swiping machine", "loan documents signing pen", "interest rate percentage board", "atm machine withdrawing", "person reading fine print", "high yield savings phone", "online bank neon sign", "person switching banks happy", "money growing comparison"],
         "slides": [
-            {"text": "Banks make money\nFROM you\nheres exactly how", "duration": 5},
-            {"text": "You deposit $1,000\nthey pay you\n0.01% interest", "duration": 5},
-            {"text": "Thats 10 cents\nper year\nfor your money", "duration": 5},
-            {"text": "They lend YOUR\nmoney out to\nothers at 7%", "duration": 5},
-            {"text": "They keep the\ndifference as\nprofit", "duration": 4},
-            {"text": "Plus overdraft fees\nlate fees and\nhidden charges", "duration": 5},
-            {"text": "Banks made $200\nbillion in fees\nlast year alone", "duration": 5},
-            {"text": "How to fight back?\nSwitch to a high\nyield savings account", "duration": 5},
-            {"text": "Online banks pay\n4-5% interest\nnot 0.01%", "duration": 5},
-            {"text": "Same FDIC protection\n400x more interest\ngoing to YOU", "duration": 6},
+            {"text": "Banks make money\nFROM you\nheres exactly how", "speech": "Banks make money from you and most people have no idea how much. Here's the full picture.", "img": "a massive grand bank building with imposing marble columns at night"},
+            {"text": "You deposit $1,000\nthey pay you\n0.01% interest", "speech": "You deposit a thousand dollars. They pay you zero point zero one percent interest. That's ten cents per year.", "img": "a few tiny copper pennies sitting alone on a vast empty dark surface"},
+            {"text": "Thats 10 cents\nper year\nfor your money", "speech": "Ten cents for lending them your money.", "img": "a single dime coin sitting on a dark table looking insignificant"},
+            {"text": "They lend YOUR\nmoney out to\nothers at 7%", "speech": "Then they take your money and lend it out to other people at seven percent interest. They keep the entire difference as profit.", "img": "a bank vault with money flowing out one door and profits pouring in"},
+            {"text": "They keep the\ndifference as\nprofit", "speech": "On top of that they charge overdraft fees, late payment fees, monthly maintenance fees, and dozens of hidden charges.", "img": "fine print on a document with hidden fees highlighted in red ink"},
+            {"text": "Plus overdraft fees\nlate fees and\nhidden charges", "speech": "American banks made over two hundred billion dollars in fees last year alone. From regular people like you and me.", "img": "mountains of gold coins piling up inside a bank vault overflowing"},
+            {"text": "Banks made $200\nbillion in fees\nlast year alone", "speech": "So how do you fight back?", "img": "a raised fist silhouette against a glowing background of resistance"},
+            {"text": "How to fight back?\nSwitch to a high\nyield savings account", "speech": "Switch to a high yield savings account at an online bank. They pay four to five percent interest on your savings.", "img": "a glowing smartphone showing a high yield savings account with big returns"},
+            {"text": "Online banks pay\n4-5% interest\nnot 0.01%", "speech": "That's literally four hundred times more interest going into your pocket.", "img": "money multiplying rapidly with green upward arrows and growing stacks"},
+            {"text": "Same FDIC protection\n400x more interest\ngoing to YOU", "speech": "They have the same FDIC insurance as big banks. Same safety, way more money for you. Make the switch.", "img": "a glowing shield with FDIC written on it protecting a stack of cash"},
         ],
-        "voiceover": "Banks make money from you and most people have no idea how much. Here's the full picture. You deposit a thousand dollars. They pay you zero point zero one percent interest. That's ten cents per year for lending them your money. Then they take your money and lend it out to other people at seven percent interest. They keep the entire difference as profit. On top of that they charge overdraft fees, late payment fees, monthly maintenance fees, and dozens of hidden charges buried in the fine print. American banks made over two hundred billion dollars in fees last year alone. Two hundred billion from regular people like you and me. So how do you fight back? Switch to a high yield savings account at an online bank. Names like Marcus, Ally, or Wealthfront. They pay four to five percent interest on your savings instead of zero point zero one. That's literally four hundred times more interest going into your pocket. They have the same FDIC insurance as big banks, meaning your money is equally protected up to two hundred fifty thousand dollars. Same safety, way more money for you. Make the switch.",
         "keywords": ["Banks", "High Yield Savings", "Fees", "Interest"],
     },
     {
         "title": "Why Renting Is Not Throwing Money Away",
-        "search_queries": ["apartment building modern city", "house with sold sign", "money pit hole ground", "repair tools maintenance work", "mortgage calculator screen", "person moving boxes heavy", "home inspection damage found", "renter relaxing couch happy", "financial calculator planning", "flexibility freedom road"],
         "slides": [
-            {"text": "Renting is NOT\nthrowing money away\nheres the truth", "duration": 5},
-            {"text": "A $400K house costs\n$2,800 per month\njust in mortgage", "duration": 5},
-            {"text": "Add property taxes\ninsurance repairs\nand HOA fees", "duration": 5},
-            {"text": "Real cost?\n$3,500+ per month\nnot $2,800", "duration": 5},
-            {"text": "First 7 years\nmost of your\npayment is INTEREST", "duration": 5},
-            {"text": "Youre paying\nthe bank\nnot building equity", "duration": 5},
-            {"text": "Renting gives you\nflexibility and\nzero surprise costs", "duration": 5},
-            {"text": "Invest the difference\nbetween rent and\nownership costs", "duration": 5},
-            {"text": "Only buy when\nyoull stay 5+ years\nand the math\nactually works", "duration": 6},
-            {"text": "There is no shame\nin renting\nIts a smart\nfinancial choice", "duration": 5},
+            {"text": "Renting is NOT\nthrowing money away\nheres the truth", "speech": "Everyone says renting is throwing money away. That's completely wrong. Let me show you the real math.", "img": "a modern luxury apartment building with glass balconies lit up at night"},
+            {"text": "A $400K house costs\n$2,800 per month\njust in mortgage", "speech": "A four hundred thousand dollar house costs about twenty eight hundred a month in mortgage payments alone.", "img": "a beautiful suburban house with a for sale sign and a large price tag"},
+            {"text": "Add property taxes\ninsurance repairs\nand HOA fees", "speech": "But that's not the real cost. Add property taxes, homeowners insurance, maintenance, repairs, and HOA fees.", "img": "a tall stack of bills and expense invoices piling up on a desk"},
+            {"text": "Real cost?\n$3,500+ per month\nnot $2,800", "speech": "You're actually paying thirty five hundred or more per month.", "img": "a calculator showing a surprisingly high total cost number glowing red"},
+            {"text": "First 7 years\nmost of your\npayment is INTEREST", "speech": "And in the first seven years of your mortgage, most of your monthly payment goes to interest, not equity. You're paying the bank, not building wealth.", "img": "money flowing from a house into a bank building through a pipeline"},
+            {"text": "Youre paying\nthe bank\nnot building equity", "speech": "Meanwhile renting gives you flexibility to move for better jobs, zero surprise repair costs.", "img": "a person walking freely through an open door to a new city skyline"},
+            {"text": "Renting gives you\nflexibility and\nzero surprise costs", "speech": "And no risk of your home losing value.", "img": "a person relaxing comfortably on a modern apartment couch looking happy"},
+            {"text": "Invest the difference\nbetween rent and\nownership costs", "speech": "If rent is cheaper than owning, take the difference and invest it in index funds. You might build more wealth as a renter.", "img": "money being redirected from housing costs into a growing investment chart"},
+            {"text": "Only buy when\nyoull stay 5+ years\nand the math\nactually works", "speech": "Only buy a house when you plan to stay at least five years and the numbers actually make sense for your income.", "img": "a house key being held up with a five year timeline and calculator"},
+            {"text": "There is no shame\nin renting\nIts a smart\nfinancial choice", "speech": "There is absolutely no shame in renting. It's often the smarter financial choice.", "img": "a confident person standing proudly in their well-decorated rental apartment"},
         ],
-        "voiceover": "Everyone says renting is throwing money away. That's completely wrong. Let me show you the real math. A four hundred thousand dollar house costs about twenty eight hundred a month in mortgage payments alone. But that's not the real cost. Add property taxes, homeowners insurance, maintenance, repairs, and HOA fees. You're actually paying thirty five hundred or more per month. And here's the part nobody mentions. In the first seven years of your mortgage, most of your monthly payment goes to interest, not equity. You're basically paying the bank, not building wealth. Meanwhile renting gives you flexibility to move for better jobs, zero surprise repair costs, and no risk of your home losing value. If rent is cheaper than owning in your area, take the difference and invest it in index funds. You might actually build more wealth as a renter than an owner. Only buy a house when you plan to stay at least five years and the numbers actually make sense for your income. There is absolutely no shame in renting. It's often the smarter financial choice.",
         "keywords": ["Renting vs Buying", "Real Estate", "Housing"],
     },
     {
         "title": "Pay Yourself First",
-        "search_queries": ["paycheck direct deposit screen", "savings account phone app", "bills stack pile stress", "empty wallet broke sad", "money growing plant small", "automatic bank transfer setup", "wealthy confident person suit", "financial freedom sunset walk", "piggy bank overflowing coins", "person budget planning calm"],
         "slides": [
-            {"text": "The number 1 rule\nof building wealth", "duration": 5},
-            {"text": "Pay yourself\nFIRST\nbefore anything else", "duration": 5},
-            {"text": "Most people pay\nbills first then\nsave whats left", "duration": 5},
-            {"text": "But theres never\nanything left\nand you know it", "duration": 5},
-            {"text": "Flip it completely", "duration": 3},
-            {"text": "The second your\npaycheck hits\nsave 20%\nimmediately", "duration": 5},
-            {"text": "Set up automatic\ntransfer so you\nnever see it", "duration": 5},
-            {"text": "After 2 weeks\nyou wont even\nnotice its gone", "duration": 5},
-            {"text": "You adjust your\nspending naturally\nwithout trying", "duration": 5},
-            {"text": "Every millionaire\ndoes this\nIts not about income\nits about the habit", "duration": 6},
+            {"text": "The number 1 rule\nof building wealth", "speech": "The number one rule of building wealth. Pay yourself first, before you pay anyone or anything else.", "img": "a golden number one trophy on a pedestal with dramatic spotlight"},
+            {"text": "Pay yourself\nFIRST\nbefore anything else", "speech": "Most people do it backwards. They pay their rent, their bills, buy groceries, maybe eat out.", "img": "a person stressed at a desk surrounded by bills and expense envelopes"},
+            {"text": "Most people pay\nbills first then\nsave whats left", "speech": "And then try to save whatever is left at the end of the month.", "img": "an empty wallet turned upside down with nothing falling out in dim light"},
+            {"text": "But theres never\nanything left\nand you know it", "speech": "But there's never anything left. You know it, I know it. Flip it completely.", "img": "a bank account screen showing zero balance with red empty indicator"},
+            {"text": "Flip it completely", "speech": "The second your paycheck hits your bank account, automatically move twenty percent into savings.", "img": "a dramatic switch being flipped from off to on with sparks flying"},
+            {"text": "The second your\npaycheck hits\nsave 20%\nimmediately", "speech": "Set up the automatic transfer so you never even see that money. It goes away before you can spend it.", "img": "a phone showing an automatic bank transfer moving money to savings"},
+            {"text": "Set up automatic\ntransfer so you\nnever see it", "speech": "After about two weeks, you completely forget about it.", "img": "a robot hand pressing an automate button on a sleek control panel"},
+            {"text": "After 2 weeks\nyou wont even\nnotice its gone", "speech": "You adjust your spending naturally without even trying. It doesn't feel like sacrifice.", "img": "a relaxed person sitting comfortably with a smile looking content"},
+            {"text": "You adjust your\nspending naturally\nwithout trying", "speech": "Every single millionaire does this. It doesn't matter if they make fifty thousand or five hundred thousand a year.", "img": "a silhouette of a wealthy person on a rooftop overlooking city lights"},
+            {"text": "Every millionaire\ndoes this\nIts not about income\nits about the habit", "speech": "It's not about how much you earn. It's about building the habit of keeping what you earn.", "img": "a chain of golden habits linking together forming a strong rope upward"},
         ],
-        "voiceover": "The number one rule of building wealth. Pay yourself first, before you pay anyone or anything else. Most people do it backwards. They pay their rent, their bills, buy groceries, maybe eat out a few times, and then try to save whatever is left at the end of the month. But there's never anything left. You know it, I know it. Flip it completely. The second your paycheck hits your bank account, automatically move twenty percent into a separate savings or investment account. Set up the automatic transfer so you never even see that money. It goes away before you can spend it. Here's what happens next. After about two weeks, you completely forget about it. You adjust your spending naturally without even trying. You find ways to spend less because you have less available. It doesn't feel like sacrifice, it just becomes your new normal. Every single millionaire does this. It doesn't matter if they make fifty thousand or five hundred thousand a year. They all pay themselves first. It's not about how much you earn. It's about building the habit of keeping what you earn.",
         "keywords": ["Pay Yourself First", "Savings Habit", "Wealth Building"],
     },
     {
         "title": "What Is an ETF and Why Everyone Buys Them",
-        "search_queries": ["stock exchange building floor", "shopping basket colorful variety", "phone investing app screen", "diversified food plate healthy", "low price tag clearance", "graph growing steadily upward", "person relaxing hammock beach", "index fund comparison chart", "piggy bank gold coins shiny", "beginner investor young"],
         "slides": [
-            {"text": "What is an ETF\nand why does\neveryone buy them?", "duration": 5},
-            {"text": "ETF stands for\nExchange Traded Fund", "duration": 4},
-            {"text": "Think of it like\na basket holding\nhundreds of stocks", "duration": 5},
-            {"text": "Instead of picking\none company\nyou own hundreds\nat once", "duration": 5},
-            {"text": "If one company\nfails the rest\nkeep you safe", "duration": 5},
-            {"text": "ETFs trade like\nregular stocks\nbuy and sell anytime", "duration": 5},
-            {"text": "Fees are tiny\nusually under 0.1%\nper year", "duration": 5},
-            {"text": "Compare that to\nmutual funds\ncharging 1-2%", "duration": 5},
-            {"text": "Popular ETFs?\nVOO SPY QQQ\nstart with $10", "duration": 5},
-            {"text": "Its the simplest\nsafest way for\nbeginners to\nstart investing", "duration": 6},
+            {"text": "What is an ETF\nand why does\neveryone buy them?", "speech": "What is an E T F and why does literally everyone buy them?", "img": "a busy stock exchange trading floor with screens and traders in action"},
+            {"text": "ETF stands for\nExchange Traded Fund", "speech": "E T F stands for exchange traded fund.", "img": "glowing letters ETF floating above a financial data dashboard screen"},
+            {"text": "Think of it like\na basket holding\nhundreds of stocks", "speech": "Think of it like a shopping basket that holds hundreds of different stocks inside it.", "img": "a golden basket overflowing with miniature stock certificates and coins"},
+            {"text": "Instead of picking\none company\nyou own hundreds\nat once", "speech": "Instead of picking one single company and hoping it does well, you own hundreds of companies all at once.", "img": "hundreds of small company logos arranged in a colorful mosaic pattern"},
+            {"text": "If one company\nfails the rest\nkeep you safe", "speech": "If one company completely fails, the rest of the basket keeps your money safe. That's the power of diversification.", "img": "a glowing protective shield dome covering a collection of company icons"},
+            {"text": "ETFs trade like\nregular stocks\nbuy and sell anytime", "speech": "E T Fs trade just like regular stocks. You can buy and sell them anytime during market hours with just a few taps on your phone.", "img": "a hand tapping a buy button on a sleek trading app on a smartphone"},
+            {"text": "Fees are tiny\nusually under 0.1%\nper year", "speech": "The fees are incredibly low, usually under zero point one percent per year.", "img": "a tiny price tag showing 0.1 percent next to a large pile of savings"},
+            {"text": "Compare that to\nmutual funds\ncharging 1-2%", "speech": "Compare that to traditional mutual funds that charge one to two percent. That difference saves you tens of thousands over your lifetime.", "img": "two scales comparing a tiny fee versus a large fee with dramatic contrast"},
+            {"text": "Popular ETFs?\nVOO SPY QQQ\nstart with $10", "speech": "The most popular E T Fs are V O O and S P Y which track the S and P five hundred, and Q Q Q which tracks top tech companies. You can start with as little as ten dollars.", "img": "glowing stock ticker symbols VOO SPY QQQ on a futuristic dark display"},
+            {"text": "Its the simplest\nsafest way for\nbeginners to\nstart investing", "speech": "It's the simplest, safest, and cheapest way for beginners to start investing. Open a free brokerage account and buy your first E T F today.", "img": "a welcoming open door with warm light leading to a path of gold coins"},
         ],
-        "voiceover": "What is an E T F and why does literally everyone buy them? E T F stands for exchange traded fund. Think of it like a shopping basket that holds hundreds of different stocks inside it. Instead of picking one single company and hoping it does well, you own hundreds of companies all at once. If one company completely fails, the rest of the basket keeps your money safe. That's the power of diversification. E T Fs trade just like regular stocks on the stock market. You can buy and sell them anytime during market hours with just a few taps on your phone. The fees are incredibly low, usually under zero point one percent per year. Compare that to traditional mutual funds that charge one to two percent. That difference saves you tens of thousands over your lifetime. The most popular E T Fs are V O O and S P Y which track the S and P five hundred, and Q Q Q which tracks the top tech companies. You can start with as little as ten dollars. It's honestly the simplest, safest, and cheapest way for beginners to start investing. Open a free brokerage account and buy your first E T F today.",
         "keywords": ["ETF", "Exchange Traded Fund", "Index Investing"],
     },
     {
         "title": "How Credit Cards Actually Work",
-        "search_queries": ["credit card close up shiny gold", "shopping store checkout counter", "calendar payment due date", "money growing compound interest", "person paying phone tap", "debt trap chain heavy", "credit score screen green", "zero balance bank statement", "smart shopper rewards points", "financial discipline planner"],
         "slides": [
-            {"text": "How credit cards\nactually work\nno one teaches this", "duration": 5},
-            {"text": "The bank gives\nyou a spending\nlimit", "duration": 5},
-            {"text": "You buy stuff now\nand pay for it\nlater", "duration": 5},
-            {"text": "Pay the FULL\nbalance each month?\nZero interest charged", "duration": 5},
-            {"text": "Its literally\nfree money plus\ncashback and points", "duration": 5},
-            {"text": "Only pay the\nminimum amount?", "duration": 4},
-            {"text": "They charge 20-30%\ninterest on\neverything left", "duration": 5},
-            {"text": "$1,000 balance\nat 25% interest\n= $250 per year\njust in interest", "duration": 6},
-            {"text": "The rule is simple\nNever spend more\nthan you can\npay off monthly", "duration": 6},
-            {"text": "Use cards for\nrewards not\nfor borrowing\nThats the secret", "duration": 5},
+            {"text": "How credit cards\nactually work\nno one teaches this", "speech": "How do credit cards actually work? Nobody teaches this in school.", "img": "a shiny gold credit card floating with a glowing halo in dark space"},
+            {"text": "The bank gives\nyou a spending\nlimit", "speech": "The bank gives you a credit limit, that's the max you can spend.", "img": "a bank building with a glowing approved stamp and credit limit number"},
+            {"text": "You buy stuff now\nand pay for it\nlater", "speech": "You buy things now and pay for them later. Here's where it gets critical.", "img": "a shopping cart full of items with a pay later countdown timer"},
+            {"text": "Pay the FULL\nbalance each month?\nZero interest charged", "speech": "If you pay the full balance every single month before the due date, you are charged zero interest. Nothing. The bank is giving you a free loan.", "img": "a large glowing green zero percent with a checkmark beside it"},
+            {"text": "Its literally\nfree money plus\ncashback and points", "speech": "Some cards even give you one to five percent cashback or travel points on top of that. Free money.", "img": "golden coins and reward points flying upward from a credit card"},
+            {"text": "Only pay the\nminimum amount?", "speech": "But if you only pay the minimum amount.", "img": "a tiny minimum payment slip glowing red with a warning symbol"},
+            {"text": "They charge 20-30%\ninterest on\neverything left", "speech": "They charge you twenty to thirty percent interest on everything that's left.", "img": "a massive red percentage number crushing a pile of money beneath it"},
+            {"text": "$1,000 balance\nat 25% interest\n= $250 per year\njust in interest", "speech": "A thousand dollar balance at twenty five percent interest costs you two hundred fifty dollars per year just in interest charges.", "img": "money being drained through a funnel into a dark pit of debt"},
+            {"text": "The rule is simple\nNever spend more\nthan you can\npay off monthly", "speech": "The rule is dead simple. Never put something on a credit card unless you can pay it off in full that same month.", "img": "a golden rule tablet with simple text glowing on a dark pedestal"},
+            {"text": "Use cards for\nrewards not\nfor borrowing\nThats the secret", "speech": "Use credit cards for the rewards and cashback, never for borrowing money you don't have. That's the secret.", "img": "a glowing golden key unlocking a treasure chest of credit card rewards"},
         ],
-        "voiceover": "How do credit cards actually work? Nobody teaches this in school. The bank gives you a credit limit, that's the max you can spend. You buy things now and pay for them later. Here's where it gets critical. If you pay the full balance every single month before the due date, you are charged zero interest. Nothing. The bank is giving you a free loan for thirty days. Some cards even give you one to five percent cashback or travel points on top of that. Free money. But if you only pay the minimum amount, they charge you twenty to thirty percent interest on everything that's left. A thousand dollar balance at twenty five percent interest costs you two hundred fifty dollars per year just in interest charges. That balance barely goes down because your minimum payment mostly covers interest, not the actual debt. The rule is dead simple. Never put something on a credit card unless you can pay it off in full that same month. Use credit cards for the rewards and cashback, never for borrowing money you don't have. That's the secret to using credit cards like rich people do.",
         "keywords": ["Credit Cards", "Interest Rates", "Cashback"],
     },
     {
         "title": "What Is a 401k Retirement Plan",
-        "search_queries": ["office worker desk computer", "paycheck stub detailed", "employer handshake deal", "money doubling growing", "tax form documents pile", "retirement couple beach happy", "compound growth chart exponential", "birthday cake candles many", "golden nest egg basket", "free money sign neon"],
         "slides": [
-            {"text": "What is a 401k?\nLet me explain it\nsimply", "duration": 5},
-            {"text": "Its a retirement\nsavings account\nthrough your job", "duration": 5},
-            {"text": "Money comes out\nof your paycheck\nBEFORE taxes", "duration": 5},
-            {"text": "Earn $50K?\nPut in $5K?\nYou only pay tax\non $45K", "duration": 5},
-            {"text": "You save money\non taxes\nright now today", "duration": 5},
-            {"text": "Many employers\nMATCH what you\nput in", "duration": 5},
-            {"text": "You put in $100\nthey put in $100\nthats DOUBLE", "duration": 5},
-            {"text": "Its literally free\nmoney from your boss", "duration": 5},
-            {"text": "Always contribute\nenough to get\nthe full match", "duration": 5},
-            {"text": "Saying no to\nthe match is like\nburning free money\nDont do it", "duration": 5},
+            {"text": "What is a 401k?\nLet me explain it\nsimply", "speech": "What is a four oh one K? Let me explain it simply so you actually understand it.", "img": "an official retirement plan document with a golden 401k seal on it"},
+            {"text": "Its a retirement\nsavings account\nthrough your job", "speech": "It's a retirement savings account that you get through your employer.", "img": "a modern corporate office with employees at desks and warm lighting"},
+            {"text": "Money comes out\nof your paycheck\nBEFORE taxes", "speech": "Money comes out of your paycheck before taxes are calculated.", "img": "a paycheck with money being redirected before a tax gate labeled taxes"},
+            {"text": "Earn $50K?\nPut in $5K?\nYou only pay tax\non $45K", "speech": "If you earn fifty thousand and put five thousand into your four oh one K, you only pay income tax on forty five thousand. You save money on taxes right now.", "img": "a tax bill getting smaller with a green savings checkmark beside it"},
+            {"text": "You save money\non taxes\nright now today", "speech": "But here's the absolute best part.", "img": "confetti and sparkles bursting from a golden gift box surprise moment"},
+            {"text": "Many employers\nMATCH what you\nput in", "speech": "Many employers will match what you contribute. You put in a hundred dollars, they put in a hundred dollars.", "img": "two stacks of money side by side doubling with an employer match label"},
+            {"text": "You put in $100\nthey put in $100\nthats DOUBLE", "speech": "Your money instantly doubles before it even starts growing. That is free money from your boss.", "img": "a hundred dollar bill splitting into two identical bills with magic glow"},
+            {"text": "Its literally free\nmoney from your boss", "speech": "The most important rule is always contribute at least enough to get the full employer match.", "img": "a hand offering a gift box of money with a free label glowing green"},
+            {"text": "Always contribute\nenough to get\nthe full match", "speech": "If they match up to six percent of your salary, make sure you put in at least six percent.", "img": "a progress bar filling to six percent with a green full match indicator"},
+            {"text": "Saying no to\nthe match is like\nburning free money\nDont do it", "speech": "Saying no to the employer match is exactly like your boss handing you free money and you saying no thanks. Don't be one of those people.", "img": "hundred dollar bills catching fire and burning away in dramatic flames"},
         ],
-        "voiceover": "What is a four oh one K? Let me explain it simply so you actually understand it. It's a retirement savings account that you get through your employer. Money comes out of your paycheck before taxes are calculated. So if you earn fifty thousand and put five thousand into your four oh one K, you only pay income tax on forty five thousand. You literally save money on taxes right now, today. But here's the absolute best part. Many employers will match what you contribute. You put in a hundred dollars, they put in a hundred dollars. Your money instantly doubles before it even starts growing. That is free money from your boss. The most important rule is always contribute at least enough to get the full employer match. If they match up to six percent of your salary, make sure you put in at least six percent. Saying no to the employer match is exactly like your boss handing you free money and you saying no thanks, I don't want it. Nobody would do that with cash, but millions of people do it with their four oh one K every single day. Don't be one of them.",
         "keywords": ["401k", "Retirement Plan", "Employer Match"],
     },
     {
         "title": "Why You Should Never Lease a Car",
-        "search_queries": ["car dealership shiny lot", "car keys handover deal", "monthly payment bill stack", "car depreciation value drop", "person driving used car", "used car reliable lot", "money going down drain", "calculator car payment loan", "person buying used car happy", "financial mistake warning"],
         "slides": [
-            {"text": "Never lease a car\nand heres exactly\nwhy", "duration": 5},
-            {"text": "A lease is just\nlong term renting\nwith extra rules", "duration": 5},
-            {"text": "You pay $400/month\nfor 3 years\nthats $14,400 total", "duration": 5},
-            {"text": "After 3 years\nyou own absolutely\nNOTHING", "duration": 5},
-            {"text": "You hand the\ncar back and\nstart over", "duration": 5},
-            {"text": "Plus mileage limits\nwear charges and\nhidden fees", "duration": 5},
-            {"text": "Go over the\nmileage limit?\nPay 25 cents\nper extra mile", "duration": 5},
-            {"text": "Instead buy a\nreliable used car\n2-3 years old", "duration": 5},
-            {"text": "Pay it off then\ndrive it for\n7-10 more years\npayment free", "duration": 5},
-            {"text": "You save $30,000+\ncompared to leasing\ntwice over 10 years", "duration": 5},
+            {"text": "Never lease a car\nand heres exactly\nwhy", "speech": "Never lease a car. Here's exactly why it's one of the worst financial decisions you can make.", "img": "a shiny car dealership showroom with rows of new cars under bright lights"},
+            {"text": "A lease is just\nlong term renting\nwith extra rules", "speech": "A lease is basically long term renting with extra rules and restrictions.", "img": "a thick lease contract being signed with chains wrapping around it"},
+            {"text": "You pay $400/month\nfor 3 years\nthats $14,400 total", "speech": "You pay about four hundred dollars a month for three years. That's fourteen thousand four hundred dollars total.", "img": "calendar pages flipping with monthly payment bills stacking up each month"},
+            {"text": "After 3 years\nyou own absolutely\nNOTHING", "speech": "And after those three years, you own absolutely nothing. You hand the car right back to the dealer.", "img": "empty open hands with car keys being handed back in a dim parking lot"},
+            {"text": "You hand the\ncar back and\nstart over", "speech": "And start the whole process over again.", "img": "a circular arrow loop with a car going around endlessly never stopping"},
+            {"text": "Plus mileage limits\nwear charges and\nhidden fees", "speech": "On top of the monthly payments, there are mileage limits, usually around twelve thousand miles per year. Go over? You pay twenty five cents for every extra mile.", "img": "a car odometer close up showing high mileage with a red warning limit"},
+            {"text": "Go over the\nmileage limit?\nPay 25 cents\nper extra mile", "speech": "Plus wear and tear charges for any scratches or dents.", "img": "a car door with a scratch and a repair bill being slapped on the windshield"},
+            {"text": "Instead buy a\nreliable used car\n2-3 years old", "speech": "Instead, here's what smart people do. Buy a reliable used car that's two to three years old. Someone else already took the biggest depreciation hit.", "img": "a clean reliable used car parked on a sunny street looking great"},
+            {"text": "Pay it off then\ndrive it for\n7-10 more years\npayment free", "speech": "Pay it off in three to four years, then drive it for seven to ten more years with zero car payments.", "img": "a person driving on an open highway at sunset feeling free and happy"},
+            {"text": "You save $30,000+\ncompared to leasing\ntwice over 10 years", "speech": "Over ten years, you save over thirty thousand dollars compared to leasing twice. That's money you could invest and grow into real wealth.", "img": "a stack of thirty thousand dollars next to a growing investment chart"},
         ],
-        "voiceover": "Never lease a car. Here's exactly why it's one of the worst financial decisions you can make. A lease is basically long term renting with extra rules and restrictions. You pay about four hundred dollars a month for three years. That's fourteen thousand four hundred dollars total. And after those three years, you own absolutely nothing. You hand the car right back to the dealer and start the whole process over again. On top of the monthly payments, there are mileage limits, usually around twelve thousand miles per year. Go over? You pay twenty five cents for every extra mile. Plus wear and tear charges for any scratches or dents. Instead, here's what smart people do. Buy a reliable used car that's two to three years old. Someone else already took the biggest depreciation hit. Pay it off in three to four years, then drive it for seven to ten more years with zero car payments. Over ten years, you save over thirty thousand dollars compared to leasing twice. That's thirty thousand extra dollars you could invest and grow into real wealth.",
         "keywords": ["Car Lease", "Used Car", "Saving Money"],
     },
     {
         "title": "What Is Cryptocurrency Explained Simply",
-        "search_queries": ["bitcoin coin gold shiny", "digital code screen matrix", "blockchain network connected", "bank building traditional old", "phone crypto trading app", "price chart volatile swings", "lock security digital strong", "person confused question mark", "wallet digital crypto screen", "risk warning sign red"],
         "slides": [
-            {"text": "What is\ncryptocurrency?\nSimplest explanation", "duration": 5},
-            {"text": "Its digital money\nthat lives only\non computers", "duration": 5},
-            {"text": "No bank controls it\nNo government\ncan print more", "duration": 5},
-            {"text": "Bitcoin was first\ncreated in 2009\nby an unknown person", "duration": 5},
-            {"text": "Today there are\nthousands of\ncryptocurrencies", "duration": 4},
-            {"text": "People buy hoping\nthe price goes up\nso they can sell\nfor profit", "duration": 5},
-            {"text": "But crypto can drop\n50% in a single week\nIts extremely risky", "duration": 5},
-            {"text": "Rule 1\nNever invest more\nthan you can\nafford to lose", "duration": 5},
-            {"text": "Rule 2\nBuild your basics\nfirst emergency fund\nindex funds 401k", "duration": 6},
-            {"text": "Crypto is dessert\nnot the main meal\nGet the basics\nright first", "duration": 6},
+            {"text": "What is\ncryptocurrency?\nSimplest explanation", "speech": "What is cryptocurrency in the simplest terms possible?", "img": "a glowing golden bitcoin coin floating in a futuristic digital space"},
+            {"text": "Its digital money\nthat lives only\non computers", "speech": "It's digital money that exists only on computers. No bank controls it and no government can print more of it.", "img": "streams of glowing digital code flowing across computer screens in the dark"},
+            {"text": "No bank controls it\nNo government\ncan print more", "speech": "It runs on a technology called blockchain, which is basically a public record that everyone can see but nobody can cheat.", "img": "a glowing blockchain network of connected nodes and chains in neon blue"},
+            {"text": "Bitcoin was first\ncreated in 2009\nby an unknown person", "speech": "Bitcoin was the very first cryptocurrency, created in two thousand nine by an anonymous person or group.", "img": "a mysterious hooded figure at a computer with the bitcoin symbol glowing"},
+            {"text": "Today there are\nthousands of\ncryptocurrencies", "speech": "Today there are thousands of different cryptocurrencies.", "img": "dozens of different cryptocurrency coins scattered across a dark surface"},
+            {"text": "People buy hoping\nthe price goes up\nso they can sell\nfor profit", "speech": "People buy crypto hoping the price goes up so they can sell it later for a profit. Some people have made fortunes.", "img": "a dramatic green crypto price chart shooting upward with golden glow"},
+            {"text": "But crypto can drop\n50% in a single week\nIts extremely risky", "speech": "But crypto can drop fifty percent in a single week. It's the most volatile and risky investment available.", "img": "a red crypto chart crashing dramatically downward with alarm indicators"},
+            {"text": "Rule 1\nNever invest more\nthan you can\nafford to lose", "speech": "Rule one, never invest more than you can completely afford to lose. If you put in a thousand dollars, you should be okay with that becoming zero.", "img": "a yellow caution triangle with a risk warning symbol glowing in darkness"},
+            {"text": "Rule 2\nBuild your basics\nfirst emergency fund\nindex funds 401k", "speech": "Rule two, build your financial basics first. Emergency fund, index fund investments, four oh one K contributions. Get those set up before you think about crypto.", "img": "stacked building blocks forming a solid foundation with financial labels"},
+            {"text": "Crypto is dessert\nnot the main meal\nGet the basics\nright first", "speech": "Crypto is the dessert, not the main meal. Get the fundamentals right first, then explore crypto with money you can afford to lose.", "img": "a fancy dessert plate beside a full main course dinner on a table"},
         ],
-        "voiceover": "What is cryptocurrency in the simplest terms possible? It's digital money that exists only on computers. No bank controls it and no government can print more of it. It runs on a technology called blockchain, which is basically a public record that everyone can see but nobody can cheat. Bitcoin was the very first cryptocurrency, created in two thousand nine by an anonymous person or group. Today there are thousands of different cryptocurrencies. People buy crypto hoping the price goes up so they can sell it later for a profit. Some people have made fortunes. But here's what you need to know. Crypto can drop fifty percent in a single week. It's the most volatile and risky investment available. Rule one, never invest more than you can completely afford to lose. If you put in a thousand dollars, you should be okay with that becoming zero. Rule two, build your financial basics first. Emergency fund, index fund investments, four oh one K contributions. Get those set up and running before you even think about crypto. Crypto is the dessert, not the main meal. Get the fundamentals right first, then explore crypto with money you can afford to lose.",
         "keywords": ["Cryptocurrency", "Bitcoin", "Digital Currency"],
     },
     {
         "title": "How Insurance Works in 60 Seconds",
-        "search_queries": ["umbrella protection rain storm", "car accident aftermath", "hospital emergency entrance", "insurance contract document", "group people community large", "house fire damage smoke", "monthly payment calendar check", "family safe protected home", "shield protection icon strong", "peace of mind relaxed"],
         "slides": [
-            {"text": "How does insurance\nwork? Simplest\nexplanation ever", "duration": 5},
-            {"text": "You pay a small\namount every month\ncalled a premium", "duration": 5},
-            {"text": "Thousands of other\npeople pay the\nsame premium", "duration": 5},
-            {"text": "All that money goes\ninto one giant pool", "duration": 4},
-            {"text": "When something bad\nhappens to YOU\nthe pool covers it", "duration": 5},
-            {"text": "Car crash? Pool pays\nHospital bill?\nPool pays", "duration": 5},
-            {"text": "Youre trading\na small certain cost\nfor protection from\na huge one", "duration": 6},
-            {"text": "The 4 types\nyou need", "duration": 4},
-            {"text": "Health insurance\nAuto insurance\nRenters insurance\nLife insurance\nif you have family", "duration": 6},
-            {"text": "One bad event\nwithout insurance\ncan put you in\ndebt for years", "duration": 5},
+            {"text": "How does insurance\nwork? Simplest\nexplanation ever", "speech": "How does insurance actually work? Here's the simplest explanation ever.", "img": "a large protective umbrella shielding a person from a heavy rain storm"},
+            {"text": "You pay a small\namount every month\ncalled a premium", "speech": "You pay a small amount every month. This is called your premium.", "img": "a small stack of coins being placed into a payment slot each month"},
+            {"text": "Thousands of other\npeople pay the\nsame premium", "speech": "Thousands of other people with the same insurance also pay their premiums.", "img": "a large crowd of diverse people all contributing to one central point"},
+            {"text": "All that money goes\ninto one giant pool", "speech": "All of that money goes into one giant pool.", "img": "streams of coins and money flowing into one massive golden pool"},
+            {"text": "When something bad\nhappens to YOU\nthe pool covers it", "speech": "When something bad happens to one person in the group, that pool pays for the expenses.", "img": "a safety net catching a falling person with money cushioning the impact"},
+            {"text": "Car crash? Pool pays\nHospital bill?\nPool pays", "speech": "Car crash? The pool covers the repair and medical bills. Hospital visit? The pool covers it. House fire? The pool pays to rebuild.", "img": "a split scene showing car crash hospital and house fire all being covered"},
+            {"text": "Youre trading\na small certain cost\nfor protection from\na huge one", "speech": "You're essentially trading a small predictable cost for protection against a huge unexpected disaster.", "img": "a massive glowing shield dome protecting a family from incoming dangers"},
+            {"text": "The 4 types\nyou need", "speech": "The four types of insurance you actually need are.", "img": "four glowing icons in a row representing essential insurance types"},
+            {"text": "Health insurance\nAuto insurance\nRenters insurance\nLife insurance\nif you have family", "speech": "Health insurance, this is non negotiable. Auto insurance, required by law. Renters or homeowners insurance. And life insurance if you have a family that depends on your income.", "img": "four protective shields labeled health auto home and life in a row"},
+            {"text": "One bad event\nwithout insurance\ncan put you in\ndebt for years", "speech": "Skip the fancy extras. Just get these four basics. One bad event without insurance can put you in serious debt for years. It's not worth the risk.", "img": "a person overwhelmed by a mountain of medical bills and debt papers"},
         ],
-        "voiceover": "How does insurance actually work? Here's the simplest explanation ever. You pay a small amount every month. This is called your premium. Thousands of other people with the same insurance also pay their premiums. All of that money goes into one giant pool. When something bad happens to one person in the group, that pool pays for the expenses. Car crash? The pool covers the repair and medical bills. Hospital visit? The pool covers it. House fire? The pool pays to rebuild. You're essentially trading a small predictable cost for protection against a huge unexpected disaster. The four types of insurance you actually need are health insurance, this is non negotiable, one hospital visit without it can cost you hundreds of thousands. Auto insurance, required by law in most places. Renters or homeowners insurance, protects your stuff from theft, fire, and damage. And life insurance if you have a family that depends on your income. Skip the fancy extras insurance companies try to sell you. Just get these four basics. One bad event without insurance can put you in serious debt for years. It's not worth the risk.",
         "keywords": ["Insurance", "Health Insurance", "Financial Protection"],
     },
     {
         "title": "The Rule of 72 Will Blow Your Mind",
-        "search_queries": ["calculator close up display", "number 72 large bold", "money doubling stacks coins", "clock time passing fast", "ten percent sign green", "investment growth chart steep", "mind blown surprised face", "compound interest curve graph", "golden egg nest growing", "albert einstein chalkboard"],
         "slides": [
-            {"text": "The Rule of 72\nthe fastest math\ntrick in finance", "duration": 5},
-            {"text": "It tells you exactly\nhow fast your\nmoney DOUBLES", "duration": 5},
-            {"text": "Take 72 and\ndivide it by\nyour interest rate", "duration": 5},
-            {"text": "Thats how many\nyears until your\nmoney doubles", "duration": 5},
-            {"text": "Getting 10% returns?\n72 / 10 = 7.2 years\nto double", "duration": 5},
-            {"text": "$10,000 becomes\n$20,000 in\njust 7 years", "duration": 5},
-            {"text": "Then $40,000\nthen $80,000\nthen $160,000", "duration": 5},
-            {"text": "8 doublings turns\n$10K into $2.5\nmillion", "duration": 5},
-            {"text": "But at 1% savings\naccount? 72 / 1\n= 72 years to double", "duration": 6},
-            {"text": "Where you put\nyour money matters\nmore than how much\nyou put in", "duration": 5},
+            {"text": "The Rule of 72\nthe fastest math\ntrick in finance", "speech": "The rule of seventy two is the fastest math trick in all of finance.", "img": "a large glowing golden number 72 floating above a math equation"},
+            {"text": "It tells you exactly\nhow fast your\nmoney DOUBLES", "speech": "It tells you exactly how fast your money doubles.", "img": "a stack of money splitting into two equal stacks with sparkle effects"},
+            {"text": "Take 72 and\ndivide it by\nyour interest rate", "speech": "Take the number seventy two and divide it by your annual interest rate. The answer is how many years until your money doubles.", "img": "a calculator showing 72 divided by interest rate with glowing result"},
+            {"text": "Thats how many\nyears until your\nmoney doubles", "speech": "Getting ten percent returns in the stock market?", "img": "a stock market chart showing ten percent annual returns in green"},
+            {"text": "Getting 10% returns?\n72 / 10 = 7.2 years\nto double", "speech": "Seventy two divided by ten equals seven point two years to double your money.", "img": "a timeline showing seven years with money doubling at the end"},
+            {"text": "$10,000 becomes\n$20,000 in\njust 7 years", "speech": "So ten thousand dollars becomes twenty thousand in about seven years. Without you adding a single dollar.", "img": "ten thousand dollars transforming into twenty thousand with magical glow"},
+            {"text": "Then $40,000\nthen $80,000\nthen $160,000", "speech": "Then it doubles again to forty thousand, then eighty thousand, then one hundred sixty thousand.", "img": "an exponential curve shooting upward steeply with money milestones"},
+            {"text": "8 doublings turns\n$10K into $2.5\nmillion", "speech": "Eight doublings turns ten thousand into two point five million.", "img": "a vault door opening to reveal 2.5 million in stacked gold and cash"},
+            {"text": "But at 1% savings\naccount? 72 / 1\n= 72 years to double", "speech": "But if your money is in a savings account earning one percent, seventy two divided by one equals seventy two years to double. Your money takes a lifetime to double once.", "img": "a tiny snail crawling extremely slowly across a long empty desert road"},
+            {"text": "Where you put\nyour money matters\nmore than how much\nyou put in", "speech": "Where you put your money matters infinitely more than how much you put in. Choose wisely.", "img": "a dramatic crossroads with two paths one leading to wealth one to nothing"},
         ],
-        "voiceover": "The rule of seventy two is the fastest math trick in all of finance. It tells you exactly how fast your money doubles. Take the number seventy two and divide it by your annual interest rate. The answer is how many years until your money doubles. Getting ten percent returns in the stock market? Seventy two divided by ten equals seven point two years to double your money. So ten thousand dollars becomes twenty thousand in about seven years. Without you adding a single dollar. Then it doubles again to forty thousand, then eighty thousand, then one hundred sixty thousand. Eight doublings turns ten thousand into two point five million. But here's why this matters so much. If your money is sitting in a savings account earning one percent, seventy two divided by one equals seventy two years to double. Your money would take an entire lifetime to double once. In the stock market at ten percent, it doubles seven to eight times in that same period. Where you put your money matters infinitely more than how much you put in. Choose wisely.",
         "keywords": ["Rule of 72", "Compound Interest", "Money Doubling"],
     },
     {
         "title": "Why Lottery Winners Go Broke",
-        "search_queries": ["lottery ticket scratch off", "champagne celebration party", "mansion luxury empty pool", "empty wallet broke person", "shopping spree bags expensive", "tax bill IRS document", "friends asking money favor", "bankruptcy court gavel", "financial advisor meeting desk", "slow wealth tortoise"],
         "slides": [
-            {"text": "Why do lottery\nwinners go broke?\nIts not bad luck", "duration": 5},
-            {"text": "70% of winners\nlose everything\nwithin 5 years", "duration": 5},
-            {"text": "First the government\ntakes 40% in taxes\nright away", "duration": 5},
-            {"text": "Win $10 million?\nYou actually get\nabout $6 million", "duration": 5},
-            {"text": "Then friends and\nfamily you havent\nheard from in years\nshow up", "duration": 5},
-            {"text": "They buy mansions\ncars and stuff\nwith massive\nmaintenance costs", "duration": 5},
-            {"text": "A $5M house costs\n$50,000 per year\njust in property tax", "duration": 5},
-            {"text": "The real problem?\nThey never learned\nhow to manage money", "duration": 5},
-            {"text": "Getting money and\nkeeping money are\ntwo completely\ndifferent skills", "duration": 5},
-            {"text": "Thats why financial\neducation beats luck\nBuild wealth slowly\nit lasts", "duration": 6},
+            {"text": "Why do lottery\nwinners go broke?\nIts not bad luck", "speech": "Why do lottery winners go broke? It's not bad luck. It's a pattern.", "img": "a golden lottery ticket being scratched with dramatic sparkles flying"},
+            {"text": "70% of winners\nlose everything\nwithin 5 years", "speech": "Seventy percent of lottery winners lose everything within five years. Here's exactly what happens.", "img": "a large seventy percent statistic in red with a shocking exclamation mark"},
+            {"text": "First the government\ntakes 40% in taxes\nright away", "speech": "First, the government takes about forty percent in taxes immediately.", "img": "a government building hand reaching out taking forty percent of cash pile"},
+            {"text": "Win $10 million?\nYou actually get\nabout $6 million", "speech": "Win ten million? You actually get about six million.", "img": "a ten million dollar check shrinking down to six million with red cuts"},
+            {"text": "Then friends and\nfamily you havent\nheard from in years\nshow up", "speech": "Then suddenly, friends and family you haven't heard from in years start showing up asking for money.", "img": "a crowd of people with outstretched hands surrounding a nervous person"},
+            {"text": "They buy mansions\ncars and stuff\nwith massive\nmaintenance costs", "speech": "They buy huge mansions, luxury cars, and expensive things with massive ongoing maintenance costs nobody warns them about.", "img": "a massive mansion with luxury sports cars parked in front at night"},
+            {"text": "A $5M house costs\n$50,000 per year\njust in property tax", "speech": "A five million dollar house costs fifty thousand dollars per year just in property taxes.", "img": "a large property tax bill stamped on a mansion backdrop looking expensive"},
+            {"text": "The real problem?\nThey never learned\nhow to manage money", "speech": "The real problem isn't the spending. It's that they never learned how to manage money.", "img": "a confused person looking at scattered financial documents overwhelmed"},
+            {"text": "Getting money and\nkeeping money are\ntwo completely\ndifferent skills", "speech": "Getting money and keeping money are two completely different skills.", "img": "two separate skill icons one for earning one for managing side by side"},
+            {"text": "Thats why financial\neducation beats luck\nBuild wealth slowly\nit lasts", "speech": "That's exactly why financial education beats luck every single time. People who build wealth slowly keep their money forever. Quick money disappears.", "img": "an open book of financial knowledge glowing with golden wisdom light"},
         ],
-        "voiceover": "Why do lottery winners go broke? It's not bad luck. It's a pattern. Seventy percent of lottery winners lose everything within five years. Here's exactly what happens. First, the government takes about forty percent in taxes immediately. Win ten million? You actually get about six million. Then suddenly, friends and family you haven't heard from in years start showing up asking for money. They buy huge mansions, luxury cars, and expensive things with massive ongoing maintenance costs nobody warns them about. A five million dollar house costs fifty thousand dollars per year just in property taxes. Not including maintenance, utilities, and insurance. The real problem isn't the spending. It's that they never learned how to manage money. Getting money and keeping money are two completely different skills. You can hand someone ten million dollars, but without financial knowledge, they'll find a way to lose it all. That's exactly why financial education beats luck every single time. People who build wealth slowly through investing, budgeting, and smart decisions keep their money forever. Quick money disappears. Slow money lasts.",
         "keywords": ["Lottery", "Wealth Management", "Financial Literacy"],
     },
     {
         "title": "What Is Passive Income Explained",
-        "search_queries": ["person sleeping money growing", "rental property house sign", "dividend stock portfolio screen", "youtube creator filming laptop", "book author writing desk", "vending machine business", "royalty music headphones studio", "beach laptop working freedom", "multiple streams river water", "financial freedom celebrating"],
         "slides": [
-            {"text": "What is passive\nincome? Lets make\nit simple", "duration": 5},
-            {"text": "Its money you earn\nwithout trading\nyour time for it", "duration": 5},
-            {"text": "Your job = active\nincome you stop\nworking you stop\nearning", "duration": 5},
-            {"text": "Passive income keeps\npaying you even\nwhile you sleep", "duration": 5},
-            {"text": "Dividend stocks pay\nyou cash every\n3 months just\nfor owning them", "duration": 5},
-            {"text": "Rental property\npays monthly rent\nfrom tenants", "duration": 5},
-            {"text": "Online business\nearns revenue\n24 hours a day", "duration": 5},
-            {"text": "But heres the truth\nnothing is passive\nat the START", "duration": 5},
-            {"text": "You invest time\nor money upfront\nthen it pays you\nback over time", "duration": 6},
-            {"text": "Start with dividend\nETFs like SCHD\neasiest passive\nincome for beginners", "duration": 5},
+            {"text": "What is passive\nincome? Lets make\nit simple", "speech": "What is passive income? Let's make it really simple.", "img": "a person sleeping peacefully while money flows into their bank account"},
+            {"text": "Its money you earn\nwithout trading\nyour time for it", "speech": "It's money you earn without actively trading your time for it every day.", "img": "a broken clock next to flowing cash showing time is not needed"},
+            {"text": "Your job = active\nincome you stop\nworking you stop\nearning", "speech": "Your regular job is active income. You show up, you work, you get paid. Stop showing up, stop getting paid.", "img": "a person working at a desk in an office under fluorescent lights"},
+            {"text": "Passive income keeps\npaying you even\nwhile you sleep", "speech": "Passive income is different. It keeps paying you even while you sleep, while you're on vacation.", "img": "a person relaxing on a tropical beach while money notifications pop up"},
+            {"text": "Dividend stocks pay\nyou cash every\n3 months just\nfor owning them", "speech": "Dividend stocks pay you cash every three months just for owning shares. You don't have to do anything.", "img": "a stock portfolio screen showing quarterly dividend payments in green"},
+            {"text": "Rental property\npays monthly rent\nfrom tenants", "speech": "Rental properties pay you monthly rent from tenants living in your property.", "img": "an apartment building with rent money flowing from windows to the owner"},
+            {"text": "Online business\nearns revenue\n24 hours a day", "speech": "An online business or YouTube channel can earn revenue twenty four hours a day, seven days a week.", "img": "a glowing laptop screen showing online revenue coming in around the clock"},
+            {"text": "But heres the truth\nnothing is passive\nat the START", "speech": "But here's the truth nobody tells you. Nothing is truly passive at the start. Every passive income stream requires time or money invested upfront.", "img": "a person working hard laying bricks to build a strong foundation"},
+            {"text": "You invest time\nor money upfront\nthen it pays you\nback over time", "speech": "You build it, set it up, and then over time it starts paying you back.", "img": "seeds being planted in soil with small green shoots starting to grow"},
+            {"text": "Start with dividend\nETFs like SCHD\neasiest passive\nincome for beginners", "speech": "The easiest passive income for beginners is dividend E T Fs like S C H D. Buy shares, receive quarterly cash payments. Start there.", "img": "a welcoming first step on a golden staircase leading upward to wealth"},
         ],
-        "voiceover": "What is passive income? Let's make it really simple. It's money you earn without actively trading your time for it every day. Your regular job is active income. You show up, you work, you get paid. Stop showing up, stop getting paid. Passive income is different. It keeps paying you even while you sleep, while you're on vacation, while you're doing absolutely nothing. Dividend stocks pay you cash every three months just for owning shares. You don't have to do anything. Rental properties pay you monthly rent from tenants living in your property. An online business or YouTube channel can earn advertising revenue twenty four hours a day, seven days a week. But here's the truth nobody on social media tells you. Nothing is truly passive at the start. Every passive income stream requires either significant time or money invested upfront. You build it, set it up, and then over time it starts paying you back. The easiest passive income for beginners is dividend E T Fs like S C H D. Buy shares, receive quarterly cash payments. Start there and build more streams over time.",
         "keywords": ["Passive Income", "Dividends", "Financial Freedom"],
     },
     {
         "title": "What Is Net Worth and How to Calculate It",
-        "search_queries": ["balance scale weighing gold", "house car valuable assets", "credit card debt stack bills", "calculator notepad pen desk", "bank account statement screen", "net worth growing graph", "person checking finances phone", "wealthy simple lifestyle", "financial health checkup", "progress bar increasing"],
         "slides": [
-            {"text": "Your net worth is\nthe most important\nnumber in finance", "duration": 5},
-            {"text": "Its a snapshot of\nyour entire\nfinancial health", "duration": 5},
-            {"text": "Step 1\nAdd everything\nyou OWN", "duration": 5},
-            {"text": "Cash savings\ninvestments\nhouse value\ncar value", "duration": 5},
-            {"text": "Step 2\nSubtract everything\nyou OWE", "duration": 5},
-            {"text": "Credit card debt\ncar loans\nmortgage\nstudent loans", "duration": 5},
-            {"text": "What you OWN\nminus what you OWE\nequals NET WORTH", "duration": 5},
-            {"text": "Negative?\nDont panic\nmost people start\nin the negative", "duration": 5},
-            {"text": "Track it every\nsingle month\non a spreadsheet", "duration": 5},
-            {"text": "Your only goal is\nto make it higher\nthan last month\nevery month", "duration": 5},
+            {"text": "Your net worth is\nthe most important\nnumber in finance", "speech": "Your net worth is the single most important number in personal finance. It's a complete snapshot of your financial health.", "img": "a glowing golden number one symbol on a dark pedestal of importance"},
+            {"text": "Its a snapshot of\nyour entire\nfinancial health", "speech": "Here's how to calculate it.", "img": "a medical-style health checkup screen showing financial vital signs"},
+            {"text": "Step 1\nAdd everything\nyou OWN", "speech": "Step one, add up everything you own. Cash in your bank accounts, savings, investments, house value, car value. That's your total assets.", "img": "a house car and investment portfolio arranged together as total assets"},
+            {"text": "Cash savings\ninvestments\nhouse value\ncar value", "speech": "Step two, subtract everything you owe.", "img": "a calculator adding up values with golden totals appearing on screen"},
+            {"text": "Step 2\nSubtract everything\nyou OWE", "speech": "Credit card balances, car loans, mortgage balance, student loans, any money you owe anyone. That's your total liabilities.", "img": "red debt numbers being subtracted with a minus symbol glowing red"},
+            {"text": "Credit card debt\ncar loans\nmortgage\nstudent loans", "speech": "Assets minus liabilities equals your net worth.", "img": "a subtraction equation in bold with the result highlighted in gold"},
+            {"text": "What you OWN\nminus what you OWE\nequals NET WORTH", "speech": "If your number is negative right now, do not panic.", "img": "a clean formula displayed on a chalkboard with dramatic chalk writing"},
+            {"text": "Negative?\nDont panic\nmost people start\nin the negative", "speech": "Most people in their twenties and thirties have a negative net worth because of student loans. That's completely normal.", "img": "a calm serene person meditating with a peaceful blue aura around them"},
+            {"text": "Track it every\nsingle month\non a spreadsheet", "speech": "The key is to track this number every single month. Write it down on a simple spreadsheet.", "img": "a laptop showing a monthly net worth tracking spreadsheet with charts"},
+            {"text": "Your only goal is\nto make it higher\nthan last month\nevery month", "speech": "Your only goal is to make it higher than last month. Every single month. Pay down debt, save more, invest consistently. That's how you build real wealth.", "img": "a green upward arrow climbing higher each month on a progress chart"},
         ],
-        "voiceover": "Your net worth is the single most important number in personal finance. It's a complete snapshot of your financial health in one number. Here's how to calculate it. Step one, add up everything you own. Cash in your bank accounts, savings, investments, the value of your house if you own one, and your car's current value. That's your total assets. Step two, subtract everything you owe. Credit card balances, car loans, mortgage balance, student loans, any money you owe anyone. That's your total liabilities. Assets minus liabilities equals your net worth. If your number is negative right now, do not panic. Most people in their twenties and thirties have a negative net worth because of student loans and car payments. That's completely normal. The key is to track this number every single month. Write it down on a simple spreadsheet. Your only goal is to make it higher than last month. Every single month. Pay down some debt, save a little more, invest consistently. Watch that number climb. That's how you build real wealth, one month at a time.",
         "keywords": ["Net Worth", "Assets", "Liabilities", "Financial Health"],
     },
     {
         "title": "What Is a Bear Market vs Bull Market",
-        "search_queries": ["bear animal fierce standing", "bull statue wall street bronze", "stock chart crashing red arrow", "stock chart rising green arrow", "investor worried looking screen", "investor celebrating gains happy", "history chart timeline long", "person holding steady calm", "sunrise after dark storm", "opportunity sale sign discount"],
         "slides": [
-            {"text": "Bear market vs\nBull market\nwhat do they mean?", "duration": 5},
-            {"text": "BULL market\nmeans stocks are\ngoing UP for months", "duration": 5},
-            {"text": "Everyone is buying\nprices keep climbing\npeople feel great", "duration": 5},
-            {"text": "BEAR market means\nstocks have dropped\n20% or more", "duration": 5},
-            {"text": "Fear takes over\npeople panic sell\nprices crash further", "duration": 5},
-            {"text": "But bear markets\nare actually\nOPPORTUNITIES\nin disguise", "duration": 5},
-            {"text": "Stocks are on sale\nyou buy the same\ncompanies cheaper", "duration": 5},
-            {"text": "Since 1928 EVERY\nbear market ended\nand a bull market\nfollowed", "duration": 6},
-            {"text": "Average bear market\nlasts 9 months\nAverage bull market\nlasts 2.7 YEARS", "duration": 6},
-            {"text": "Be greedy when\nothers are fearful\nThats Warren Buffetts\nnumber 1 rule", "duration": 6},
+            {"text": "Bear market vs\nBull market\nwhat do they mean?", "speech": "Bear market versus bull market. What do these actually mean?", "img": "a bear and bull statue facing each other on Wall Street in golden light"},
+            {"text": "BULL market\nmeans stocks are\ngoing UP for months", "speech": "A bull market means stocks have been going up consistently for months or years. Everyone is buying, prices keep climbing.", "img": "a powerful bull charging forward with green upward arrows behind it"},
+            {"text": "Everyone is buying\nprices keep climbing\npeople feel great", "speech": "People feel optimistic and confident.", "img": "happy investors celebrating with confetti and green stock charts rising"},
+            {"text": "BEAR market means\nstocks have dropped\n20% or more", "speech": "A bear market is the opposite. It means stocks have dropped twenty percent or more from their recent high.", "img": "a fierce growling bear with red crashing stock charts behind it"},
+            {"text": "Fear takes over\npeople panic sell\nprices crash further", "speech": "Fear takes over, people panic sell everything, and prices crash even further.", "img": "panicked traders at screens with red numbers cascading downward"},
+            {"text": "But bear markets\nare actually\nOPPORTUNITIES\nin disguise", "speech": "But bear markets are actually opportunities in disguise. The same great companies are now on sale at a huge discount.", "img": "a diamond hidden inside a rough rock being revealed with golden light"},
+            {"text": "Stocks are on sale\nyou buy the same\ncompanies cheaper", "speech": "Since nineteen twenty eight, every single bear market eventually ended and was followed by a new bull market. Every one, without exception.", "img": "shopping bags with stock ticker labels showing huge discount sale prices"},
+            {"text": "Since 1928 EVERY\nbear market ended\nand a bull market\nfollowed", "speech": "The average bear market only lasts about nine months. The average bull market lasts two point seven years.", "img": "a long historical chart showing every crash recovered with green rebounds"},
+            {"text": "Average bear market\nlasts 9 months\nAverage bull market\nlasts 2.7 YEARS", "speech": "The good times last three times longer than the bad times.", "img": "a timeline bar showing short red bear periods vs long green bull periods"},
+            {"text": "Be greedy when\nothers are fearful\nThats Warren Buffetts\nnumber 1 rule", "speech": "Warren Buffett's number one rule is be greedy when others are fearful. When everyone is panicking, that's when smart investors are buying.", "img": "a brave lone investor standing confidently while others run away in fear"},
         ],
-        "voiceover": "Bear market versus bull market. What do these actually mean? A bull market means stocks have been going up consistently for months or years. Everyone is buying, prices keep climbing, and people feel optimistic and confident. A bear market is the opposite. It means stocks have dropped twenty percent or more from their recent high. Fear takes over, people panic sell everything, and prices crash even further. But here's what most people don't realize. Bear markets are actually opportunities in disguise. The same great companies you wanted to buy are now on sale at a huge discount. Since nineteen twenty eight, every single bear market eventually ended and was followed by a new bull market. Every one, without exception. The average bear market only lasts about nine months. The average bull market lasts two point seven years. The good times last three times longer than the bad times. Warren Buffett's number one rule is be greedy when others are fearful. When everyone is panicking and selling, that's exactly when smart investors are buying. Don't fear the bear. Prepare for it and profit from it.",
         "keywords": ["Bear Market", "Bull Market", "Stock Market Cycles"],
     },
     {
         "title": "What Is Inflation and Why Should You Care",
-        "search_queries": ["grocery receipt long expensive", "gas station price sign high", "old vintage money bills", "bread loaf bakery shelf", "shopping cart full groceries", "wages paycheck comparison", "time clock ticking vintage", "central bank federal reserve", "price comparison then and now", "investing beating inflation"],
         "slides": [
-            {"text": "What is inflation?\nIt affects you\nevery single day", "duration": 5},
-            {"text": "Inflation means\nprices go up\nover time", "duration": 5},
-            {"text": "A gallon of milk\ncost $1.50 in 2000\nToday its $4.50", "duration": 5},
-            {"text": "Same milk\n3 times the price\nyour dollar buys less", "duration": 5},
-            {"text": "Average inflation\nis about 3%\nper year", "duration": 5},
-            {"text": "If your salary\ndoesnt grow by\nat least 3%", "duration": 5},
-            {"text": "You are getting\na pay cut\nevery single year\neven if your check\nstays the same", "duration": 6},
-            {"text": "Savings account at\n0.01% does NOT\nbeat inflation", "duration": 5},
-            {"text": "Investing at 10%\nDOES beat inflation\nyour money actually\ngrows", "duration": 5},
-            {"text": "Saving keeps your\nmoney safe\nInvesting makes it\nstronger", "duration": 5},
+            {"text": "What is inflation?\nIt affects you\nevery single day", "speech": "What is inflation? It affects you every single day whether you realize it or not.", "img": "rising red price arrows floating upward from everyday items in a store"},
+            {"text": "Inflation means\nprices go up\nover time", "speech": "Inflation means prices go up over time.", "img": "a grocery store aisle with glowing red price tags getting higher"},
+            {"text": "A gallon of milk\ncost $1.50 in 2000\nToday its $4.50", "speech": "A gallon of milk cost about a dollar fifty in the year two thousand. Today that exact same gallon costs four dollars fifty.", "img": "a milk gallon on a grocery shelf with old and new price tags compared"},
+            {"text": "Same milk\n3 times the price\nyour dollar buys less", "speech": "Same milk, three times the price. Your dollar literally buys less stuff each year.", "img": "a shrinking dollar bill getting smaller and weaker against a dark background"},
+            {"text": "Average inflation\nis about 3%\nper year", "speech": "Average inflation is about three percent per year. Here's why this matters to you personally.", "img": "a three percent number displayed on a rising chart with yearly markers"},
+            {"text": "If your salary\ndoesnt grow by\nat least 3%", "speech": "If your salary doesn't grow by at least three percent each year, you are effectively getting a pay cut.", "img": "a flat horizontal salary line being overtaken by a rising cost line"},
+            {"text": "You are getting\na pay cut\nevery single year\neven if your check\nstays the same", "speech": "Even if your paycheck stays the exact same number, it buys less stuff than it did last year.", "img": "a paycheck staying the same while shopping bags get smaller and fewer"},
+            {"text": "Savings account at\n0.01% does NOT\nbeat inflation", "speech": "A regular savings account paying zero point zero one percent does absolutely nothing against three percent inflation.", "img": "a tiny 0.01 percent being crushed by a massive 3 percent inflation wave"},
+            {"text": "Investing at 10%\nDOES beat inflation\nyour money actually\ngrows", "speech": "But investing in the stock market at ten percent per year does beat inflation. After inflation, you're still gaining seven percent in real purchasing power.", "img": "a ten percent investment arrow soaring above a three percent inflation line"},
+            {"text": "Saving keeps your\nmoney safe\nInvesting makes it\nstronger", "speech": "Saving keeps your money safe. Investing makes it actually stronger over time. You need both.", "img": "a strong muscular arm holding a shield protecting a growing stack of money"},
         ],
-        "voiceover": "What is inflation? It affects you every single day whether you realize it or not. Inflation means prices go up over time. A gallon of milk cost about a dollar fifty in the year two thousand. Today that exact same gallon costs four dollars fifty. Same milk, three times the price. Your dollar literally buys less stuff each year. Average inflation is about three percent per year. Here's why this matters to you personally. If your salary doesn't grow by at least three percent each year, you are effectively getting a pay cut. Even if your paycheck stays the exact same number, it buys less stuff than it did last year. And here's the real problem. A regular savings account paying zero point zero one percent does absolutely nothing against three percent inflation. Your money is slowly losing purchasing power just sitting there. But investing in the stock market at an average of ten percent per year does beat inflation. After three percent inflation, you're still gaining seven percent in real purchasing power. Saving keeps your money safe. Investing makes it actually stronger over time. You need both.",
         "keywords": ["Inflation", "Cost of Living", "Purchasing Power"],
     },
     {
         "title": "How to Read Your Pay Stub",
-        "search_queries": ["paycheck stub paper detailed", "gross pay amount highlighted", "tax deduction list itemized", "social security card blue", "health insurance card medical", "net pay bank deposit", "person confused reading paper", "direct deposit phone notification", "employee working office desk", "take home pay wallet"],
         "slides": [
-            {"text": "Can you actually\nread your pay stub?\nMost people cant", "duration": 5},
-            {"text": "GROSS PAY\nis what you earned\nbefore deductions", "duration": 5},
-            {"text": "This is the big\nnumber at the top", "duration": 4},
-            {"text": "Then come\nthe deductions\nthis is where\nmoney disappears", "duration": 5},
-            {"text": "Federal income tax\nState tax\nSocial Security\nMedicare", "duration": 5},
-            {"text": "Health insurance\nand 401k come\nout too if you\nhave them", "duration": 5},
-            {"text": "After ALL deductions\nyou get NET PAY", "duration": 5},
-            {"text": "Thats your actual\ntake home money\nwhat hits your\nbank account", "duration": 5},
-            {"text": "Gross = what\nyou earn\nNet = what\nyou keep", "duration": 5},
-            {"text": "Check it monthly\nfor errors\nMistakes happen\nand cost you money", "duration": 6},
+            {"text": "Can you actually\nread your pay stub?\nMost people cant", "speech": "Can you actually read your pay stub? Most people just look at the deposit amount and ignore everything else.", "img": "a detailed pay stub document on a desk with sections highlighted"},
+            {"text": "GROSS PAY\nis what you earned\nbefore deductions", "speech": "Gross pay is what you earned before anything gets taken out. It's the big number at the top of your stub.", "img": "a large glowing salary number at the top of a pay stub document"},
+            {"text": "This is the big\nnumber at the top", "speech": "Then come the deductions. This is where your money seems to disappear.", "img": "money vanishing through multiple deduction lines on a dark screen"},
+            {"text": "Then come\nthe deductions\nthis is where\nmoney disappears", "speech": "Federal income tax takes a percentage based on your tax bracket. State income tax takes its cut if your state has one.", "img": "scissors cutting portions from a paycheck labeled federal and state tax"},
+            {"text": "Federal income tax\nState tax\nSocial Security\nMedicare", "speech": "Social Security takes six point two percent. Medicare takes one point four five percent. Those are all mandatory.", "img": "official government stamps for Social Security and Medicare on documents"},
+            {"text": "Health insurance\nand 401k come\nout too if you\nhave them", "speech": "Then your health insurance premium and four oh one K contributions come out if you have them set up.", "img": "health insurance card and 401k form next to deducted money amounts"},
+            {"text": "After ALL deductions\nyou get NET PAY", "speech": "After all of those deductions, you're left with your net pay. That's your actual take home money.", "img": "a final net pay amount glowing green at the bottom of a pay stub"},
+            {"text": "Thats your actual\ntake home money\nwhat hits your\nbank account", "speech": "The amount that hits your bank account.", "img": "a phone notification showing a direct deposit landing in a bank account"},
+            {"text": "Gross = what\nyou earn\nNet = what\nyou keep", "speech": "Easy way to remember it. Gross pay is what you earn. Net pay is what you keep.", "img": "two columns side by side comparing a big gross number vs smaller net"},
+            {"text": "Check it monthly\nfor errors\nMistakes happen\nand cost you money", "speech": "Check your pay stub at least once a month. Payroll mistakes happen more often than you think, and they always seem to be in the company's favor.", "img": "a magnifying glass carefully examining a pay stub for errors and mistakes"},
         ],
-        "voiceover": "Can you actually read your pay stub? Most people just look at the deposit amount and ignore everything else. Gross pay is what you earned before anything gets taken out. It's the big number at the top of your stub. Then come the deductions. This is where your money seems to disappear. Federal income tax takes a percentage based on your tax bracket. State income tax takes its cut if your state has one. Social Security takes six point two percent. Medicare takes one point four five percent. Those are all mandatory. Then your health insurance premium and four oh one K contributions come out if you have them set up. After all of those deductions, you're left with your net pay. That's your actual take home money. The amount that hits your bank account. Easy way to remember it. Gross pay is what you earn. Net pay is what you keep. Check your pay stub at least once a month and verify everything is correct. Payroll mistakes happen more often than you think, and they always seem to be in the company's favor, not yours.",
         "keywords": ["Pay Stub", "Gross Pay", "Net Pay", "Payroll"],
     },
     {
         "title": "Good Debt vs Bad Debt",
-        "search_queries": ["student graduation cap gown", "house mortgage signing papers", "credit card shopping spree bags", "car loan dealership new", "business startup laptop coffee", "person drowning debt water", "scale balance comparing weights", "investment return growing chart", "person celebrating debt free", "tool hammer building"],
         "slides": [
-            {"text": "Not all debt is bad\nsome debt actually\nmakes you richer", "duration": 5},
-            {"text": "GOOD debt helps\nyou earn more\nmoney over time", "duration": 5},
-            {"text": "Student loans for a\nhigh paying career\nGood debt", "duration": 5},
-            {"text": "Mortgage on a\nproperty that grows\nin value Good debt", "duration": 5},
-            {"text": "Business loan that\ngenerates more than\nit costs Good debt", "duration": 5},
-            {"text": "BAD debt buys things\nthat lose value and\ncosts you interest", "duration": 5},
-            {"text": "Credit card debt on\nclothes and eating out\nBad debt", "duration": 5},
-            {"text": "Car loan on a car\nyou cant afford\nBad debt", "duration": 5},
-            {"text": "The test is simple\nwill this debt make\nme richer or poorer\nin 5 years?", "duration": 6},
-            {"text": "Use debt as a tool\nto build wealth\nnever as a trap\nthat keeps you broke", "duration": 6},
+            {"text": "Not all debt is bad\nsome debt actually\nmakes you richer", "speech": "Not all debt is created equal. Some debt actually makes you richer over time.", "img": "a balance scale with green good debt on one side and red bad debt on other"},
+            {"text": "GOOD debt helps\nyou earn more\nmoney over time", "speech": "Good debt helps you earn more money or build wealth.", "img": "a growing green investment tree with money blossoming from its branches"},
+            {"text": "Student loans for a\nhigh paying career\nGood debt", "speech": "Student loans that lead to a high paying career? That's good debt if you choose your degree wisely.", "img": "a graduation cap being tossed in the air with a bright successful future"},
+            {"text": "Mortgage on a\nproperty that grows\nin value Good debt", "speech": "A mortgage on a property that appreciates in value? Good debt. You're building equity while living there.", "img": "a house with a rising green value arrow showing property appreciation"},
+            {"text": "Business loan that\ngenerates more than\nit costs Good debt", "speech": "A business loan that generates more revenue than the interest costs? Good debt. You're using borrowed money to make more money.", "img": "a thriving business storefront with revenue flowing in and growing"},
+            {"text": "BAD debt buys things\nthat lose value and\ncosts you interest", "speech": "Bad debt is the opposite. It buys things that lose value immediately and charges you interest.", "img": "shopping bags and impulse purchases fading away and losing value"},
+            {"text": "Credit card debt on\nclothes and eating out\nBad debt", "speech": "Credit card debt from shopping sprees and eating out? Bad debt.", "img": "a pile of credit card bills stacking up next to empty shopping bags"},
+            {"text": "Car loan on a car\nyou cant afford\nBad debt", "speech": "A car loan on a brand new luxury car you can't really afford? Bad debt. That car loses twenty percent the moment you drive off.", "img": "a brand new car driving off a lot with its value dropping immediately"},
+            {"text": "The test is simple\nwill this debt make\nme richer or poorer\nin 5 years?", "speech": "The test is simple. Before taking on any debt, ask yourself, will this debt make me richer or poorer in five years?", "img": "a person at a crossroads thinking with richer and poorer paths ahead"},
+            {"text": "Use debt as a tool\nto build wealth\nnever as a trap\nthat keeps you broke", "speech": "Use debt as a tool to build wealth, never as a trap that keeps you broke.", "img": "a golden wrench tool building a staircase of wealth upward to success"},
         ],
-        "voiceover": "Not all debt is created equal. Some debt actually makes you richer over time. Good debt helps you earn more money or build wealth. Student loans that lead to a high paying career? That's good debt if you choose your degree wisely. A mortgage on a property that appreciates in value? Good debt. You're building equity while living there. A business loan that generates more revenue than the interest costs? Good debt. You're using borrowed money to make even more money. Bad debt is the opposite. It buys things that lose value immediately and charges you interest while doing it. Credit card debt from shopping sprees and eating out? Bad debt. A car loan on a brand new luxury car you can't really afford? Bad debt. That car loses twenty percent of its value the moment you drive off the lot. The test is simple. Before taking on any debt, ask yourself this question. Will this debt make me richer or poorer in five years? If the answer is poorer, don't do it. Use debt as a tool to build wealth, never as a trap that keeps you broke.",
         "keywords": ["Good Debt", "Bad Debt", "Financial Decisions"],
     },
 ]
 
 
-def fetch_pexels_images(queries, num_images, save_dir):
+def enhance_image(img_path):
+    """Upscale, sharpen, and enhance a downloaded AI image to HD quality"""
+    try:
+        from PIL import Image, ImageEnhance, ImageFilter
+        img = Image.open(img_path).convert("RGB")
+        w, h = img.size
+        if w >= 1080 and h >= 1920:
+            return
+        img = img.resize((1080, 1920), Image.LANCZOS)
+        img = img.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=3))
+        img = ImageEnhance.Contrast(img).enhance(1.15)
+        img = ImageEnhance.Color(img).enhance(1.1)
+        img.save(img_path, "JPEG", quality=92)
+    except Exception as e:
+        print(f"  [WARN] Image enhance failed: {e}")
+
+
+def fetch_ai_images(slides, save_dir):
+    """Fetch AI-generated images from Pollinations.ai (free, no API key) with HD enhancement"""
     os.makedirs(save_dir, exist_ok=True)
     images = []
 
-    for i in range(num_images):
-        query = queries[i % len(queries)]
+    style = "cinematic photorealistic scene, dramatic lighting, dark moody atmosphere, ultra sharp details, 8K render, no text no words no letters no watermark no signature"
+
+    for i, slide in enumerate(slides):
         img_path = os.path.join(save_dir, f"slide_{i}.jpg")
 
-        if os.path.exists(img_path):
+        if os.path.exists(img_path) and os.path.getsize(img_path) > 50000:
             images.append(img_path)
             continue
 
+        keywords = slide.get('img', 'finance money')
+        speech_hint = slide.get('speech', '')[:80]
+        prompt = f"{style}, {keywords}, concept: {speech_hint}"
+        encoded = urllib.parse.quote(prompt)
+        url = f"https://image.pollinations.ai/prompt/{encoded}?width=768&height=1344&nologo=true&seed={i + 42}&model=flux&enhance=true"
+
         try:
-            url = f"https://api.pexels.com/v1/search?query={query}&orientation=portrait&per_page=15&page=1"
-            headers = {"Authorization": PEXELS_API_KEY}
-            resp = requests.get(url, headers=headers, timeout=10)
-
-            if resp.status_code == 200:
-                data = resp.json()
-                photos = data.get("photos", [])
-                if photos:
-                    photo = photos[i % len(photos)]
-                    img_url = photo["src"].get("portrait", photo["src"]["large"])
-                    img_resp = requests.get(img_url, timeout=15)
-                    if img_resp.status_code == 200:
-                        with open(img_path, 'wb') as f:
-                            f.write(img_resp.content)
-                        images.append(img_path)
-                        print(f"  [IMG] Image {i+1}: {query}")
-                        continue
-
-            print(f"  [WARN] Pexels {resp.status_code}: {resp.text[:150]}")
-            images.append(None)
-
+            resp = requests.get(url, timeout=90)
+            if resp.status_code == 200 and len(resp.content) > 5000:
+                with open(img_path, 'wb') as f:
+                    f.write(resp.content)
+                enhance_image(img_path)
+                images.append(img_path)
+                print(f"  [AI] Slide {i+1}: {keywords}")
+                continue
         except Exception as e:
-            print(f"  [WARN] Image error: {e}")
-            images.append(None)
+            print(f"  [WARN] AI gen failed: {e}")
+
+        if PEXELS_API_KEY:
+            try:
+                purl = f"https://api.pexels.com/v1/search?query={keywords}&orientation=portrait&per_page=5"
+                resp = requests.get(purl, headers={"Authorization": PEXELS_API_KEY}, timeout=10)
+                if resp.status_code == 200:
+                    photos = resp.json().get("photos", [])
+                    if photos:
+                        img_url = photos[i % len(photos)]["src"].get("portrait", photos[0]["src"]["large"])
+                        img_resp = requests.get(img_url, timeout=15)
+                        if img_resp.status_code == 200:
+                            with open(img_path, 'wb') as f:
+                                f.write(img_resp.content)
+                            images.append(img_path)
+                            print(f"  [IMG] Slide {i+1}: {keywords} (Pexels fallback)")
+                            continue
+            except Exception:
+                pass
+
+        images.append(None)
 
     return images
+
+
+def create_slide_audios(slides, work_dir):
+    """Generate audio for each slide's speech separately, measure exact duration per slide"""
+    os.makedirs(work_dir, exist_ok=True)
+
+    try:
+        import edge_tts
+    except ImportError:
+        return None
+
+    voices = [
+        ("en-US-DavisNeural", "+20%", "-6Hz"),
+        ("en-US-GuyNeural", "+20%", "-5Hz"),
+        ("en-US-ChristopherNeural", "+20%", "-4Hz"),
+        ("en-GB-RyanNeural", "+20%", "-5Hz"),
+    ]
+
+    working_voice = None
+    for voice, rate, pitch in voices:
+        try:
+            test_path = os.path.join(work_dir, "test_voice.mp3")
+            communicate = edge_tts.Communicate("Testing voice.", voice, rate=rate, pitch=pitch)
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(communicate.save(test_path))
+            loop.close()
+            if os.path.exists(test_path) and os.path.getsize(test_path) > 500:
+                working_voice = (voice, rate, pitch)
+                try:
+                    os.remove(test_path)
+                except Exception:
+                    pass
+                print(f"[OK] Using voice: {voice}")
+                break
+        except Exception:
+            continue
+
+    if not working_voice:
+        return None
+
+    audio_paths = []
+    durations = []
+
+    for idx, slide in enumerate(slides):
+        audio_path = os.path.join(work_dir, f"speech_{idx}.mp3")
+        voice, rate, pitch = working_voice
+        try:
+            communicate = edge_tts.Communicate(slide['speech'], voice, rate=rate, pitch=pitch)
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(communicate.save(audio_path))
+            loop.close()
+        except Exception as e:
+            print(f"  [WARN] TTS failed for slide {idx}: {e}")
+            silence_cmd = [FFMPEG, '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '3', '-c:a', 'aac', audio_path]
+            subprocess.run(silence_cmd, capture_output=True, timeout=10)
+
+        dur = get_audio_duration(audio_path)
+        dur = max(dur, 1.5)
+        audio_paths.append(audio_path)
+        durations.append(dur)
+        print(f"  [TTS] Slide {idx+1}: {dur:.1f}s")
+
+    concat_list = os.path.join(work_dir, "audio_concat.txt")
+    with open(concat_list, 'w') as f:
+        for ap in audio_paths:
+            f.write(f"file '{os.path.basename(ap)}'\n")
+
+    combined = os.path.join(work_dir, "combined_audio.mp3")
+    cmd = [FFMPEG, '-y', '-f', 'concat', '-safe', '0', '-i', concat_list, '-c:a', 'copy', combined]
+    subprocess.run(cmd, capture_output=True, timeout=30)
+
+    if not os.path.exists(combined) or os.path.getsize(combined) < 1000:
+        return None
+
+    return combined, durations
 
 
 def create_audio(text, output_path):
     try:
         import edge_tts
         voices = [
-            ("en-US-DavisNeural", "+30%", "-6Hz"),
-            ("en-US-GuyNeural", "+30%", "-5Hz"),
-            ("en-US-ChristopherNeural", "+30%", "-4Hz"),
-            ("en-GB-RyanNeural", "+30%", "-5Hz"),
+            ("en-US-DavisNeural", "+20%", "-6Hz"),
+            ("en-US-GuyNeural", "+20%", "-5Hz"),
+            ("en-US-ChristopherNeural", "+20%", "-4Hz"),
+            ("en-GB-RyanNeural", "+20%", "-5Hz"),
         ]
         for voice, rate, pitch in voices:
             try:
@@ -634,26 +681,7 @@ def create_audio(text, output_path):
                 continue
         raise Exception("All edge-tts voices failed")
     except Exception as e:
-        print(f"[WARN] edge-tts failed ({e}), trying piper-tts...")
-
-    try:
-        import wave
-        from piper import PiperVoice
-        model_path = os.path.join(os.path.dirname(__file__), "voice.onnx")
-        if os.path.exists(model_path):
-            voice = PiperVoice.load(model_path)
-            wav_path = output_path.replace(".mp3", ".wav")
-            with wave.open(wav_path, "wb") as wav_file:
-                voice.synthesize(text, wav_file)
-            cmd = [FFMPEG, '-y', '-i', wav_path, '-b:a', '128k', output_path]
-            subprocess.run(cmd, capture_output=True, timeout=30)
-            os.remove(wav_path)
-            if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-                print("[OK] Audio ready (Piper TTS)")
-                return True
-        raise Exception("No piper model found")
-    except Exception as e2:
-        print(f"[WARN] piper-tts failed ({e2}), using gTTS")
+        print(f"[WARN] edge-tts failed ({e}), using gTTS...")
 
     from gtts import gTTS
     tts = gTTS(text=text, lang='en', slow=False)
@@ -663,7 +691,6 @@ def create_audio(text, output_path):
 
 
 def generate_bg_music(output_path, duration):
-    """Generate subtle ambient background music using FFmpeg synthesis"""
     cmd = [
         FFMPEG, '-y',
         '-f', 'lavfi', '-i',
@@ -686,11 +713,10 @@ def get_audio_duration(audio_path):
             time_str = line.split('Duration:')[1].split(',')[0].strip()
             parts = time_str.split(':')
             return float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
-    return 25
+    return 4
 
 
-def prep_slides(images, slides, scale, work_dir):
-    """Pre-render each slide as a JPEG with text burned in via Pillow at 120% size for zoom"""
+def prep_slides(images, slides, durations, work_dir):
     os.makedirs(work_dir, exist_ok=True)
 
     from PIL import Image, ImageDraw, ImageFont
@@ -714,12 +740,8 @@ def prep_slides(images, slides, scale, work_dir):
         return ImageFont.load_default()
 
     W, H = 864, 1536
-    OUT_W, OUT_H = 720, 1280
-
-    font_big = get_font(int(58 * W / OUT_W))
-    font_med = get_font(int(50 * W / OUT_W))
-
-    durations = []
+    font_big = get_font(70)
+    font_med = get_font(60)
 
     for idx, slide in enumerate(slides):
         img_src = images[idx] if idx < len(images) else None
@@ -743,16 +765,16 @@ def prep_slides(images, slides, scale, work_dir):
             if y_pos < H // 2:
                 alpha = 0
             else:
-                alpha = int(200 * ((y_pos - H // 2) / (H // 2)))
+                alpha = int(210 * ((y_pos - H // 2) / (H // 2)))
             g_draw.rectangle([(0, y_pos), (W, y_pos)], fill=(0, 0, 0, alpha))
         bg = Image.alpha_composite(bg, gradient).convert("RGB")
         del gradient, g_draw
 
         draw = ImageDraw.Draw(bg)
         lines = slide['text'].upper().split('\n')
-        line_h = int(80 * H / OUT_H)
+        line_h = 96
         total_h = len(lines) * line_h
-        start_y = H - total_h - int(120 * H / OUT_H)
+        start_y = H - total_h - 144
 
         for li, line in enumerate(lines):
             font = font_big if li == 0 else font_med
@@ -772,29 +794,20 @@ def prep_slides(images, slides, scale, work_dir):
         bg.save(out, "JPEG", quality=92)
         del draw, bg
         gc.collect()
-
-        dur = slide['duration'] * scale
-        durations.append(dur)
         print(f"  slide {idx+1}/{len(slides)} ready")
 
-    return durations
 
-
-def create_video_ffmpeg(slides, images, audio_file, output_file):
-    audio_duration = get_audio_duration(audio_file)
-    total_slide_dur = sum(s['duration'] for s in slides)
-    scale = audio_duration / total_slide_dur if total_slide_dur > 0 else 1.0
-
+def create_video_ffmpeg(slides, images, audio_file, durations, output_file):
     valid_images = [img for img in images if img is not None]
     if not valid_images:
-        return create_video_simple(slides, audio_file, output_file)
+        return create_video_simple(slides, audio_file, durations, output_file)
 
     work_dir = output_file + "_work"
     print("[BUILD] Preparing slides with text + zoom...")
-    durations = prep_slides(images, slides, scale, work_dir)
+    prep_slides(images, slides, durations, work_dir)
 
-    FPS = 20
-    FADE_DUR = 0.4
+    FPS = 30
+    FADE_DUR = 0.5
     n = len(slides)
 
     print("[BUILD] Creating zoom clips...")
@@ -806,11 +819,10 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         if total_frames < 2:
             total_frames = 2
 
-        zoom_dir = "in" if idx % 2 == 0 else "out"
-        if zoom_dir == "in":
-            zexpr = f"min(zoom+0.0008,1.12)"
+        if idx % 2 == 0:
+            zexpr = "min(zoom+0.0003,1.08)"
         else:
-            zexpr = f"if(eq(on\\,0)\\,1.12\\,max(zoom-0.0008\\,1.0))"
+            zexpr = "if(eq(on\\,0)\\,1.08\\,max(zoom-0.0003\\,1.0))"
 
         cmd = [
             FFMPEG, '-y',
@@ -823,12 +835,10 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         ]
         proc = subprocess.run(cmd, capture_output=True, timeout=30)
         if proc.returncode != 0:
-            err = proc.stderr.decode('utf-8', errors='replace')[-200:]
-            print(f"  [WARN] Zoom clip {idx} failed: {err}")
             cmd_simple = [
                 FFMPEG, '-y',
                 '-loop', '1', '-i', os.path.join(work_dir, f"s_{idx}.jpg"),
-                '-vf', f"scale=720:1280",
+                '-vf', 'scale=720:1280',
                 '-t', f"{dur:.2f}", '-r', str(FPS),
                 '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
                 '-pix_fmt', 'yuv420p',
@@ -870,8 +880,6 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
         ]
         proc = subprocess.run(cmd, capture_output=True, timeout=120)
         if proc.returncode != 0:
-            err = proc.stderr.decode('utf-8', errors='replace')[-300:]
-            print(f"[WARN] Crossfade failed ({err}), using simple concat...")
             concat_file = os.path.join(work_dir, "concat.txt")
             with open(concat_file, 'w') as f:
                 for cp in clip_paths:
@@ -886,6 +894,7 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
             subprocess.run(cmd, capture_output=True, timeout=60)
 
     joined_path = os.path.join(work_dir, "joined.mp4")
+    audio_duration = get_audio_duration(audio_file)
 
     print("[BUILD] Mixing voiceover + background music...")
     bg_music_path = os.path.join(work_dir, "bgmusic.m4a")
@@ -922,23 +931,17 @@ def create_video_ffmpeg(slides, images, audio_file, output_file):
     shutil.rmtree(work_dir, ignore_errors=True)
 
     if proc.returncode != 0:
-        err = proc.stderr.decode('utf-8', errors='replace')[-300:]
-        print(f"[ERR] Final merge failed: {err}")
-        return create_video_simple(slides, audio_file, output_file)
+        return create_video_simple(slides, audio_file, durations, output_file)
 
     print("[OK] Video created with zoom + crossfade + music!")
     return True
 
 
-def create_video_simple(slides, audio_file, output_file):
-    audio_duration = get_audio_duration(audio_file)
-    total_slide_dur = sum(s['duration'] for s in slides)
-    scale = audio_duration / total_slide_dur if total_slide_dur > 0 else 1.0
-
+def create_video_simple(slides, audio_file, durations, output_file):
     filters = []
     t = 0
-    for slide in slides:
-        dur = slide['duration'] * scale
+    for idx, slide in enumerate(slides):
+        dur = durations[idx] if idx < len(durations) else 5
         lines = slide['text'].split('\n')
         num_lines = len(lines)
         start_y = f"(h/2)-{(num_lines * 30)}"
@@ -975,11 +978,9 @@ def create_video_simple(slides, audio_file, output_file):
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
-        print("[ERR] FFmpeg timed out")
         return False
 
     if proc.returncode != 0:
-        print("[ERR] FFmpeg failed")
         return False
 
     print("[OK] Video created (simple mode)")
@@ -1005,44 +1006,50 @@ def _get_next_topic_index():
 def generate_daily_video():
     index = _get_next_topic_index()
     topic = CONTENT_TOPICS[index]
+    slides = topic['slides']
 
     os.makedirs(CONFIG['output_dir'], exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
     output_file = f"{CONFIG['output_dir']}/the_ai_dollar_{timestamp}.mp4"
-    audio_file = f"{CONFIG['output_dir']}/audio_{timestamp}.mp3"
+    audio_dir = f"{CONFIG['output_dir']}/audio_{timestamp}"
     img_dir = f"{CONFIG['output_dir']}/imgs_{timestamp}"
 
     try:
-        print("[TTS] Generating voiceover...")
-        create_audio(topic['voiceover'], audio_file)
+        print("[TTS] Generating per-slide audio...")
+        slide_result = create_slide_audios(slides, audio_dir)
 
-        images = []
-        if PEXELS_API_KEY:
-            print("[IMG] Fetching images from Pexels...")
-            images = fetch_pexels_images(
-                topic['search_queries'],
-                len(topic['slides']),
-                img_dir
-            )
-            print(f"[OK] Got {sum(1 for i in images if i)} images")
+        if slide_result:
+            audio_file, durations = slide_result
+            total_dur = sum(durations)
+            print(f"[OK] Per-slide audio: {len(durations)} segments, {total_dur:.1f}s total")
         else:
-            print("[WARN] No PEXELS_API_KEY, using color background")
+            print("[WARN] Per-slide audio failed, using single voiceover...")
+            audio_file = os.path.join(audio_dir, "full_audio.mp3")
+            os.makedirs(audio_dir, exist_ok=True)
+            full_text = ' '.join(s['speech'] for s in slides)
+            create_audio(full_text, audio_file)
+            total_dur = get_audio_duration(audio_file)
+            per_slide = total_dur / len(slides)
+            durations = [per_slide] * len(slides)
+
+        print("[IMG] Generating AI images...")
+        images = fetch_ai_images(slides, img_dir)
+        print(f"[OK] Got {sum(1 for i in images if i)} images")
 
         print("[VIDEO] Creating animated video...")
-        ok = create_video_ffmpeg(topic['slides'], images, audio_file, output_file)
+        ok = create_video_ffmpeg(slides, images, audio_file, durations, output_file)
 
         if not ok:
             return {"status": "error", "message": "Video creation failed"}
 
         print(f"[OK] Video created: {output_file}")
 
-        try:
-            os.remove(audio_file)
-        except Exception:
-            pass
+        voiceover_text = ' '.join(s['speech'] for s in slides)
+
         try:
             import shutil
+            shutil.rmtree(audio_dir, ignore_errors=True)
             shutil.rmtree(img_dir, ignore_errors=True)
         except Exception:
             pass
@@ -1051,7 +1058,7 @@ def generate_daily_video():
             "status": "success",
             "video": output_file,
             "title": topic['title'],
-            "script": topic['voiceover'],
+            "script": voiceover_text,
             "keywords": topic['keywords']
         }
 
