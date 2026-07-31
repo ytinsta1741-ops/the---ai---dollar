@@ -529,8 +529,8 @@ def enhance_image(img_path):
         print(f"  [WARN] Image enhance failed: {e}")
 
 
-def _extract_search_keywords(desc):
-    """Pull 2-4 search-friendly keywords from a descriptive img prompt."""
+def _extract_search_keywords(desc, text=""):
+    """Pull 2-4 search-friendly keywords from img + text context."""
     stop = {'a', 'an', 'the', 'of', 'on', 'in', 'at', 'to', 'and', 'or',
             'with', 'its', 'from', 'into', 'for', 'by', 'is', 'are', 'was',
             'being', 'their', 'that', 'this', 'no', 'not', 'showing',
@@ -538,10 +538,22 @@ def _extract_search_keywords(desc):
             'glowing', 'dramatic', 'golden', 'massive', 'tiny', 'large',
             'behind', 'beside', 'above', 'below', 'under', 'over',
             'dark', 'bright', 'single', 'each', 'every', 'slowly',
-            'against', 'through', 'between', 'along', 'across'}
-    words = desc.lower().replace(',', ' ').split()
+            'against', 'through', 'between', 'along', 'across', 'displayed',
+            'floating', 'shooting', 'being', 'showing'}
+
+    # Extract nouns from both desc and text
+    words = (desc + ' ' + text.lower()).replace(',', ' ').split()
     good = [w for w in words if w not in stop and len(w) > 2 and w.isalpha()]
-    return ' '.join(good[:3]) if good else 'finance money'
+
+    # Deduplicate while preserving order
+    seen = set()
+    result = []
+    for w in good:
+        if w not in seen:
+            seen.add(w)
+            result.append(w)
+
+    return ' '.join(result[:3]) if result else 'finance money'
 
 
 def fetch_hd_images(slides, save_dir):
@@ -558,7 +570,8 @@ def fetch_hd_images(slides, save_dir):
             continue
 
         desc = slide.get('img', 'finance money')
-        query = _extract_search_keywords(desc)
+        text = slide.get('text', '')
+        query = _extract_search_keywords(desc, text)
         got = False
 
         if PEXELS_API_KEY:
@@ -736,12 +749,26 @@ def get_audio_duration(audio_path):
 
 
 def prep_slides(images, slides, durations, work_dir):
-    """Prepare clean slide images - no text overlay, just the image."""
+    """Prepare slides with clean text at bottom - image on top, text on solid black bar."""
     os.makedirs(work_dir, exist_ok=True)
 
-    from PIL import Image
+    from PIL import Image, ImageDraw, ImageFont
+
+    def get_font(size):
+        font_search = [
+            "C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf",
+        ]
+        for path in font_search:
+            try:
+                return ImageFont.truetype(path, size)
+            except Exception:
+                continue
+        return ImageFont.load_default()
 
     W, H = 864, 1536
+    font = get_font(48)
 
     for idx, slide in enumerate(slides):
         img_src = images[idx] if idx < len(images) else None
@@ -750,16 +777,34 @@ def prep_slides(images, slides, durations, work_dir):
         if img_src and os.path.exists(img_src):
             bg = Image.open(img_src).convert("RGB")
             iw, ih = bg.size
-            ratio = max(W / iw, H / ih)
+            ratio = max(W / (iw * 0.95), (H * 0.75) / ih)
             bg = bg.resize((int(iw * ratio), int(ih * ratio)), Image.LANCZOS)
             left = (bg.width - W) // 2
-            top = (bg.height - H) // 2
-            bg = bg.crop((left, top, left + W, top + H))
+            top = (bg.height - int(H * 0.75)) // 2
+            bg = bg.crop((left, top, left + W, top + int(H * 0.75)))
         else:
-            bg = Image.new("RGB", (W, H), (10, 10, 46))
+            bg = Image.new("RGB", (W, int(H * 0.75)), (20, 20, 50))
 
-        bg.save(out, "JPEG", quality=95)
-        del bg
+        canvas = Image.new("RGB", (W, H), (0, 0, 0))
+        canvas.paste(bg, (0, 0))
+
+        draw = ImageDraw.Draw(canvas)
+        text = slide['text'].upper()
+        lines = text.split('\n')
+
+        line_h = 80
+        total_h = len(lines) * line_h
+        start_y = H - total_h - 60
+
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            tw = bbox[2] - bbox[0]
+            x = (W - tw) // 2
+            draw.text((x, start_y), line, font=font, fill=(255, 255, 255))
+            start_y += line_h
+
+        canvas.save(out, "JPEG", quality=95)
+        del canvas, bg, draw
         gc.collect()
         print(f"  slide {idx+1}/{len(slides)} ready")
 
