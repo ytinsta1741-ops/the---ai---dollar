@@ -529,12 +529,26 @@ def enhance_image(img_path):
         print(f"  [WARN] Image enhance failed: {e}")
 
 
-def fetch_ai_images(slides, save_dir):
-    """Fetch AI-generated images from Pollinations.ai (free, no API key) with HD enhancement"""
+def _extract_search_keywords(desc):
+    """Pull 2-4 search-friendly keywords from a descriptive img prompt."""
+    stop = {'a', 'an', 'the', 'of', 'on', 'in', 'at', 'to', 'and', 'or',
+            'with', 'its', 'from', 'into', 'for', 'by', 'is', 'are', 'was',
+            'being', 'their', 'that', 'this', 'no', 'not', 'showing',
+            'looking', 'getting', 'labeled', 'versus', 'vs', 'next',
+            'glowing', 'dramatic', 'golden', 'massive', 'tiny', 'large',
+            'behind', 'beside', 'above', 'below', 'under', 'over',
+            'dark', 'bright', 'single', 'each', 'every', 'slowly',
+            'against', 'through', 'between', 'along', 'across'}
+    words = desc.lower().replace(',', ' ').split()
+    good = [w for w in words if w not in stop and len(w) > 2 and w.isalpha()]
+    return ' '.join(good[:3]) if good else 'finance money'
+
+
+def fetch_hd_images(slides, save_dir):
+    """Fetch sharp HD images from Pexels (primary) with Pollinations fallback."""
     os.makedirs(save_dir, exist_ok=True)
     images = []
-
-    style = "cinematic photorealistic scene, dramatic lighting, dark moody atmosphere, ultra sharp details, 8K render, no text no words no letters no watermark no signature"
+    headers = {"Authorization": PEXELS_API_KEY} if PEXELS_API_KEY else {}
 
     for i, slide in enumerate(slides):
         img_path = os.path.join(save_dir, f"slide_{i}.jpg")
@@ -543,43 +557,48 @@ def fetch_ai_images(slides, save_dir):
             images.append(img_path)
             continue
 
-        keywords = slide.get('img', 'finance money')
-        speech_hint = slide.get('speech', '')[:80]
-        prompt = f"{style}, {keywords}, concept: {speech_hint}"
-        encoded = urllib.parse.quote(prompt)
-        url = f"https://image.pollinations.ai/prompt/{encoded}?width=768&height=1344&nologo=true&seed={i + 42}&model=flux&enhance=true"
-
-        try:
-            resp = requests.get(url, timeout=90)
-            if resp.status_code == 200 and len(resp.content) > 5000:
-                with open(img_path, 'wb') as f:
-                    f.write(resp.content)
-                enhance_image(img_path)
-                images.append(img_path)
-                print(f"  [AI] Slide {i+1}: {keywords}")
-                continue
-        except Exception as e:
-            print(f"  [WARN] AI gen failed: {e}")
+        desc = slide.get('img', 'finance money')
+        query = _extract_search_keywords(desc)
+        got = False
 
         if PEXELS_API_KEY:
             try:
-                purl = f"https://api.pexels.com/v1/search?query={keywords}&orientation=portrait&per_page=5"
-                resp = requests.get(purl, headers={"Authorization": PEXELS_API_KEY}, timeout=10)
+                purl = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&orientation=portrait&per_page=15"
+                resp = requests.get(purl, headers=headers, timeout=15)
                 if resp.status_code == 200:
                     photos = resp.json().get("photos", [])
                     if photos:
-                        img_url = photos[i % len(photos)]["src"].get("portrait", photos[0]["src"]["large"])
-                        img_resp = requests.get(img_url, timeout=15)
-                        if img_resp.status_code == 200:
+                        photo = photos[i % len(photos)]
+                        img_url = photo["src"].get("large2x") or photo["src"].get("portrait") or photo["src"]["large"]
+                        img_resp = requests.get(img_url, timeout=20)
+                        if img_resp.status_code == 200 and len(img_resp.content) > 20000:
                             with open(img_path, 'wb') as f:
                                 f.write(img_resp.content)
                             images.append(img_path)
-                            print(f"  [IMG] Slide {i+1}: {keywords} (Pexels fallback)")
-                            continue
-            except Exception:
-                pass
+                            print(f"  [HD] Slide {i+1}: {query}")
+                            got = True
+            except Exception as e:
+                print(f"  [WARN] Pexels failed slide {i+1}: {e}")
 
-        images.append(None)
+        if not got:
+            style = "cinematic photorealistic, sharp focus, dramatic lighting, no text no watermark"
+            prompt = f"{style}, {desc}"
+            encoded = urllib.parse.quote(prompt)
+            url = f"https://image.pollinations.ai/prompt/{encoded}?width=768&height=1344&nologo=true&seed={i + 42}&model=flux&enhance=true"
+            try:
+                resp = requests.get(url, timeout=90)
+                if resp.status_code == 200 and len(resp.content) > 5000:
+                    with open(img_path, 'wb') as f:
+                        f.write(resp.content)
+                    enhance_image(img_path)
+                    images.append(img_path)
+                    print(f"  [AI] Slide {i+1}: {query} (fallback)")
+                    got = True
+            except Exception as e:
+                print(f"  [WARN] AI gen failed slide {i+1}: {e}")
+
+        if not got:
+            images.append(None)
 
     return images
 
@@ -717,31 +736,12 @@ def get_audio_duration(audio_path):
 
 
 def prep_slides(images, slides, durations, work_dir):
+    """Prepare clean slide images - no text overlay, just the image."""
     os.makedirs(work_dir, exist_ok=True)
 
-    from PIL import Image, ImageDraw, ImageFont
-
-    def get_font(size):
-        font_search = [
-            "C:/Windows/Fonts/impact.ttf",
-            "C:/Windows/Fonts/arialbd.ttf",
-            "C:/Windows/Fonts/arial.ttf",
-            "impact.ttf", "Impact.ttf",
-            "/usr/share/fonts/truetype/msttcorefonts/Impact.ttf",
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-            "DejaVuSans-Bold.ttf", "FreeSansBold.ttf",
-            "LiberationSans-Bold.ttf",
-        ]
-        for path in font_search:
-            try:
-                return ImageFont.truetype(path, size)
-            except Exception:
-                continue
-        return ImageFont.load_default()
+    from PIL import Image
 
     W, H = 864, 1536
-    font_big = get_font(70)
-    font_med = get_font(60)
 
     for idx, slide in enumerate(slides):
         img_src = images[idx] if idx < len(images) else None
@@ -758,41 +758,8 @@ def prep_slides(images, slides, durations, work_dir):
         else:
             bg = Image.new("RGB", (W, H), (10, 10, 46))
 
-        bg = bg.convert("RGBA")
-        gradient = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        g_draw = ImageDraw.Draw(gradient)
-        for y_pos in range(H):
-            if y_pos < H // 2:
-                alpha = 0
-            else:
-                alpha = int(210 * ((y_pos - H // 2) / (H // 2)))
-            g_draw.rectangle([(0, y_pos), (W, y_pos)], fill=(0, 0, 0, alpha))
-        bg = Image.alpha_composite(bg, gradient).convert("RGB")
-        del gradient, g_draw
-
-        draw = ImageDraw.Draw(bg)
-        lines = slide['text'].upper().split('\n')
-        line_h = 96
-        total_h = len(lines) * line_h
-        start_y = H - total_h - 144
-
-        for li, line in enumerate(lines):
-            font = font_big if li == 0 else font_med
-            bbox = draw.textbbox((0, 0), line, font=font)
-            tw = bbox[2] - bbox[0]
-            x = (W - tw) // 2
-            y = start_y + li * line_h
-
-            for ox in range(-5, 6):
-                for oy in range(-5, 6):
-                    if abs(ox) + abs(oy) > 0:
-                        draw.text((x + ox, y + oy), line, font=font, fill=(0, 0, 0))
-
-            color = (255, 255, 255) if li == 0 else (255, 255, 50)
-            draw.text((x, y), line, font=font, fill=color)
-
-        bg.save(out, "JPEG", quality=92)
-        del draw, bg
+        bg.save(out, "JPEG", quality=95)
+        del bg
         gc.collect()
         print(f"  slide {idx+1}/{len(slides)} ready")
 
@@ -938,51 +905,22 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file):
 
 
 def create_video_simple(slides, audio_file, durations, output_file):
-    filters = []
-    t = 0
-    for idx, slide in enumerate(slides):
-        dur = durations[idx] if idx < len(durations) else 5
-        lines = slide['text'].split('\n')
-        num_lines = len(lines)
-        start_y = f"(h/2)-{(num_lines * 30)}"
-        for li, line in enumerate(lines):
-            escaped = line.replace("'", "").replace(":", "\\:").replace("$", "\\$").replace("%", "%%").replace('"', "").replace(";", "\\;")
-            y_pos = f"({start_y})+{li * 60}"
-            color = "white" if li == 0 else "0x00DDFF"
-            filters.append(
-                f"drawtext=text='{escaped}':"
-                f"x=(w-text_w)/2:y={y_pos}:"
-                f"fontsize=42:fontcolor={color}:"
-                f"borderw=3:bordercolor=black:"
-                f"enable='between(t,{t:.2f},{t+dur:.2f})'"
-            )
-        t += dur
-
-    vf = ",".join(filters)
+    """Fallback: solid color background with audio, no text."""
+    total_dur = sum(durations)
     cmd = [
         FFMPEG, '-y',
-        '-f', 'lavfi', '-i', 'color=c=0x0A0A2E:size=720x1280:rate=24',
+        '-f', 'lavfi', '-i', f'color=c=0x0A0A2E:size=720x1280:rate=24:d={total_dur:.2f}',
         '-i', audio_file,
-        '-vf', vf,
         '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
         '-c:a', 'aac', '-b:a', '128k',
         '-pix_fmt', 'yuv420p',
         '-shortest',
         output_file
     ]
-
     print("[BUILD] Running FFmpeg (simple mode)...")
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    try:
-        stdout, stderr = proc.communicate(timeout=240)
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.communicate()
-        return False
-
+    proc = subprocess.run(cmd, capture_output=True, timeout=240)
     if proc.returncode != 0:
         return False
-
     print("[OK] Video created (simple mode)")
     return True
 
@@ -1033,8 +971,8 @@ def generate_daily_video():
             per_slide = total_dur / len(slides)
             durations = [per_slide] * len(slides)
 
-        print("[IMG] Generating AI images...")
-        images = fetch_ai_images(slides, img_dir)
+        print("[IMG] Fetching HD images...")
+        images = fetch_hd_images(slides, img_dir)
         print(f"[OK] Got {sum(1 for i in images if i)} images")
 
         print("[VIDEO] Creating animated video...")
