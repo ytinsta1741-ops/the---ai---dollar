@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: the-ai-dollar
+    env: python
+    plan: free
+    buildCommand: pip install -q -r requirements.txt
+    startCommand: python main.py
+    autoDeploy: true
+    healthCheckPath: /
+    healthCheckInterval: 30
+    envVars:
+      - key: PYTHONIOENCODING
+        value: utf-8
+      - key: PYTHONUNBUFFERED
+        value: "true"
+      - key: PORT
+        value: "10000"
+    envVarFile: .env
+    preDeployCommand: echo "The AI Dollar - Starting 24/7 YouTube automation"
