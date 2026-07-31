@@ -749,7 +749,7 @@ def get_audio_duration(audio_path):
 
 
 def prep_slides(images, slides, durations, work_dir):
-    """Prepare slides with clean text at bottom - image on top, text on solid black bar."""
+    """Prepare slides: full image + text overlay at bottom (white text with black outline)."""
     os.makedirs(work_dir, exist_ok=True)
 
     from PIL import Image, ImageDraw, ImageFont
@@ -768,7 +768,8 @@ def prep_slides(images, slides, durations, work_dir):
         return ImageFont.load_default()
 
     W, H = 864, 1536
-    font = get_font(48)
+    font_big = get_font(56)
+    font_med = get_font(48)
 
     for idx, slide in enumerate(slides):
         img_src = images[idx] if idx < len(images) else None
@@ -777,34 +778,39 @@ def prep_slides(images, slides, durations, work_dir):
         if img_src and os.path.exists(img_src):
             bg = Image.open(img_src).convert("RGB")
             iw, ih = bg.size
-            ratio = max(W / (iw * 0.95), (H * 0.75) / ih)
+            ratio = max(W / iw, H / ih)
             bg = bg.resize((int(iw * ratio), int(ih * ratio)), Image.LANCZOS)
             left = (bg.width - W) // 2
-            top = (bg.height - int(H * 0.75)) // 2
-            bg = bg.crop((left, top, left + W, top + int(H * 0.75)))
+            top = (bg.height - H) // 2
+            bg = bg.crop((left, top, left + W, top + H))
         else:
-            bg = Image.new("RGB", (W, int(H * 0.75)), (20, 20, 50))
+            bg = Image.new("RGB", (W, H), (10, 10, 46))
 
-        canvas = Image.new("RGB", (W, H), (0, 0, 0))
-        canvas.paste(bg, (0, 0))
-
-        draw = ImageDraw.Draw(canvas)
+        draw = ImageDraw.Draw(bg)
         text = slide['text'].upper()
         lines = text.split('\n')
 
-        line_h = 80
+        line_h = 90
         total_h = len(lines) * line_h
-        start_y = H - total_h - 60
+        start_y = H - total_h - 120
 
-        for line in lines:
+        for li, line in enumerate(lines):
+            font = font_big if li == 0 else font_med
             bbox = draw.textbbox((0, 0), line, font=font)
             tw = bbox[2] - bbox[0]
             x = (W - tw) // 2
-            draw.text((x, start_y), line, font=font, fill=(255, 255, 255))
-            start_y += line_h
+            y = start_y + li * line_h
 
-        canvas.save(out, "JPEG", quality=95)
-        del canvas, bg, draw
+            for ox in range(-4, 5):
+                for oy in range(-4, 5):
+                    if abs(ox) + abs(oy) > 0:
+                        draw.text((x + ox, y + oy), line, font=font, fill=(0, 0, 0))
+
+            color = (255, 255, 255) if li == 0 else (255, 255, 100)
+            draw.text((x, y), line, font=font, fill=color)
+
+        bg.save(out, "JPEG", quality=95)
+        del draw, bg
         gc.collect()
         print(f"  slide {idx+1}/{len(slides)} ready")
 
