@@ -820,9 +820,9 @@ def prep_slides(images, slides, durations, work_dir):
                 continue
         return ImageFont.load_default()
 
-    W, H = 864, 1536
-    font_big = get_font(56)
-    font_med = get_font(48)
+    W, H = 720, 1280
+    font_big = get_font(48)
+    font_med = get_font(40)
 
     for idx, slide in enumerate(slides):
         img_src = images[idx] if idx < len(images) else None
@@ -874,137 +874,62 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file):
         return create_video_simple(slides, audio_file, durations, output_file)
 
     work_dir = output_file + "_work"
-    print("[BUILD] Preparing slides with text + zoom...")
+    print("[BUILD] Preparing slides...")
     prep_slides(images, slides, durations, work_dir)
 
-    FPS = 30
-    FADE_DUR = 0.5
     n = len(slides)
-
-    print("[BUILD] Creating zoom clips...")
-    clip_paths = []
-    for idx in range(n):
-        clip_path = os.path.join(work_dir, f"clip_{idx}.mp4")
-        dur = durations[idx]
-        total_frames = int(dur * FPS)
-        if total_frames < 2:
-            total_frames = 2
-
-        if idx % 2 == 0:
-            zexpr = "min(zoom+0.0003,1.08)"
-        else:
-            zexpr = "if(eq(on\\,0)\\,1.08\\,max(zoom-0.0003\\,1.0))"
-
-        cmd = [
-            FFMPEG, '-y',
-            '-loop', '1', '-i', os.path.join(work_dir, f"s_{idx}.jpg"),
-            '-vf', f"zoompan=z='{zexpr}':x='(iw-iw/zoom)/2':y='(ih-ih/zoom)/2':d={total_frames}:s=720x1280:fps={FPS}",
-            '-t', f"{dur:.2f}",
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
-            '-pix_fmt', 'yuv420p',
-            clip_path
-        ]
-        proc = subprocess.run(cmd, capture_output=True, timeout=30)
-        if proc.returncode != 0:
-            cmd_simple = [
-                FFMPEG, '-y',
-                '-loop', '1', '-i', os.path.join(work_dir, f"s_{idx}.jpg"),
-                '-vf', 'scale=720:1280',
-                '-t', f"{dur:.2f}", '-r', str(FPS),
-                '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
-                '-pix_fmt', 'yuv420p',
-                clip_path
-            ]
-            subprocess.run(cmd_simple, capture_output=True, timeout=30)
-
-        clip_paths.append(clip_path)
-
-    print("[BUILD] Joining clips with crossfade...")
-    if n == 1:
-        import shutil as _sh
-        _sh.copy2(clip_paths[0], os.path.join(work_dir, "joined.mp4"))
-    else:
-        inputs = []
-        for cp in clip_paths:
-            inputs.extend(['-i', cp])
-
-        fc_parts = []
-        offset = durations[0] - FADE_DUR
-        prev = "[0:v]"
-        for i in range(1, n):
-            out_label = f"[v{i}]"
-            fc_parts.append(
-                f"{prev}[{i}:v]xfade=transition=fade:duration={FADE_DUR}:offset={max(0, offset):.2f}{out_label}"
-            )
-            prev = out_label
-            if i < n - 1:
-                offset += durations[i] - FADE_DUR
-
-        filter_complex = ";".join(fc_parts)
-        joined_path = os.path.join(work_dir, "joined.mp4")
-        cmd = [FFMPEG, '-y'] + inputs + [
-            '-filter_complex', filter_complex,
-            '-map', prev,
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
-            '-pix_fmt', 'yuv420p',
-            joined_path
-        ]
-        proc = subprocess.run(cmd, capture_output=True, timeout=120)
-        if proc.returncode != 0:
-            concat_file = os.path.join(work_dir, "concat.txt")
-            with open(concat_file, 'w') as f:
-                for cp in clip_paths:
-                    f.write(f"file '{os.path.basename(cp)}'\n")
-            cmd = [
-                FFMPEG, '-y',
-                '-f', 'concat', '-safe', '0', '-i', concat_file,
-                '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
-                '-pix_fmt', 'yuv420p',
-                joined_path
-            ]
-            subprocess.run(cmd, capture_output=True, timeout=60)
-
-    joined_path = os.path.join(work_dir, "joined.mp4")
     audio_duration = get_audio_duration(audio_file)
 
-    print("[BUILD] Mixing voiceover + background music...")
+    print("[BUILD] Creating video (single-pass concat + audio)...")
+    concat_file = os.path.join(work_dir, "concat.txt")
+    with open(concat_file, 'w') as f:
+        for idx in range(n):
+            f.write(f"file 's_{idx}.jpg'\n")
+            f.write(f"duration {durations[idx]:.2f}\n")
+        f.write(f"file 's_{n-1}.jpg'\n")
+
     bg_music_path = os.path.join(work_dir, "bgmusic.m4a")
     has_music = generate_bg_music(bg_music_path, audio_duration + 2)
 
     if has_music:
         cmd = [
             FFMPEG, '-y',
-            '-i', joined_path,
+            '-f', 'concat', '-safe', '0', '-i', concat_file,
             '-i', audio_file,
             '-i', bg_music_path,
             '-filter_complex',
-            '[2:a]volume=0.12[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
-            '-map', '0:v', '-map', '[aout]',
-            '-c:v', 'copy',
+            '[0:v]scale=720:1280,fps=24[v];[2:a]volume=0.12[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
+            '-map', '[v]', '-map', '[aout]',
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
             '-c:a', 'aac', '-b:a', '128k',
+            '-pix_fmt', 'yuv420p',
             '-shortest',
             output_file
         ]
     else:
         cmd = [
             FFMPEG, '-y',
-            '-i', joined_path,
+            '-f', 'concat', '-safe', '0', '-i', concat_file,
             '-i', audio_file,
-            '-c:v', 'copy',
+            '-vf', 'scale=720:1280,fps=24',
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
             '-c:a', 'aac', '-b:a', '128k',
+            '-pix_fmt', 'yuv420p',
             '-shortest',
             output_file
         ]
 
-    proc = subprocess.run(cmd, capture_output=True, timeout=60)
+    proc = subprocess.run(cmd, capture_output=True, timeout=180)
 
     import shutil
     shutil.rmtree(work_dir, ignore_errors=True)
 
     if proc.returncode != 0:
+        stderr = proc.stderr.decode('utf-8', errors='replace')[-500:]
+        print(f"[WARN] FFmpeg failed: {stderr}")
         return create_video_simple(slides, audio_file, durations, output_file)
 
-    print("[OK] Video created with zoom + crossfade + music!")
+    print("[OK] Video created!")
     return True
 
 
