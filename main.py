@@ -16,7 +16,7 @@ import requests
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from video_generator import generate_daily_video
+from video_generator import generate_daily_video, generate_long_video
 from instagram_poster import post_to_instagram
 
 
@@ -36,7 +36,7 @@ def start_health_server():
     server.serve_forever()
 
 
-def upload_to_youtube(video_path, title, description):
+def upload_to_youtube(video_path, title, description, is_short=True):
     """Upload video to YouTube using OAuth refresh token"""
     try:
         refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "")
@@ -65,11 +65,20 @@ def upload_to_youtube(video_path, title, description):
 
         youtube = build("youtube", "v3", credentials=creds)
 
+        if is_short:
+            yt_title = title[:100] + " #Shorts"
+            yt_desc = f"{description}\n\nLearn finance in 60 seconds. New video every few hours!\n\nSubscribe to The AI Dollar for daily finance education.\n\n#Finance #Money #PersonalFinance #Investing #Shorts #FinanceTips #MoneyTips #WealthBuilding #FinancialLiteracy #MoneyManagement #StockMarket #Budgeting #DebtFree #PassiveIncome #TheAIDollar"
+            yt_tags = ["Finance", "Personal Finance", "Money Tips", "Investing For Beginners", "Financial Literacy", "Money Management", "Stock Market", "Budgeting Tips", "Wealth Building", "Passive Income", "Credit Score", "Debt Free", "Savings Tips", "Financial Education", "Money Advice", "TheAIDollar", "Shorts"]
+        else:
+            yt_title = title[:100]
+            yt_desc = f"{description}\n\nDeep dive finance education from The AI Dollar.\nNew long-form videos daily + Shorts every few hours!\n\nSubscribe for daily finance education.\n\n#Finance #Money #PersonalFinance #Investing #FinanceTips #WealthBuilding #FinancialLiteracy #MoneyManagement #StockMarket #Budgeting #DebtFree #PassiveIncome #TheAIDollar"
+            yt_tags = ["Finance", "Personal Finance", "Money Tips", "Investing For Beginners", "Financial Literacy", "Money Management", "Stock Market", "Budgeting Tips", "Wealth Building", "Passive Income", "Credit Score", "Financial Education", "Money Advice", "TheAIDollar"]
+
         body = {
             "snippet": {
-                "title": title[:100] + " #Shorts",
-                "description": f"{description}\n\nLearn finance in 60 seconds. New video every few hours!\n\nSubscribe to The AI Dollar for daily finance education.\n\n#Finance #Money #PersonalFinance #Investing #Shorts #FinanceTips #MoneyTips #WealthBuilding #FinancialLiteracy #MoneyManagement #StockMarket #Budgeting #DebtFree #PassiveIncome #TheAIDollar",
-                "tags": ["Finance", "Personal Finance", "Money Tips", "Investing For Beginners", "Financial Literacy", "Money Management", "Stock Market", "Budgeting Tips", "Wealth Building", "Passive Income", "Credit Score", "Debt Free", "Savings Tips", "Financial Education", "Money Advice", "TheAIDollar", "Shorts"],
+                "title": yt_title,
+                "description": yt_desc,
+                "tags": yt_tags,
                 "categoryId": "22",
             },
             "status": {
@@ -139,6 +148,42 @@ def post_video():
         traceback.print_exc()
 
 
+def post_long_video():
+    """Generate and post a 2-3 minute long-form video to YouTube"""
+    print(f"\n{'='*50}")
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] POSTING LONG-FORM VIDEO")
+    print(f"{'='*50}\n")
+
+    try:
+        print("[STEP 1] Generating long-form video...")
+        result = generate_long_video()
+
+        if result['status'] != 'success':
+            print(f"[ERR] Long video generation failed: {result.get('message','')}")
+            return
+
+        video_path = result['video']
+        title      = result['title']
+        script     = result['script']
+        print(f"[OK] Long video generated: {title}")
+
+        print(f"\n[STEP 2] Uploading to YouTube (long-form)...")
+        youtube_success = upload_to_youtube(video_path, title, script, is_short=False)
+
+        with open("last_post_time.txt", "w") as f:
+            f.write(str(time.time()))
+
+        print(f"\n{'='*50}")
+        print(f"[DONE] LONG-FORM POSTING COMPLETE")
+        print(f"   YouTube: {'posted' if youtube_success else 'skipped'}")
+        print(f"{'='*50}\n")
+
+    except Exception as e:
+        print(f"[ERR] Error in post_long_video: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def keep_alive():
     """Self-ping to prevent Render free tier from spinning down"""
     try:
@@ -148,14 +193,14 @@ def keep_alive():
 
 
 def schedule_jobs():
-    schedule.every().day.at("07:00").do(post_video)  # 7 AM UTC = 10 AM KSA = 3 AM EST
+    schedule.every().day.at("07:00").do(post_long_video)  # 7 AM UTC = 10 AM KSA -- LONG-FORM VIDEO
     schedule.every().day.at("12:00").do(post_video)  # 12 PM UTC = 3 PM KSA = 8 AM EST
     schedule.every().day.at("17:00").do(post_video)  # 5 PM UTC = 8 PM KSA = 1 PM EST
     schedule.every().day.at("20:00").do(post_video)  # 8 PM UTC = 11 PM KSA = 4 PM EST
     schedule.every().day.at("23:00").do(post_video)  # 11 PM UTC = 2 AM KSA = 7 PM EST
     schedule.every().day.at("02:00").do(post_video)  # 2 AM UTC = 5 AM KSA = 10 PM EST
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Jobs scheduled: 7/12/17/20/23/02 UTC (optimized for US peak)")
+    print("[OK] Schedule: 5 Shorts + 1 Long-form daily (US peak hours)")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
 
