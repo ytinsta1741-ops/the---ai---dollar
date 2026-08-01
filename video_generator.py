@@ -684,7 +684,6 @@ def _run_edge_tts(text, output_path, voice, rate, pitch):
 
 
 VOICE_LIST = [
-    ("en-US-DavisNeural", "+20%", "-6Hz"),
     ("en-US-GuyNeural", "+20%", "-5Hz"),
     ("en-US-ChristopherNeural", "+20%", "-4Hz"),
     ("en-GB-RyanNeural", "+20%", "-5Hz"),
