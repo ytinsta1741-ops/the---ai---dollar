@@ -663,6 +663,34 @@ def fetch_hd_images(slides, save_dir):
     return images
 
 
+def _run_edge_tts(text, output_path, voice, rate, pitch):
+    """Run edge-tts in a clean asyncio context with retry"""
+    import edge_tts
+    import time as _time
+
+    async def _generate():
+        communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
+        await communicate.save(output_path)
+
+    for attempt in range(3):
+        try:
+            asyncio.run(_generate())
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 500:
+                return True
+        except Exception as e:
+            print(f"  [WARN] edge-tts attempt {attempt+1}/3 ({voice}): {e}")
+            _time.sleep(2)
+    return False
+
+
+VOICE_LIST = [
+    ("en-US-DavisNeural", "+20%", "-6Hz"),
+    ("en-US-GuyNeural", "+20%", "-5Hz"),
+    ("en-US-ChristopherNeural", "+20%", "-4Hz"),
+    ("en-GB-RyanNeural", "+20%", "-5Hz"),
+]
+
+
 def create_slide_audios(slides, work_dir):
     """Generate audio for each slide's speech separately, measure exact duration per slide"""
     os.makedirs(work_dir, exist_ok=True)
@@ -670,35 +698,23 @@ def create_slide_audios(slides, work_dir):
     try:
         import edge_tts
     except ImportError:
+        print("[ERR] edge-tts not installed")
         return None
 
-    voices = [
-        ("en-US-DavisNeural", "+20%", "-6Hz"),
-        ("en-US-GuyNeural", "+20%", "-5Hz"),
-        ("en-US-ChristopherNeural", "+20%", "-4Hz"),
-        ("en-GB-RyanNeural", "+20%", "-5Hz"),
-    ]
-
     working_voice = None
-    for voice, rate, pitch in voices:
-        try:
-            test_path = os.path.join(work_dir, "test_voice.mp3")
-            communicate = edge_tts.Communicate("Testing voice.", voice, rate=rate, pitch=pitch)
-            loop = asyncio.new_event_loop()
-            loop.run_until_complete(communicate.save(test_path))
-            loop.close()
-            if os.path.exists(test_path) and os.path.getsize(test_path) > 500:
-                working_voice = (voice, rate, pitch)
-                try:
-                    os.remove(test_path)
-                except Exception:
-                    pass
-                print(f"[OK] Using voice: {voice}")
-                break
-        except Exception:
-            continue
+    for voice, rate, pitch in VOICE_LIST:
+        test_path = os.path.join(work_dir, "test_voice.mp3")
+        if _run_edge_tts("Testing voice.", test_path, voice, rate, pitch):
+            working_voice = (voice, rate, pitch)
+            try:
+                os.remove(test_path)
+            except Exception:
+                pass
+            print(f"[OK] Using voice: {voice}")
+            break
 
     if not working_voice:
+        print("[ERR] All edge-tts voices failed in create_slide_audios")
         return None
 
     audio_paths = []
@@ -707,13 +723,8 @@ def create_slide_audios(slides, work_dir):
     for idx, slide in enumerate(slides):
         audio_path = os.path.join(work_dir, f"speech_{idx}.mp3")
         voice, rate, pitch = working_voice
-        try:
-            communicate = edge_tts.Communicate(slide['speech'], voice, rate=rate, pitch=pitch)
-            loop = asyncio.new_event_loop()
-            loop.run_until_complete(communicate.save(audio_path))
-            loop.close()
-        except Exception as e:
-            print(f"  [WARN] TTS failed for slide {idx}: {e}")
+        if not _run_edge_tts(slide['speech'], audio_path, voice, rate, pitch):
+            print(f"  [WARN] TTS failed for slide {idx}, using silence")
             silence_cmd = [FFMPEG, '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '3', '-c:a', 'aac', audio_path]
             subprocess.run(silence_cmd, capture_output=True, timeout=10)
 
@@ -741,32 +752,27 @@ def create_slide_audios(slides, work_dir):
 def create_audio(text, output_path):
     try:
         import edge_tts
-        voices = [
-            ("en-US-DavisNeural", "+20%", "-6Hz"),
-            ("en-US-GuyNeural", "+20%", "-5Hz"),
-            ("en-US-ChristopherNeural", "+20%", "-4Hz"),
-            ("en-GB-RyanNeural", "+20%", "-5Hz"),
-        ]
-        for voice, rate, pitch in voices:
-            try:
-                communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
-                loop = asyncio.new_event_loop()
-                loop.run_until_complete(communicate.save(output_path))
-                loop.close()
-                if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-                    print(f"[OK] Audio ready (deep voice: {voice})")
-                    return True
-            except Exception:
-                continue
-        raise Exception("All edge-tts voices failed")
+        for voice, rate, pitch in VOICE_LIST:
+            if _run_edge_tts(text, output_path, voice, rate, pitch):
+                print(f"[OK] Audio ready (deep voice: {voice})")
+                return True
+        raise Exception("All edge-tts voices failed after retries")
     except Exception as e:
         print(f"[WARN] edge-tts failed ({e}), using gTTS...")
 
+    import time as _time
     from gtts import gTTS
-    tts = gTTS(text=text, lang='en', slow=False)
-    tts.save(output_path)
-    print("[OK] Audio ready (gTTS fallback)")
-    return True
+    for attempt in range(3):
+        try:
+            tts = gTTS(text=text, lang='en', slow=False)
+            tts.save(output_path)
+            print("[OK] Audio ready (gTTS fallback)")
+            return True
+        except Exception as e:
+            print(f"  [WARN] gTTS attempt {attempt+1}/3: {e}")
+            _time.sleep(5)
+
+    raise Exception("All TTS methods failed")
 
 
 def generate_bg_music(output_path, duration):
