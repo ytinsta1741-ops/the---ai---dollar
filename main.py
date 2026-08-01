@@ -12,6 +12,7 @@ import threading
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import schedule
+import requests
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -138,14 +139,24 @@ def post_video():
         traceback.print_exc()
 
 
+def keep_alive():
+    """Self-ping to prevent Render free tier from spinning down"""
+    try:
+        requests.get("https://the-ai-dollar.onrender.com/", timeout=10)
+    except Exception:
+        pass
+
+
 def schedule_jobs():
-    schedule.every().day.at("10:00").do(post_video)  # 10 AM KSA = 3 AM EST (UK morning)
-    schedule.every().day.at("15:00").do(post_video)  # 3 PM KSA = 8 AM EST (US morning)
-    schedule.every().day.at("20:00").do(post_video)  # 8 PM KSA = 1 PM EST (US lunch)
-    schedule.every().day.at("23:00").do(post_video)  # 11 PM KSA = 4 PM EST (US after work)
-    schedule.every().day.at("02:00").do(post_video)  # 2 AM KSA = 7 PM EST (US PRIME TIME)
-    schedule.every().day.at("05:00").do(post_video)  # 5 AM KSA = 10 PM EST (US late night)
-    print("[OK] Jobs scheduled: 10AM | 3PM | 8PM | 11PM | 2AM | 5AM KSA (optimized for US peak)")
+    schedule.every().day.at("07:00").do(post_video)  # 7 AM UTC = 10 AM KSA = 3 AM EST
+    schedule.every().day.at("12:00").do(post_video)  # 12 PM UTC = 3 PM KSA = 8 AM EST
+    schedule.every().day.at("17:00").do(post_video)  # 5 PM UTC = 8 PM KSA = 1 PM EST
+    schedule.every().day.at("20:00").do(post_video)  # 8 PM UTC = 11 PM KSA = 4 PM EST
+    schedule.every().day.at("23:00").do(post_video)  # 11 PM UTC = 2 AM KSA = 7 PM EST
+    schedule.every().day.at("02:00").do(post_video)  # 2 AM UTC = 5 AM KSA = 10 PM EST
+    schedule.every(10).minutes.do(keep_alive)
+    print("[OK] Jobs scheduled: 7/12/17/20/23/02 UTC (optimized for US peak)")
+    print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
 
 def main():
@@ -175,7 +186,7 @@ def main():
         print("\n[NOW] Posting first video now...\n")
         post_video()
 
-    print("\n[SCHED] Scheduler running (10AM | 3PM | 8PM | 11PM | 2AM | 5AM KSA)...")
+    print("\n[SCHED] Scheduler running (6 posts/day UTC + self-ping every 10 min)...")
     try:
         while True:
             schedule.run_pending()
