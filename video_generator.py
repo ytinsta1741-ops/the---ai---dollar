@@ -645,3 +645,461 @@ def fetch_hd_images(slides, save_dir):
             prompt = f"{style}, {desc}"
             encoded = urllib.parse.quote(prompt)
             url = f"https://image.pollinations.ai/prompt/{encoded}?width=768&height=1344&nologo=true&seed={i + 42}&model=flux&enhance=true"
+            try:
+                resp = requests.get(url, timeout=90)
+                if resp.status_code == 200 and len(resp.content) > 5000:
+                    with open(img_path, 'wb') as f:
+                        f.write(resp.content)
+                    enhance_image(img_path)
+                    images.append(img_path)
+                    print(f"  [AI] Slide {i+1}: {query} (fallback)")
+                    got = True
+            except Exception as e:
+                print(f"  [WARN] AI gen failed slide {i+1}: {e}")
+
+        if not got:
+            images.append(None)
+
+    return images
+
+
+def create_slide_audios(slides, work_dir):
+    """Generate audio for each slide's speech separately, measure exact duration per slide"""
+    os.makedirs(work_dir, exist_ok=True)
+
+    try:
+        import edge_tts
+    except ImportError:
+        return None
+
+    voices = [
+        ("en-US-DavisNeural", "+20%", "-6Hz"),
+        ("en-US-GuyNeural", "+20%", "-5Hz"),
+        ("en-US-ChristopherNeural", "+20%", "-4Hz"),
+        ("en-GB-RyanNeural", "+20%", "-5Hz"),
+    ]
+
+    working_voice = None
+    for voice, rate, pitch in voices:
+        try:
+            test_path = os.path.join(work_dir, "test_voice.mp3")
+            communicate = edge_tts.Communicate("Testing voice.", voice, rate=rate, pitch=pitch)
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(communicate.save(test_path))
+            loop.close()
+            if os.path.exists(test_path) and os.path.getsize(test_path) > 500:
+                working_voice = (voice, rate, pitch)
+                try:
+                    os.remove(test_path)
+                except Exception:
+                    pass
+                print(f"[OK] Using voice: {voice}")
+                break
+        except Exception:
+            continue
+
+    if not working_voice:
+        return None
+
+    audio_paths = []
+    durations = []
+
+    for idx, slide in enumerate(slides):
+        audio_path = os.path.join(work_dir, f"speech_{idx}.mp3")
+        voice, rate, pitch = working_voice
+        try:
+            communicate = edge_tts.Communicate(slide['speech'], voice, rate=rate, pitch=pitch)
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(communicate.save(audio_path))
+            loop.close()
+        except Exception as e:
+            print(f"  [WARN] TTS failed for slide {idx}: {e}")
+            silence_cmd = [FFMPEG, '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '3', '-c:a', 'aac', audio_path]
+            subprocess.run(silence_cmd, capture_output=True, timeout=10)
+
+        dur = get_audio_duration(audio_path)
+        dur = max(dur, 1.5)
+        audio_paths.append(audio_path)
+        durations.append(dur)
+        print(f"  [TTS] Slide {idx+1}: {dur:.1f}s")
+
+    concat_list = os.path.join(work_dir, "audio_concat.txt")
+    with open(concat_list, 'w') as f:
+        for ap in audio_paths:
+            f.write(f"file '{os.path.basename(ap)}'\n")
+
+    combined = os.path.join(work_dir, "combined_audio.mp3")
+    cmd = [FFMPEG, '-y', '-f', 'concat', '-safe', '0', '-i', concat_list, '-c:a', 'copy', combined]
+    subprocess.run(cmd, capture_output=True, timeout=30)
+
+    if not os.path.exists(combined) or os.path.getsize(combined) < 1000:
+        return None
+
+    return combined, durations
+
+
+def create_audio(text, output_path):
+    try:
+        import edge_tts
+        voices = [
+            ("en-US-DavisNeural", "+20%", "-6Hz"),
+            ("en-US-GuyNeural", "+20%", "-5Hz"),
+            ("en-US-ChristopherNeural", "+20%", "-4Hz"),
+            ("en-GB-RyanNeural", "+20%", "-5Hz"),
+        ]
+        for voice, rate, pitch in voices:
+            try:
+                communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
+                loop = asyncio.new_event_loop()
+                loop.run_until_complete(communicate.save(output_path))
+                loop.close()
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+                    print(f"[OK] Audio ready (deep voice: {voice})")
+                    return True
+            except Exception:
+                continue
+        raise Exception("All edge-tts voices failed")
+    except Exception as e:
+        print(f"[WARN] edge-tts failed ({e}), using gTTS...")
+
+    from gtts import gTTS
+    tts = gTTS(text=text, lang='en', slow=False)
+    tts.save(output_path)
+    print("[OK] Audio ready (gTTS fallback)")
+    return True
+
+
+def generate_bg_music(output_path, duration):
+    cmd = [
+        FFMPEG, '-y',
+        '-f', 'lavfi', '-i',
+        f'anoisesrc=d={duration}:c=pink:r=44100:a=0.015',
+        '-af', 'lowpass=f=300,highpass=f=80,volume=0.4',
+        '-c:a', 'aac', '-b:a', '64k',
+        output_path
+    ]
+    proc = subprocess.run(cmd, capture_output=True, timeout=30)
+    return proc.returncode == 0 and os.path.exists(output_path)
+
+
+def get_audio_duration(audio_path):
+    cmd = [FFMPEG, '-i', audio_path, '-f', 'null', '-']
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    _, stderr = proc.communicate()
+    output = stderr.decode('utf-8', errors='replace')
+    for line in output.split('\n'):
+        if 'Duration' in line:
+            time_str = line.split('Duration:')[1].split(',')[0].strip()
+            parts = time_str.split(':')
+            return float(parts[0]) * 3600 + float(parts[1]) * 60 + float(parts[2])
+    return 4
+
+
+def prep_slides(images, slides, durations, work_dir):
+    """Prepare slides: full image + text overlay at bottom (white text with black outline)."""
+    os.makedirs(work_dir, exist_ok=True)
+
+    from PIL import Image, ImageDraw, ImageFont
+
+    def get_font(size):
+        font_search = [
+            "C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf",
+        ]
+        for path in font_search:
+            try:
+                return ImageFont.truetype(path, size)
+            except Exception:
+                continue
+        return ImageFont.load_default()
+
+    W, H = 864, 1536
+    font_big = get_font(56)
+    font_med = get_font(48)
+
+    for idx, slide in enumerate(slides):
+        img_src = images[idx] if idx < len(images) else None
+        out = os.path.join(work_dir, f"s_{idx}.jpg")
+
+        if img_src and os.path.exists(img_src):
+            bg = Image.open(img_src).convert("RGB")
+            iw, ih = bg.size
+            ratio = max(W / iw, H / ih)
+            bg = bg.resize((int(iw * ratio), int(ih * ratio)), Image.LANCZOS)
+            left = (bg.width - W) // 2
+            top = (bg.height - H) // 2
+            bg = bg.crop((left, top, left + W, top + H))
+        else:
+            bg = Image.new("RGB", (W, H), (10, 10, 46))
+
+        draw = ImageDraw.Draw(bg)
+        text = slide['text'].upper()
+        lines = text.split('\n')
+
+        line_h = 90
+        total_h = len(lines) * line_h
+        start_y = H - total_h - 120
+
+        for li, line in enumerate(lines):
+            font = font_big if li == 0 else font_med
+            bbox = draw.textbbox((0, 0), line, font=font)
+            tw = bbox[2] - bbox[0]
+            x = (W - tw) // 2
+            y = start_y + li * line_h
+
+            for ox in range(-4, 5):
+                for oy in range(-4, 5):
+                    if abs(ox) + abs(oy) > 0:
+                        draw.text((x + ox, y + oy), line, font=font, fill=(0, 0, 0))
+
+            color = (255, 255, 255) if li == 0 else (255, 255, 100)
+            draw.text((x, y), line, font=font, fill=color)
+
+        bg.save(out, "JPEG", quality=95)
+        del draw, bg
+        gc.collect()
+        print(f"  slide {idx+1}/{len(slides)} ready")
+
+
+def create_video_ffmpeg(slides, images, audio_file, durations, output_file):
+    valid_images = [img for img in images if img is not None]
+    if not valid_images:
+        return create_video_simple(slides, audio_file, durations, output_file)
+
+    work_dir = output_file + "_work"
+    print("[BUILD] Preparing slides with text + zoom...")
+    prep_slides(images, slides, durations, work_dir)
+
+    FPS = 30
+    FADE_DUR = 0.5
+    n = len(slides)
+
+    print("[BUILD] Creating zoom clips...")
+    clip_paths = []
+    for idx in range(n):
+        clip_path = os.path.join(work_dir, f"clip_{idx}.mp4")
+        dur = durations[idx]
+        total_frames = int(dur * FPS)
+        if total_frames < 2:
+            total_frames = 2
+
+        if idx % 2 == 0:
+            zexpr = "min(zoom+0.0003,1.08)"
+        else:
+            zexpr = "if(eq(on\\,0)\\,1.08\\,max(zoom-0.0003\\,1.0))"
+
+        cmd = [
+            FFMPEG, '-y',
+            '-loop', '1', '-i', os.path.join(work_dir, f"s_{idx}.jpg"),
+            '-vf', f"zoompan=z='{zexpr}':x='(iw-iw/zoom)/2':y='(ih-ih/zoom)/2':d={total_frames}:s=720x1280:fps={FPS}",
+            '-t', f"{dur:.2f}",
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
+            '-pix_fmt', 'yuv420p',
+            clip_path
+        ]
+        proc = subprocess.run(cmd, capture_output=True, timeout=30)
+        if proc.returncode != 0:
+            cmd_simple = [
+                FFMPEG, '-y',
+                '-loop', '1', '-i', os.path.join(work_dir, f"s_{idx}.jpg"),
+                '-vf', 'scale=720:1280',
+                '-t', f"{dur:.2f}", '-r', str(FPS),
+                '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
+                '-pix_fmt', 'yuv420p',
+                clip_path
+            ]
+            subprocess.run(cmd_simple, capture_output=True, timeout=30)
+
+        clip_paths.append(clip_path)
+
+    print("[BUILD] Joining clips with crossfade...")
+    if n == 1:
+        import shutil as _sh
+        _sh.copy2(clip_paths[0], os.path.join(work_dir, "joined.mp4"))
+    else:
+        inputs = []
+        for cp in clip_paths:
+            inputs.extend(['-i', cp])
+
+        fc_parts = []
+        offset = durations[0] - FADE_DUR
+        prev = "[0:v]"
+        for i in range(1, n):
+            out_label = f"[v{i}]"
+            fc_parts.append(
+                f"{prev}[{i}:v]xfade=transition=fade:duration={FADE_DUR}:offset={max(0, offset):.2f}{out_label}"
+            )
+            prev = out_label
+            if i < n - 1:
+                offset += durations[i] - FADE_DUR
+
+        filter_complex = ";".join(fc_parts)
+        joined_path = os.path.join(work_dir, "joined.mp4")
+        cmd = [FFMPEG, '-y'] + inputs + [
+            '-filter_complex', filter_complex,
+            '-map', prev,
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
+            '-pix_fmt', 'yuv420p',
+            joined_path
+        ]
+        proc = subprocess.run(cmd, capture_output=True, timeout=120)
+        if proc.returncode != 0:
+            concat_file = os.path.join(work_dir, "concat.txt")
+            with open(concat_file, 'w') as f:
+                for cp in clip_paths:
+                    f.write(f"file '{os.path.basename(cp)}'\n")
+            cmd = [
+                FFMPEG, '-y',
+                '-f', 'concat', '-safe', '0', '-i', concat_file,
+                '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
+                '-pix_fmt', 'yuv420p',
+                joined_path
+            ]
+            subprocess.run(cmd, capture_output=True, timeout=60)
+
+    joined_path = os.path.join(work_dir, "joined.mp4")
+    audio_duration = get_audio_duration(audio_file)
+
+    print("[BUILD] Mixing voiceover + background music...")
+    bg_music_path = os.path.join(work_dir, "bgmusic.m4a")
+    has_music = generate_bg_music(bg_music_path, audio_duration + 2)
+
+    if has_music:
+        cmd = [
+            FFMPEG, '-y',
+            '-i', joined_path,
+            '-i', audio_file,
+            '-i', bg_music_path,
+            '-filter_complex',
+            '[2:a]volume=0.12[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
+            '-map', '0:v', '-map', '[aout]',
+            '-c:v', 'copy',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-shortest',
+            output_file
+        ]
+    else:
+        cmd = [
+            FFMPEG, '-y',
+            '-i', joined_path,
+            '-i', audio_file,
+            '-c:v', 'copy',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-shortest',
+            output_file
+        ]
+
+    proc = subprocess.run(cmd, capture_output=True, timeout=60)
+
+    import shutil
+    shutil.rmtree(work_dir, ignore_errors=True)
+
+    if proc.returncode != 0:
+        return create_video_simple(slides, audio_file, durations, output_file)
+
+    print("[OK] Video created with zoom + crossfade + music!")
+    return True
+
+
+def create_video_simple(slides, audio_file, durations, output_file):
+    """Fallback: solid color background with audio, no text."""
+    total_dur = sum(durations)
+    cmd = [
+        FFMPEG, '-y',
+        '-f', 'lavfi', '-i', f'color=c=0x0A0A2E:size=720x1280:rate=24:d={total_dur:.2f}',
+        '-i', audio_file,
+        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+        '-c:a', 'aac', '-b:a', '128k',
+        '-pix_fmt', 'yuv420p',
+        '-shortest',
+        output_file
+    ]
+    print("[BUILD] Running FFmpeg (simple mode)...")
+    proc = subprocess.run(cmd, capture_output=True, timeout=240)
+    if proc.returncode != 0:
+        return False
+    print("[OK] Video created (simple mode)")
+    return True
+
+
+def _get_next_topic_index():
+    counter_file = "topic_counter.txt"
+    try:
+        if os.path.exists(counter_file):
+            with open(counter_file) as f:
+                idx = int(f.read().strip())
+        else:
+            idx = 0
+    except Exception:
+        idx = 0
+    next_idx = (idx + 1) % len(CONTENT_TOPICS)
+    with open(counter_file, "w") as f:
+        f.write(str(next_idx))
+    return idx
+
+
+def generate_daily_video():
+    index = _get_next_topic_index()
+    topic = CONTENT_TOPICS[index]
+    slides = topic['slides']
+
+    os.makedirs(CONFIG['output_dir'], exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    output_file = f"{CONFIG['output_dir']}/the_ai_dollar_{timestamp}.mp4"
+    audio_dir = f"{CONFIG['output_dir']}/audio_{timestamp}"
+    img_dir = f"{CONFIG['output_dir']}/imgs_{timestamp}"
+
+    try:
+        print("[TTS] Generating per-slide audio...")
+        slide_result = create_slide_audios(slides, audio_dir)
+
+        if slide_result:
+            audio_file, durations = slide_result
+            total_dur = sum(durations)
+            print(f"[OK] Per-slide audio: {len(durations)} segments, {total_dur:.1f}s total")
+        else:
+            print("[WARN] Per-slide audio failed, using single voiceover...")
+            audio_file = os.path.join(audio_dir, "full_audio.mp3")
+            os.makedirs(audio_dir, exist_ok=True)
+            full_text = ' '.join(s['speech'] for s in slides)
+            create_audio(full_text, audio_file)
+            total_dur = get_audio_duration(audio_file)
+            per_slide = total_dur / len(slides)
+            durations = [per_slide] * len(slides)
+
+        print("[IMG] Fetching HD images...")
+        images = fetch_hd_images(slides, img_dir)
+        print(f"[OK] Got {sum(1 for i in images if i)} images")
+
+        print("[VIDEO] Creating animated video...")
+        ok = create_video_ffmpeg(slides, images, audio_file, durations, output_file)
+
+        if not ok:
+            return {"status": "error", "message": "Video creation failed"}
+
+        print(f"[OK] Video created: {output_file}")
+
+        voiceover_text = ' '.join(s['speech'] for s in slides)
+
+        try:
+            import shutil
+            shutil.rmtree(audio_dir, ignore_errors=True)
+            shutil.rmtree(img_dir, ignore_errors=True)
+        except Exception:
+            pass
+
+        return {
+            "status": "success",
+            "video": output_file,
+            "title": topic['title'],
+            "script": voiceover_text,
+            "keywords": topic['keywords']
+        }
+
+    except Exception as e:
+        print(f"[ERR] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
