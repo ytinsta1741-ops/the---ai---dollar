@@ -395,7 +395,7 @@ CONTENT_TOPICS = [
             {"text": "WHERE you put\nyour money MATTERS\nmore than how\nMUCH you invest", "speech": "WHERE you put your money MATTERS INFINITELY MORE than HOW MUCH you put in. Choose WISELY.", "img": "dramatic crossroads with two paths one to wealth one to nothing"},
             {"text": "Start with 10%\nstock returns\ntoday\nand watch it\nCOMPOUND forever", "speech": "Put your money in stocks earning TEN PERCENT TODAY and watch it COMPOUND into MILLIONS by retirement. START THIS WEEK. DO IT.", "img": "a person watching in amazement as their wealth multiplies"},
         ],
-        "keywords": ["Rule of 72", "Compound Interest", "Wealth"},
+        "keywords": ["Rule of 72", "Compound Interest", "Wealth"],
     },
     {
         "title": "Lottery Winners: Why 70% Go BROKE in 5 Years",
