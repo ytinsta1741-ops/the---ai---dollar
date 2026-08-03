@@ -1113,6 +1113,8 @@ def prep_slides(images, slides, durations, work_dir):
     W, H = 720, 1280
     font_big = get_font(48)
     font_med = get_font(40)
+    font_brand = get_font(24)
+    font_cta = get_font(36)
 
     for idx, slide in enumerate(slides):
         img_src = images[idx] if idx < len(images) else None
@@ -1130,6 +1132,17 @@ def prep_slides(images, slides, durations, work_dir):
             bg = Image.new("RGB", (W, H), (10, 10, 46))
 
         draw = ImageDraw.Draw(bg)
+
+        brand = "THE AI DOLLAR"
+        bb = draw.textbbox((0, 0), brand, font=font_brand)
+        bw = bb[2] - bb[0]
+        bx = (W - bw) // 2
+        for ox in range(-2, 3):
+            for oy in range(-2, 3):
+                if abs(ox) + abs(oy) > 0:
+                    draw.text((bx + ox, 30 + oy), brand, font=font_brand, fill=(0, 0, 0))
+        draw.text((bx, 30), brand, font=font_brand, fill=(255, 215, 0))
+
         text = slide['text'].upper()
         lines = text.split('\n')
 
@@ -1151,6 +1164,20 @@ def prep_slides(images, slides, durations, work_dir):
 
             color = (255, 255, 255) if li == 0 else (255, 255, 100)
             draw.text((x, y), line, font=font, fill=color)
+
+        is_last = (idx == len(slides) - 1)
+        if is_last:
+            cta = "SUBSCRIBE FOR MORE"
+            cb = draw.textbbox((0, 0), cta, font=font_cta)
+            cw = cb[2] - cb[0]
+            ch = cb[3] - cb[1]
+            cx = (W - cw) // 2
+            cy = 80
+            draw.rounded_rectangle(
+                [cx - 20, cy - 10, cx + cw + 20, cy + ch + 10],
+                radius=12, fill=(255, 0, 0)
+            )
+            draw.text((cx, cy), cta, font=font_cta, fill=(255, 255, 255))
 
         bg.save(out, "JPEG", quality=95)
         del draw, bg

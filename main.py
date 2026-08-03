@@ -36,7 +36,7 @@ def start_health_server():
     server.serve_forever()
 
 
-def upload_to_youtube(video_path, title, description, is_short=True):
+def upload_to_youtube(video_path, title, description, is_short=True, keywords=None):
     """Upload video to YouTube using OAuth refresh token"""
     try:
         refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "")
@@ -65,14 +65,54 @@ def upload_to_youtube(video_path, title, description, is_short=True):
 
         youtube = build("youtube", "v3", credentials=creds)
 
+        topic_tags = keywords if keywords else []
+        base_tags = [
+            "personal finance", "money tips", "investing for beginners",
+            "financial literacy", "how to invest", "money management",
+            "wealth building", "passive income", "financial education",
+            "stock market for beginners", "save money", "make money",
+            "budget tips", "debt free", "credit score",
+            "side hustle", "financial freedom", "money advice 2025",
+            "finance tips", "get rich", "TheAIDollar",
+        ]
+        yt_tags = topic_tags + [t for t in base_tags if t.lower() not in [k.lower() for k in topic_tags]]
+
+        kw_line = ", ".join(topic_tags[:5]) if topic_tags else "money tips, finance, investing"
+
         if is_short:
             yt_title = title[:100] + " #Shorts"
-            yt_desc = f"{description}\n\nLearn finance in 60 seconds. New video every few hours!\n\nSubscribe to The AI Dollar for daily finance education.\n\n#Finance #Money #PersonalFinance #Investing #Shorts #FinanceTips #MoneyTips #WealthBuilding #FinancialLiteracy #MoneyManagement #StockMarket #Budgeting #DebtFree #PassiveIncome #TheAIDollar"
-            yt_tags = ["Finance", "Personal Finance", "Money Tips", "Investing For Beginners", "Financial Literacy", "Money Management", "Stock Market", "Budgeting Tips", "Wealth Building", "Passive Income", "Credit Score", "Debt Free", "Savings Tips", "Financial Education", "Money Advice", "TheAIDollar", "Shorts"]
+            yt_desc = (
+                f"{kw_line} - {title}\n\n"
+                f"{description}\n\n"
+                f"Want to learn finance in 60 seconds? SUBSCRIBE to The AI Dollar!\n"
+                f"New Shorts EVERY FEW HOURS + deep-dive videos DAILY.\n\n"
+                f"LIKE this video if you learned something!\n"
+                f"COMMENT your biggest money question below!\n"
+                f"SHARE with a friend who needs to hear this!\n\n"
+                f"#Finance #Money #PersonalFinance #Investing #Shorts "
+                f"#FinanceTips #MoneyTips #WealthBuilding #FinancialLiteracy "
+                f"#StockMarket #Budgeting #DebtFree #PassiveIncome "
+                f"#MoneyManagement #FinancialFreedom #HowToInvest "
+                f"#MakeMoneyOnline #SideHustle #CreditScore #TheAIDollar"
+            )
+            yt_tags.append("Shorts")
         else:
             yt_title = title[:100]
-            yt_desc = f"{description}\n\nDeep dive finance education from The AI Dollar.\nNew long-form videos daily + Shorts every few hours!\n\nSubscribe for daily finance education.\n\n#Finance #Money #PersonalFinance #Investing #FinanceTips #WealthBuilding #FinancialLiteracy #MoneyManagement #StockMarket #Budgeting #DebtFree #PassiveIncome #TheAIDollar"
-            yt_tags = ["Finance", "Personal Finance", "Money Tips", "Investing For Beginners", "Financial Literacy", "Money Management", "Stock Market", "Budgeting Tips", "Wealth Building", "Passive Income", "Credit Score", "Financial Education", "Money Advice", "TheAIDollar"]
+            yt_desc = (
+                f"{kw_line} - Complete guide for beginners\n\n"
+                f"{description}\n\n"
+                f"In this video you'll learn everything about {kw_line}.\n\n"
+                f"SUBSCRIBE to The AI Dollar for daily finance education!\n"
+                f"New deep-dive videos EVERY DAY + Shorts every few hours.\n\n"
+                f"LIKE if this helped you!\n"
+                f"COMMENT your #1 finance question!\n"
+                f"SHARE with someone who needs financial education!\n\n"
+                f"TIMESTAMPS:\n0:00 Introduction\n0:15 Key concepts\n1:00 Strategy\n2:00 Action steps\n\n"
+                f"#Finance #Money #PersonalFinance #Investing "
+                f"#FinanceTips #WealthBuilding #FinancialLiteracy "
+                f"#StockMarket #Budgeting #DebtFree #PassiveIncome "
+                f"#FinancialFreedom #HowToInvest #MoneyManagement #TheAIDollar"
+            )
 
         body = {
             "snippet": {
@@ -124,10 +164,11 @@ def post_video():
         video_path = result['video']
         title      = result['title']
         script     = result['script']
+        keywords   = result.get('keywords', [])
         print(f"[OK] Video generated: {title}")
 
         print(f"\n[STEP 2] Uploading to YouTube...")
-        youtube_success = upload_to_youtube(video_path, title, script)
+        youtube_success = upload_to_youtube(video_path, title, script, is_short=True, keywords=keywords)
 
         print(f"\n[STEP 3] Instagram...")
         print("[SKIP] Instagram disabled (anti-bot detection blocking automated posts)")
@@ -165,10 +206,11 @@ def post_long_video():
         video_path = result['video']
         title      = result['title']
         script     = result['script']
+        keywords   = result.get('keywords', [])
         print(f"[OK] Long video generated: {title}")
 
         print(f"\n[STEP 2] Uploading to YouTube (long-form)...")
-        youtube_success = upload_to_youtube(video_path, title, script, is_short=False)
+        youtube_success = upload_to_youtube(video_path, title, script, is_short=False, keywords=keywords)
 
         with open("last_post_time.txt", "w") as f:
             f.write(str(time.time()))
