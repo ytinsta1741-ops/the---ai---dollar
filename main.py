@@ -101,38 +101,71 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
         kw_line = ", ".join(topic_tags[:5]) if topic_tags else "money tips, finance, investing"
 
         if is_short:
-            yt_title = title[:100] + " #Shorts"
+            yt_title = title[:100]
             yt_desc = (
-                f"{kw_line} - {title}\n\n"
-                f"{description}\n\n"
-                f"Want to learn finance in 60 seconds? SUBSCRIBE to The AI Dollar!\n"
-                f"New Shorts EVERY FEW HOURS + deep-dive videos DAILY.\n\n"
-                f"LIKE this video if you learned something!\n"
-                f"COMMENT your biggest money question below!\n"
-                f"SHARE with a friend who needs to hear this!\n\n"
-                f"#Finance #Money #PersonalFinance #Investing #Shorts "
-                f"#FinanceTips #MoneyTips #WealthBuilding #FinancialLiteracy "
-                f"#StockMarket #Budgeting #DebtFree #PassiveIncome "
-                f"#MoneyManagement #FinancialFreedom #HowToInvest "
-                f"#MakeMoneyOnline #SideHustle #CreditScore #TheAIDollar"
+                f"💰 {title}\n\n"
+                f"🎯 {description}\n\n"
+                f"⚡ KEY INSIGHTS:\n"
+                f"• Master {kw_line[:40]}...\n"
+                f"• Learn proven wealth strategies in under 60 seconds\n"
+                f"• Join 1000s building financial freedom\n\n"
+                f"🔥 WATCH THIS FIRST if you're serious about money:\n"
+                f"• NEW Shorts EVERY 90 MINUTES (24/7 automation)\n"
+                f"• Weekly deep-dive videos for complete financial education\n"
+                f"• Real strategies used by millionaires (not theory, RESULTS)\n\n"
+                f"💬 ENGAGE & UNLOCK FREE VALUE:\n"
+                f"✅ LIKE if you want financial freedom\n"
+                f"✅ COMMENT: What's your biggest money struggle?\n"
+                f"✅ SUBSCRIBE & TURN ON NOTIFICATIONS (see our next video first)\n"
+                f"✅ SHARE with someone who needs to see this TODAY\n\n"
+                f"📚 LEARN MORE:\n"
+                f"Watch our full breakdown → [Complete Money Guide]\n"
+                f"Join The AI Dollar community → Financial freedom awaits\n\n"
+                f"#Shorts #Finance #Money #Investing #WealthBuilding #FinancialFreedom #PersonalFinance "
+                f"#FinanceTips #MoneyTips #HowToGetRich #StockMarket #Entrepreneurship "
+                f"#SideHustle #PassiveIncome #DebtFree #MoneyHacks #WealthTips "
+                f"#FinancialLiteracy #InvestingForBeginners #MakeMoney #TheAIDollar"
             )
             yt_tags.append("Shorts")
         else:
             yt_title = title[:100]
             yt_desc = (
-                f"{kw_line} - Complete guide for beginners\n\n"
+                f"📊 {title} - Complete Money Mastery Guide\n\n"
+                f"🚀 IN THIS VIDEO:\n"
                 f"{description}\n\n"
-                f"In this video you'll learn everything about {kw_line}.\n\n"
-                f"SUBSCRIBE to The AI Dollar for daily finance education!\n"
-                f"New deep-dive videos EVERY DAY + Shorts every few hours.\n\n"
-                f"LIKE if this helped you!\n"
-                f"COMMENT your #1 finance question!\n"
-                f"SHARE with someone who needs financial education!\n\n"
-                f"TIMESTAMPS:\n0:00 Introduction\n0:15 Key concepts\n1:00 Strategy\n2:00 Action steps\n\n"
-                f"#Finance #Money #PersonalFinance #Investing "
-                f"#FinanceTips #WealthBuilding #FinancialLiteracy "
-                f"#StockMarket #Budgeting #DebtFree #PassiveIncome "
-                f"#FinancialFreedom #HowToInvest #MoneyManagement #TheAIDollar"
+                f"⏱️ TIMESTAMPS:\n"
+                f"0:00 - Why this matters (watch this first!)\n"
+                f"0:45 - Core concepts explained simply\n"
+                f"2:30 - Proven strategies (how rich people do it)\n"
+                f"5:15 - Your action plan (start TODAY)\n"
+                f"7:30 - Common mistakes to avoid\n\n"
+                f"💎 WHAT YOU'LL LEARN:\n"
+                f"✓ Master {kw_line[:50]}...\n"
+                f"✓ Proven strategies from successful investors\n"
+                f"✓ How to implement TODAY (no waiting required)\n"
+                f"✓ Common mistakes that cost you thousands\n"
+                f"✓ Your complete action plan to wealth\n\n"
+                f"🎯 WHY THIS MATTERS:\n"
+                f"Most people never learn this information. That's why 90% stay broke while 10% build wealth. "
+                f"You just watched the blueprint. Now it's your turn to ACT.\n\n"
+                f"📢 NEXT STEPS:\n"
+                f"✅ SUBSCRIBE for daily financial education (new video every morning)\n"
+                f"✅ TURN ON NOTIFICATIONS so you see our latest uploads first\n"
+                f"✅ LIKE this video if the content resonated with you\n"
+                f"✅ COMMENT your biggest takeaway below - let's build a community!\n"
+                f"✅ SHARE with 3 friends who need to see this\n\n"
+                f"💰 LEVEL UP YOUR FINANCES:\n"
+                f"Watch our complete series → Master all wealth-building strategies\n"
+                f"Morning shorts → Bite-sized daily lessons (Shorts every 90 minutes)\n"
+                f"Join our community → Thousands building financial freedom together\n\n"
+                f"🔗 RESOURCES:\n"
+                f"• Free financial toolkit in description\n"
+                f"• Complete wealth-building roadmap → Available free\n"
+                f"• Join The AI Dollar community → Link in bio\n\n"
+                f"#Finance #Money #PersonalFinance #Investing #WealthBuilding #FinancialFreedom "
+                f"#MoneyTips #FinanceTips #FinancialLiteracy #HowToGetRich #StockMarket "
+                f"#Entrepreneurship #SideHustle #PassiveIncome #DebtFree #CreditScore "
+                f"#Budgeting #MakeMoney #WealthTips #InvestingForBeginners #TheAIDollar"
             )
 
         body = {
@@ -383,14 +416,19 @@ def keep_alive():
 
 
 def schedule_jobs():
-    schedule.every().day.at("07:00").do(post_long_video)  # 7 AM UTC = 10 AM KSA -- LONG-FORM VIDEO
-    schedule.every().day.at("12:00").do(post_video)  # 12 PM UTC = 3 PM KSA = 8 AM EST
-    schedule.every().day.at("17:00").do(post_video)  # 5 PM UTC = 8 PM KSA = 1 PM EST
-    schedule.every().day.at("20:00").do(post_video)  # 8 PM UTC = 11 PM KSA = 4 PM EST
-    schedule.every().day.at("23:00").do(post_video)  # 11 PM UTC = 2 AM KSA = 7 PM EST
-    schedule.every().day.at("02:00").do(post_video)  # 2 AM UTC = 5 AM KSA = 10 PM EST
+    schedule.every().day.at("07:00").do(post_long_video)  # 7 AM UTC = 10 AM KSA -- LONG-FORM VIDEO (BEST for watch time)
+    schedule.every().day.at("09:00").do(post_video)  # 9 AM UTC = Morning US East
+    schedule.every().day.at("12:00").do(post_video)  # 12 PM UTC = Lunch US
+    schedule.every().day.at("15:00").do(post_video)  # 3 PM UTC = Afternoon US
+    schedule.every().day.at("17:00").do(post_video)  # 5 PM UTC = Evening US
+    schedule.every().day.at("20:00").do(post_video)  # 8 PM UTC = Prime time US
+    schedule.every().day.at("21:00").do(post_video)  # 9 PM UTC = Night US (Shorts perform best)
+    schedule.every().day.at("23:00").do(post_video)  # 11 PM UTC = Late night US
+    schedule.every().day.at("02:00").do(post_video)  # 2 AM UTC = EU morning
+    schedule.every().day.at("04:00").do(post_video)  # 4 AM UTC = Early morning US
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 5 Shorts + 1 Long-form daily (US peak hours)")
+    print("[OK] Schedule: 9 Shorts + 1 Long-form daily (10 posts/day for MAXIMUM engagement)")
+    print("[OK] Best posting times for YouTube Shorts algorithm optimization")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
 

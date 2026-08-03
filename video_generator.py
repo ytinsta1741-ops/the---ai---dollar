@@ -30,7 +30,7 @@ PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
 
 CONTENT_TOPICS = [
     {
-        "title": "Your Money Is Dying Right Now",
+        "title": "This Is Why You're Poor (3 Reasons Your Money Disappears)",
         "slides": [
             {"text": "RIGHT NOW\nyour cash is\nLOSING VALUE", "speech": "While you watch this video, your money is actively losing value. Not tomorrow, not next month. RIGHT NOW.", "img": "a real hundred dollar bill burning with orange flames on a dark background"},
             {"text": "Check this out\nInflation hit 7%\nthis year alone", "speech": "Inflation just hit seven percent. That means prices on everything you buy skyrocketed. Your money? It stayed exactly the same.", "img": "price tags on store shelves glowing red as numbers spike upward"},
@@ -46,7 +46,7 @@ CONTENT_TOPICS = [
         "keywords": ["Inflation", "Stocks", "Wealth", "Investing"],
     },
     {
-        "title": "Turn Your Coffee Money Into A Million",
+        "title": "$5 Daily Habit = $1M In 40 Years (Most People Don't Know This)",
         "slides": [
             {"text": "FIVE DOLLARS\nA DAY\nBECOMES A\nMILLION", "speech": "Your morning coffee. That five dollar latte. Invested every day? Becomes over ONE MILLION DOLLARS. This is not theory. This is math.", "img": "a steaming coffee cup transforming into stacks of hundred dollar bills"},
             {"text": "That's literally\nthe cost of\nyour breakfast", "speech": "Five dollars. That's what you spend on breakfast without thinking. You wouldn't even FEEL the loss.", "img": "a coffee cup and pastry on a cafe table with $5 bill"},
@@ -62,7 +62,7 @@ CONTENT_TOPICS = [
         "keywords": ["Compound Interest", "Wealth", "Investing", "Rich"],
     },
     {
-        "title": "Bad Credit DESTROYS Your Wealth",
+        "title": "Bad Credit Costs You $100K (3 Rules to Fix It Fast)",
         "slides": [
             {"text": "Bad credit\nCOSTS YOU\n$100,000", "speech": "Bad credit doesn't just hurt your feelings. It DESTROYS your wealth. We're talking ONE HUNDRED THOUSAND DOLLARS literally stolen from you.", "img": "a credit score meter shattered into pieces with red destructive energy"},
             {"text": "On that $300K\nmortgage you want", "speech": "When you apply for a three hundred thousand dollar mortgage to buy your dream house.", "img": "a beautiful dream house burning with a sold sign on fire"},
@@ -78,7 +78,7 @@ CONTENT_TOPICS = [
         "keywords": ["Credit Score", "Finance", "Mortgage", "Wealth Building"],
     },
     {
-        "title": "The 50/30/20 Rule DESTROYS Poverty",
+        "title": "The 50/30/20 Budget Formula (Build Wealth On Any Salary)",
         "slides": [
             {"text": "This budget rule\nDESTROYED my\nfinancial chaos", "speech": "This budget rule DESTROYED my financial chaos and turned me into a money-building MACHINE.", "img": "a person breaking free from chains of overspending with golden light"},
             {"text": "Take your paycheck\nany size\nDOES NOT MATTER", "speech": "Take your paycheck, any size works. Twenty thousand or two hundred thousand. The ratio works EVERYWHERE.", "img": "a massive paycheck envelope glowing with gold being held up triumphantly"},
@@ -94,7 +94,7 @@ CONTENT_TOPICS = [
         "keywords": ["Budgeting", "50/30/20", "Wealth Formula"],
     },
     {
-        "title": "Stocks vs Bonds: The POWER Comparison",
+        "title": "Stocks vs Bonds: Which Wins? (80/20 Rule Explained)",
         "slides": [
             {"text": "Stocks vs Bonds\nWhich one DESTROYS\nthe other?", "speech": "Stocks versus bonds. Which one DESTROYS the other? Let's end this debate right now.", "img": "a charging bull and a soaring eagle colliding in dramatic battle"},
             {"text": "A stock means\nYOU OWN a piece\nof a real company", "speech": "When you buy a stock, you OWN a tiny piece of a REAL COMPANY. If that company EXPLODES, so does your investment.", "img": "a gleaming corporate skyscraper shooting upward with lightning strikes"},
@@ -110,7 +110,7 @@ CONTENT_TOPICS = [
         "keywords": ["Stocks", "Bonds", "Asset Allocation", "Investing"],
     },
     {
-        "title": "No Emergency Fund? You're ONE Crisis Away",
+        "title": "$800 Car Repair Destroyed Them (Build Emergency Fund Now)",
         "slides": [
             {"text": "No emergency fund?\nYou're ONE CRISIS\naway from DISASTER", "speech": "No emergency fund? Let me show you EXACTLY how fast your life can spiral into DISASTER.", "img": "a glowing red emergency alarm shrieking in a dark industrial corridor"},
             {"text": "Your car EXPLODES\n$800 repair bill\nTOMORROW", "speech": "Your car breaks down TOMORROW. Eight hundred dollar repair bill. RIGHT NOW.", "img": "a car smoking with flames and a repair shop bill flying out the windshield"},
@@ -126,7 +126,7 @@ CONTENT_TOPICS = [
         "keywords": ["Emergency Fund", "Financial Safety", "Savings"],
     },
     {
-        "title": "Recessions DESTROY Weak Investors (But BUILD Rich Ones)",
+        "title": "Recessions Make Millionaires (The Crash Strategy Rich Use)",
         "slides": [
             {"text": "A recession is coming\nWatch what happens\nto WEAK investors", "speech": "A recession is coming. Watch what happens to weak investors while the RICH get richer.", "img": "massive black storm clouds with lightning above a city in chaos"},
             {"text": "Companies CRASH\nthey start cutting\nworkers like crazy", "speech": "Companies CRASH and START CUTTING workers like their lives depend on it. Layoffs EXPLODE.", "img": "a dark abandoned corporate office with empty desks and shadows"},
@@ -142,7 +142,7 @@ CONTENT_TOPICS = [
         "keywords": ["Recession", "Market Crash", "Wealth Building"],
     },
     {
-        "title": "RICH People Buy Assets That PRINT MONEY",
+        "title": "4 Assets That Print Money Daily (Millionaire Strategy)",
         "slides": [
             {"text": "Rich people don't buy\nSTUFF they buy\nASSETS that PRINT\nMONEY", "speech": "Rich people don't buy stuff. They buy ASSETS that PRINT MONEY. This one difference separates the WEALTHY from BROKE.", "img": "a glowing mansion estate with rivers of golden coins flowing through it"},
             {"text": "An asset PRINTS\nmoney INTO your\npocket every month", "speech": "An asset PRINTS MONEY into your pocket every single month. That's the definition.", "img": "golden coins flowing continuously into an open wallet with green upward arrows"},
@@ -158,7 +158,7 @@ CONTENT_TOPICS = [
         "keywords": ["Assets", "Passive Income", "Wealth Building"],
     },
     {
-        "title": "The S&P 500 Is Your ULTIMATE Wealth Machine",
+        "title": "$100 → $1,745 In 30 Years (S&P 500 Magic)",
         "slides": [
             {"text": "What is the S&P 500?\nYour ULTIMATE wealth\nmachine explained", "speech": "What is the S and P five hundred? It's your ULTIMATE wealth machine. Let me show you.", "img": "Wall Street bull statue glowing gold under dramatic lighting"},
             {"text": "It's the top 500\ncompanies in America\nCOMBINED into ONE", "speech": "It's the TOP FIVE HUNDRED companies in America. All of them. Combined. Into ONE single investment.", "img": "glowing futuristic holograms of massive tech companies floating"},
@@ -174,7 +174,7 @@ CONTENT_TOPICS = [
         "keywords": ["S&P 500", "Index Fund", "Wealth Building"],
     },
     {
-        "title": "Taxes DESTROYED You (Until Now)",
+        "title": "You're Paying Wrong Taxes (22% vs 13% - The Bracket Secret)",
         "slides": [
             {"text": "You DON'T pay 30%\non everything\nThat's a LIE\nstop believing it", "speech": "You do NOT pay thirty percent on everything you earn. STOP BELIEVING THIS LIE. It's destroying your wealth.", "img": "a tax document with a red 30% being shattered into pieces"},
             {"text": "This myth STOPS\npeople from earning\nmore money\nIt's SABOTAGE", "speech": "This myth STOPS people from earning more money. It's financial SABOTAGE. Let me destroy this myth right now.", "img": "a shattered glass sign reading MYTH with explosive fragments flying"},
@@ -190,7 +190,7 @@ CONTENT_TOPICS = [
         "keywords": ["Taxes", "Tax Brackets", "Financial Literacy"],
     },
     {
-        "title": "ANNIHILATE Your Debt with These Two Weapons",
+        "title": "Debt Snowball vs Avalanche (Which Actually Works?)",
         "slides": [
             {"text": "Got suffocating debt?\nTwo PROVEN weapons\nto ANNIHILATE it", "speech": "Got debt destroying your dreams? Two PROVEN weapons to ANNIHILATE it completely.", "img": "a pile of bills on fire with red warning lights flashing"},
             {"text": "WEAPON 1:\nThe SNOWBALL\ntarget small wins", "speech": "Weapon one is the DEBT SNOWBALL. This weapon CRUSHES you mentally but WINS emotionally.", "img": "a glowing white snowball rolling downhill growing massive and unstoppable"},
@@ -555,6 +555,86 @@ CONTENT_TOPICS = [
             {"text": "Use debt as TOOL\nto build wealth\nnever trap that\nkeeps you broke", "speech": "Use DEBT as a TOOL to BUILD WEALTH. Never as a TRAP that keeps you BROKE FOREVER. CHOOSE WISELY.", "img": "golden wrench tool building staircase of wealth upward"},
         ],
         "keywords": ["Good Debt", "Bad Debt", "Borrowing Wisely"],
+    },
+    {
+        "title": "Side Hustle Math: Turn $0 Into $1000/Month (6 Ideas)",
+        "slides": [
+            {"text": "6 side hustles\nthat PAY you\nreal money\nSTART TODAY", "speech": "Six side hustles that PAY REAL MONEY. Not get-rich schemes. Not crypto nonsense. Real income you can start THIS WEEK.", "img": "six icons representing different income streams glowing"},
+            {"text": "Freelance writing\n$500-2000\nper month\nzero startup", "speech": "Freelance writing for blogs and websites. Five hundred to two thousand dollars monthly. ZERO startup cost. Start TODAY.", "img": "laptop screen with article being written in gold light"},
+            {"text": "Virtual assistant\n$600-1500\nmonth managing\nbusiness tasks", "speech": "Virtual assistant work. Organize calendars, emails, projects. Six hundred to fifteen hundred monthly.", "img": "organized digital workspace with calendar and tasks"},
+            {"text": "Tutoring online\n$20-50 per hour\npick your schedule", "speech": "Online tutoring. Twenty to fifty dollars per hour. Set your own schedule. Work whenever you want.", "img": "student and teacher in virtual learning session"},
+            {"text": "Sell digital products\nTemplates guides courses\n$1000+ passive", "speech": "Sell digital products. Templates, guides, courses. Thousand plus PASSIVE income monthly. Build ONCE, sell FOREVER.", "img": "digital products icons like templates and courses"},
+            {"text": "Dropshipping products\n$800-2000 monthly\nlet others handle shipping", "speech": "Dropshipping. Eight hundred to two thousand monthly. You just market, they handle shipping.", "img": "packages being shipped with profit flowing in"},
+            {"text": "Social media management\n$400-1200 per client\nzero experience needed", "speech": "Manage social media for small businesses. Four hundred to twelve hundred PER CLIENT. Zero experience needed.", "img": "colorful social media posts being managed"},
+            {"text": "The real secret?\nPick ONE. Go deep.\nMastery beats variety", "speech": "The real secret? Pick ONE side hustle. Go DEEP. Become EXPERT. Mastery beats jumping around.", "img": "arrow going straight up showing focused growth"},
+            {"text": "90 days of\nserious work\n$1000 monthly\nGUARANTEED", "speech": "Ninety days of serious focused work? One thousand monthly GUARANTEED. This isn't theoretical. This WORKS.", "img": "ninety day calendar with money growing"},
+            {"text": "Extra $1000/month\n= $12K yearly\n= Life changing\nmoney", "speech": "One thousand monthly side income. Twelve thousand yearly. That changes your LIFE. Start THIS WEEK. Pick ONE.", "img": "celebration with wealth growing showing success"},
+        ],
+        "keywords": ["Side Hustle", "Extra Income", "Make Money"],
+    },
+    {
+        "title": "The Roth IRA Hack (Free Money From Government)",
+        "slides": [
+            {"text": "The government\nwill give you\nFREE MONEY\nfor retirement", "speech": "The government will literally PAY YOU FREE MONEY to invest in your retirement. Most people don't know this exists.", "img": "government building with money flowing out golden"},
+            {"text": "It's called\nRoth IRA\nTax free FOREVER", "speech": "It's called the ROTH IRA. Invest money TODAY, pay taxes TODAY, then NEVER PAY TAXES AGAIN on the growth. EVER.", "img": "retirement account growing tax-free with green arrows"},
+            {"text": "You can withdraw\nmoney anytime\nno penalties\nno rules", "speech": "You can withdraw your money anytime. No penalties. No age restrictions. Complete FREEDOM.", "img": "atm machine dispensing money freely"},
+            {"text": "$7000 per year\nmaximum contribution\ntax free growth\nFOREVER", "speech": "Contribute up to seven thousand dollars per year. Watch it grow TAX FREE for 30 YEARS. Seven thousand becomes FIFTY THOUSAND.", "img": "seven thousand dollars transforming into wealth"},
+            {"text": "Your $7K becomes\n$50K in 30 years\nThat's AUTOMATIC", "speech": "Seven thousand today becomes fifty thousand in thirty years. You didn't do ANYTHING. It just grows. This is MAGIC.", "img": "money multiplying in piggy bank over decades"},
+            {"text": "Even better?\nYour employer\nmight MATCH\nyour contributions", "speech": "EVEN BETTER. Some employers MATCH your contributions. Free money. Literally free.", "img": "employer doubling employee contribution with match"},
+            {"text": "How to start?\nFidelity Vanguard\nSchwab 5 minutes", "speech": "Open an account at Fidelity, Vanguard, or Schwab. Five minutes. Start with fifty bucks.", "img": "phone opening brokerage account with green checkmark"},
+            {"text": "Buy VOO or VTI\nset and forget\nlet compound\ndo the work", "speech": "Buy VOO or VTI. Set and FORGET. Compound interest does the heavy lifting.", "img": "index fund symbols glowing with passive growth"},
+            {"text": "People who START\nat 25 vs 35\nWin FIVE HUNDRED\nTHOUSAND more", "speech": "Someone who starts at twenty five versus thirty five? They win FIVE HUNDRED THOUSAND MORE by retirement. TEN YEARS of delay costs half a million.", "img": "two paths diverging with one path to wealth"},
+            {"text": "Don't regret this\nSTART TODAY\nfuture you\nwill thank you", "speech": "Don't regret this in twenty years. START TODAY. Your future self will WORSHIP YOU for this decision. DO THIS NOW.", "img": "older person celebrating financial security at retirement"},
+        ],
+        "keywords": ["Roth IRA", "Retirement", "Tax Free"],
+    },
+    {
+        "title": "Real Estate Secrets (Start With $0)",
+        "slides": [
+            {"text": "You don't need\nmoney to get\ninto real estate\nThat's a myth", "speech": "You don't need money to start in real estate. THAT'S A LIE. Here's the REAL way to get started.", "img": "house key glowing with opportunity energy"},
+            {"text": "Strategy 1:\nFind deals nobody\nelse sees and\nSELL them", "speech": "Strategy ONE. WHOLESALING. Find deals nobody else sees. Get them under contract. Sell them to investors for PROFIT. Zero money needed.", "img": "house deal contract being signed"},
+            {"text": "You're the middleman\n$5K-$20K profit\nper deal\nno money needed", "speech": "You're the MIDDLEMAN. Find the deal. Sell it to investor. Take FIVE to TWENTY THOUSAND per deal. ZERO of your own money needed.", "img": "middleman profiting from deal connection"},
+            {"text": "Strategy 2:\nFIRST time buyer\nFHA loans\n3.5% down", "speech": "Strategy TWO. FHA LOANS. Buy your first property with only THREE POINT FIVE PERCENT down. Live in it. Rent out rooms. Cover your mortgage.", "img": "first time home buyer with low down payment"},
+            {"text": "Your roommates\nPAY your mortgage\nwhile you build\nequity", "speech": "Your roommates PAY YOUR MORTGAGE while you BUILD EQUITY. You literally live for FREE and get RICHER.", "img": "roommates paying rent that covers mortgage"},
+            {"text": "Strategy 3:\nLook for deals\nSELLERS are desperate\nto offload", "speech": "Strategy THREE. Find DISTRESSED sellers. Divorced. Bankrupt. Inherited a house they don't want. BUY LOW.", "img": "distressed property with opportunity arrows"},
+            {"text": "You negotiate\nlow price\nfix it up\nSELL or rent", "speech": "Negotiate a KILLER price. Fix it up cheap. Either SELL it or RENT IT OUT for PROFIT. Real wealth building.", "img": "property transformation from broken to beautiful"},
+            {"text": "Start small\none property\nuse equity to\nbuy second", "speech": "Start small. ONE property. Build EQUITY. Use that equity to BUY PROPERTY TWO with LEVERAGE. Repeat.", "img": "property portfolio growing with each purchase"},
+            {"text": "Real estate \nmakes millionaires\nfaster than stocks\nproven", "speech": "Real estate makes MILLIONAIRES FASTER than stocks. It's PROVEN. Leverage plus appreciation equals WEALTH EXPLOSION.", "img": "real estate empire stacking higher"},
+            {"text": "Start THIS MONTH\nLook at 10 properties\nmake 1 offer\nYour wealth journey\nSTARTS", "speech": "Start THIS MONTH. Look at properties. Make offers. Your real estate wealth journey STARTS NOW. This works.", "img": "for sale sign with stars representing opportunity"},
+        ],
+        "keywords": ["Real Estate", "Property", "Wealth Building"],
+    },
+    {
+        "title": "Why Your Boss Doesn't Want You to Know This (Career Hacks)",
+        "slides": [
+            {"text": "Your boss doesn't want\nyou to know\nthese salary\nTRUTHS", "speech": "Your boss DOESN'T WANT YOU to know these salary truths. They profit when you don't know your VALUE.", "img": "boss protecting money with secret gesture"},
+            {"text": "TRUTH 1: You can\nNEGOTIATE salary\neverything is\nnegotiable", "speech": "TRUTH ONE. Salary is NEGOTIABLE. EVERYTHING is negotiable. Your boss expects it.", "img": "negotiation handshake with money on table"},
+            {"text": "Most people accept\nfirst offer\nthey're leaving\nTHOUSANDS on table", "speech": "Most people accept the FIRST OFFER. They leave THOUSANDS on the table. Insane.", "img": "money falling from table untouched"},
+            {"text": "TRUTH 2: Job hopping\ngets you 10-20%\nraise\nstaying loses money", "speech": "TRUTH TWO. Job hopping. Moving companies gives you TEN TO TWENTY PERCENT raises. Staying costs you MONEY.", "img": "career ladder with big jumps upward"},
+            {"text": "Companies budget\n5% raises\nleaving gets you\n15% immediately", "speech": "Companies budget FIVE PERCENT raises. Switching jobs? FIFTEEN PERCENT immediately. The math is BRUTAL.", "img": "salary comparison showing job change advantage"},
+            {"text": "TRUTH 3: Remote work\nincreases your\nmarket value\n2x easily", "speech": "TRUTH THREE. Remote work OPENS your job market globally. You can earn in US dollars from ANYWHERE.", "img": "laptop from tropical location earning global salary"},
+            {"text": "Your geographic\nmax salary just\nbecame global\nmax salary", "speech": "Your salary ceiling just EXPLODED. You're no longer competing with fifty people in your city. Compete with THOUSANDS.", "img": "global world map with connection lines"},
+            {"text": "TRUTH 4: Your network\nis worth $100K+\nin lifetime earnings", "speech": "TRUTH FOUR. Your network is worth ONE HUNDRED THOUSAND PLUS in lifetime earnings. Build GENUINE relationships.", "img": "network of connected people glowing"},
+            {"text": "Most people get\ntheir best jobs\nthrough connections\nnot job boards", "speech": "Most people get their BEST JOBS through referrals, not LinkedIn. Build real relationships in your industry.", "img": "person getting referred to dream job"},
+            {"text": "Invest in PEOPLE\nthey become your\nwealth network\nfor LIFE", "speech": "Invest in PEOPLE. They become your wealth network for LIFE. This is how you GET RICH. Build your network NOW.", "img": "strong relationships building personal wealth empire"},
+        ],
+        "keywords": ["Career", "Salary", "Negotiation"],
+    },
+    {
+        "title": "Passive Income Streams (7 Ways Money Works While You Sleep)",
+        "slides": [
+            {"text": "7 passive income\nstreams that make\nmoney 24/7\nwhile you sleep", "speech": "SEVEN passive income streams that make MONEY WHILE YOU SLEEP. Build them ONCE. Profit FOREVER.", "img": "money flowing in continuously while person sleeps"},
+            {"text": "Stream 1: Dividend\nstocks pay you\nquarterly\n$100 becomes\n$200 yearly", "speech": "Dividend stocks. One hundred dollars buys stock that pays you money quarterly. Your money makes money.", "img": "stock certificate with dividend checks"},
+            {"text": "Stream 2: Rental\nproperty tenants\npay you monthly\n$2000 profit\nafter expenses", "speech": "Rental property. Tenants PAY YOU monthly. After expenses? Two thousand profit. PASSIVE.", "img": "apartment building with rent checks flowing in"},
+            {"text": "Stream 3: High yield\nsavings account\n4.5% interest\nmonthly deposits", "speech": "High yield savings. Put money in. Get FOUR POINT FIVE PERCENT interest annually. ZERO EFFORT.", "img": "savings account growing with interest"},
+            {"text": "Stream 4: Affiliate\nmarketing recommend\nproducts earn\ncommission", "speech": "Affiliate marketing. Recommend products. Earn COMMISSION on every sale. PASSIVE sales.", "img": "links generating commissions automatically"},
+            {"text": "Stream 5: Create\ncourse once\nsell it 1000 times\n$50K revenue", "speech": "Create a course ONCE. Sell it 1000 times. Fifty thousand in PASSIVE revenue. Do it once in 2024, earn in 2025 and 2026.", "img": "course being purchased repeatedly"},
+            {"text": "Stream 6: Vending\nmachine business\nput machines out\ncollect money", "speech": "Vending machines. Put them in locations. Collect money PASSIVELY. Build a network. Build WEALTH.", "img": "vending machine dispensing products and profit"},
+            {"text": "Stream 7: Peer\nlending invest\nin other people\nearn interest", "speech": "Peer lending. Invest in loans. Earn INTEREST. Your money funds others while GROWING.", "img": "money lending chain creating passive returns"},
+            {"text": "The goal: Build\n$10K monthly\npassive income\nThen you're FREE", "speech": "BUILD ten thousand MONTHLY in PASSIVE income. Then you're FREE. No more working for money. Money works for YOU.", "img": "person free from work celebrating financial independence"},
+            {"text": "Start ONE stream\nthis month\ncompound them\nyear by year\nyou WIN", "speech": "Start ONE stream this month. Build it. Add another next month. Year by year COMPOUND them. Eventually you're RICH. DO THIS NOW.", "img": "passive income streams compounding into wealth"},
+        ],
+        "keywords": ["Passive Income", "Dividends", "Financial Freedom"],
     },
 ]
 
