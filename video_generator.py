@@ -206,7 +206,7 @@ CONTENT_TOPICS = [
         "keywords": ["Debt Payoff", "Snowball", "Avalanche"],
     },
     {
-        "title": "Roth IRA: The Cheat Code Government Left Open",
+        "title": "Roth IRA: The Government Cheat Code Nobody Talks About",
         "slides": [
             {"text": "A Roth IRA is\nthe BIGGEST cheat code\nin all of finance\nSeriously", "speech": "A Roth IRA is the single BIGGEST cheat code the government left open. I'm SERIOUS. Let me show you the cheat.", "img": "a golden key unlocking a treasure chest overflowing with coins"},
             {"text": "You put in money\nYOU already paid\ntax on\nthat's it", "speech": "You put in money YOU already paid taxes on. Regular after-tax dollars from your paycheck.", "img": "a paycheck with money coming out after taxes have been taken"},
@@ -222,7 +222,7 @@ CONTENT_TOPICS = [
         "keywords": ["Roth IRA", "Tax Free", "Retirement"],
     },
     {
-        "title": "Stop Timing the Market (You're Losing $100K)",
+        "title": "I Lost $100K Timing The Market (Don't Make This Mistake)",
         "slides": [
             {"text": "Stop WASTING time\ntrying to time\nthe market\nNobody can", "speech": "Stop WASTING your time trying to time the stock market perfectly. Nobody can do it. Not the experts, not the TV gurus. NOBODY.", "img": "a broken clock next to a chaotic stock chart showing impossible patterns"},
             {"text": "Not hedge fund\nmanagers or TV\nanalysts or your\nuncle Bob", "speech": "Not hedge fund managers with billions of dollars. Not TV financial analysts with teams. Not your friend who SWEARS he always buys at the bottom.", "img": "a financial news studio with screens showing conflicting predictions"},
@@ -238,7 +238,7 @@ CONTENT_TOPICS = [
         "keywords": ["Dollar Cost Averaging", "Investment Strategy", "Passive Income"],
     },
     {
-        "title": "Banks Are STEALING $200 Billion From You",
+        "title": "Banks Stole $200B Last Year (Here's How They Did It)",
         "slides": [
             {"text": "Banks STEAL money\nfrom you every\nsingle day\nHere's how", "speech": "Banks STEAL money from you every single day. Most people have NO IDEA. Here's exactly how they do it.", "img": "a massive grand bank building with imposing columns towering at night"},
             {"text": "You deposit $1,000\nThey pay you\n0.01% interest\nPATHETIC", "speech": "You deposit a thousand dollars. They pay you ZERO POINT ZERO ONE percent interest. That's TEN CENTS per year. PATHETIC.", "img": "a few tiny copper pennies sitting alone on a vast empty dark floor"},
@@ -254,7 +254,7 @@ CONTENT_TOPICS = [
         "keywords": ["Banks", "High Yield Savings", "Financial Freedom"],
     },
     {
-        "title": "Renting Isn't Throwing Money Away (The TRUTH)",
+        "title": "Rent vs Buy: The $300K Truth Nobody Tells You",
         "slides": [
             {"text": "Renting is NOT\nthrowing money away\npeople are WRONG\nabout this", "speech": "Everyone says renting is throwing money away. That's COMPLETELY WRONG. Let me show you the TRUTH.", "img": "a modern luxury apartment with glass balconies lit beautifully at night"},
             {"text": "A $400K house costs\n$2,800 per month\nmortgage ONLY", "speech": "A four hundred thousand dollar house costs about twenty eight hundred a month in mortgage payments ALONE.", "img": "a beautiful suburban house with for sale sign and large price tag"},
@@ -270,7 +270,7 @@ CONTENT_TOPICS = [
         "keywords": ["Renting", "Real Estate", "Financial Math"],
     },
     {
-        "title": "PAY YOURSELF FIRST (The #1 Wealth Rule)",
+        "title": "Why 90% Stay Broke (The Pay Yourself First Secret)",
         "slides": [
             {"text": "The #1 rule for\nbuilding wealth\nPAY YOURSELF FIRST\nno excuses", "speech": "The NUMBER ONE rule for building wealth. PAY YOURSELF FIRST. Everything else SECOND. No excuses.", "img": "a golden trophy sitting on a pedestal under dramatic spotlight"},
             {"text": "Most people do it\nWRONG\nthey pay bills FIRST", "speech": "Most people do it BACKWARDS. They pay rent, bills, groceries, eat out.", "img": "a stressed person surrounded by bills and payment envelopes"},
@@ -286,7 +286,7 @@ CONTENT_TOPICS = [
         "keywords": ["Pay Yourself First", "Savings", "Wealth Building"],
     },
     {
-        "title": "ETFs: The Safe Way to DOMINATE the Market",
+        "title": "ETFs Beat 90% Of Wall Street (Here's The Proof)",
         "slides": [
             {"text": "What is an ETF\nand why do\nALL rich people\nbuy them?", "speech": "What is an ETF and why does literally EVERY successful investor buy them?", "img": "a busy stock exchange trading floor packed with screens and activity"},
             {"text": "ETF stands for\nExchange Traded\nFund\nthat's it", "speech": "ETF stands for EXCHANGE TRADED FUND. Simple as that.", "img": "glowing letters ETF floating above a financial data dashboard"},
@@ -302,7 +302,7 @@ CONTENT_TOPICS = [
         "keywords": ["ETF", "Index Investing", "Passive Income"],
     },
     {
-        "title": "Credit Cards: WEAPON or TRAP? (You Decide)",
+        "title": "Credit Cards Made Me $3K Last Year (Most People Lose $3K)",
         "slides": [
             {"text": "How credit cards\nactually work\nmost people get\nthis WRONG", "speech": "How do credit cards ACTUALLY work? Most people get this COMPLETELY WRONG and it COSTS THEM THOUSANDS.", "img": "a shiny gold credit card floating with glowing halo in space"},
             {"text": "The bank gives you\na spending limit\nthat's YOUR max", "speech": "The bank gives you a CREDIT LIMIT. That's the maximum you can spend on that card.", "img": "a bank building with glowing approved stamp and limit number"},
@@ -318,7 +318,7 @@ CONTENT_TOPICS = [
         "keywords": ["Credit Cards", "Rewards", "Debt Avoidance"],
     },
     {
-        "title": "401k: Your Boss Is Handing You FREE MONEY",
+        "title": "Your Boss Gives You Free Money (401k Hack Most People Miss)",
         "slides": [
             {"text": "What is a 401k?\nLet me CRUSH this\nconfusion", "speech": "What is a 401k? Let me CRUSH all the confusion right now. This is CRITICAL for your wealth.", "img": "an official retirement plan document with golden 401k seal"},
             {"text": "It's a retirement\nsavings account\nthrough your JOB", "speech": "It's a RETIREMENT SAVINGS ACCOUNT that comes through your employer. That's it.", "img": "a modern corporate office with employees at desks glowing"},
@@ -334,7 +334,7 @@ CONTENT_TOPICS = [
         "keywords": ["401k", "Retirement", "Employer Match"],
     },
     {
-        "title": "Never Lease a Car (Here's Why You'd Be INSANE)",
+        "title": "Car Leasing Is A Scam (The $50K Trap Exposed)",
         "slides": [
             {"text": "Never lease a car\nit's one of the\nWORST financial\ndecisions ever", "speech": "Never lease a car. It's one of the WORST financial decisions you can EVER make. Let me show you why.", "img": "a shiny car dealership showroom with rows of new cars"},
             {"text": "A lease is just\nlong term renting\nwith CHAINS", "speech": "A lease is basically LONG TERM RENTING with CHAINS and RESTRICTIONS.", "img": "a thick lease contract being signed with chains wrapping around"},
@@ -350,7 +350,7 @@ CONTENT_TOPICS = [
         "keywords": ["Car Lease", "Used Car", "Saving Money"],
     },
     {
-        "title": "Cryptocurrency: The HIGH-RISK Wealth Game",
+        "title": "Crypto Made Him $2M Then Lost It All (Learn From His Mistake)",
         "slides": [
             {"text": "What is crypto?\nSimplest explanation\nno BS", "speech": "What is cryptocurrency in the SIMPLEST terms possible? No BS.", "img": "a glowing golden bitcoin coin floating in futuristic digital space"},
             {"text": "It's digital money\nthat exists ONLY\non computers\nno bank controls it", "speech": "It's DIGITAL MONEY that exists ONLY on computers. No bank controls it. No government can print more of it.", "img": "glowing digital code streaming across computer screens"},
@@ -366,7 +366,7 @@ CONTENT_TOPICS = [
         "keywords": ["Cryptocurrency", "Bitcoin", "High Risk"],
     },
     {
-        "title": "Insurance: The PROTECTION You Can't Skip",
+        "title": "$500K Medical Bill Destroyed This Family (Get Insurance NOW)",
         "slides": [
             {"text": "How does insurance\nwork? Final simple\nexplanation ever", "speech": "How does insurance work? Here's the FINAL simple explanation ever. Pay attention.", "img": "a large protective umbrella shielding person from heavy rain"},
             {"text": "You pay small amount\nmonthly called\nPREMIUM\nthat's your bet", "speech": "You pay a small amount every month. This is called your PREMIUM. That's your bet against disaster.", "img": "small stack of coins being placed into payment slot monthly"},
@@ -382,7 +382,7 @@ CONTENT_TOPICS = [
         "keywords": ["Insurance", "Protection", "Financial Security"],
     },
     {
-        "title": "The Rule of 72: The ULTIMATE Math Cheat Code",
+        "title": "The Rule of 72: Double Your Money With Simple Math",
         "slides": [
             {"text": "The Rule of 72\nthe most powerful\nmath trick in\nfinance", "speech": "The Rule of SEVENTY TWO is the MOST POWERFUL math trick in all of finance. Master this NOW.", "img": "a large glowing golden number 72 floating above math equation"},
             {"text": "It shows EXACTLY\nhow fast your\nmoney DOUBLES", "speech": "It shows EXACTLY how fast your MONEY DOUBLES. That's it. That's the magic.", "img": "a stack of money splitting into two equal stacks with sparkles"},
@@ -398,7 +398,7 @@ CONTENT_TOPICS = [
         "keywords": ["Rule of 72", "Compound Interest", "Wealth"],
     },
     {
-        "title": "Lottery Winners: Why 70% Go BROKE in 5 Years",
+        "title": "He Won $300M Lottery Then Went Broke (Here's Why)",
         "slides": [
             {"text": "Why do lottery\nwinners go BROKE?\nIt's not luck\nit's MATH", "speech": "Why do lottery winners go BROKE? It's not bad luck. It's PREDICTABLE MATH. Pattern repeats every single time.", "img": "golden lottery ticket being scratched with dramatic sparkles"},
             {"text": "70% of winners\nLOSE EVERYTHING\nin 5 years\n70%", "speech": "SEVENTY PERCENT of lottery winners LOSE EVERYTHING within FIVE YEARS. SEVENTY PERCENT. This is DOCUMENTED.", "img": "large seventy percent statistic in red with shocking exclamation"},
@@ -415,7 +415,7 @@ CONTENT_TOPICS = [
         "keywords": ["Lottery", "Financial Literacy", "Wealth Management"],
     },
     {
-        "title": "Passive Income: STOP Trading Time for Money",
+        "title": "5 Passive Income Sources That Pay $3K/Month",
         "slides": [
             {"text": "What is passive\nincome? Let me\nMAKE IT CLEAR", "speech": "What is PASSIVE INCOME? Let me make this CRYSTAL CLEAR right now.", "img": "person sleeping peacefully while money flows into bank account"},
             {"text": "It's money you\nEARN without\ntrading your TIME\nfor it", "speech": "It's MONEY YOU EARN without actively TRADING YOUR TIME for it EVERY SINGLE DAY.", "img": "broken clock next to flowing cash showing time is irrelevant"},
@@ -434,7 +434,7 @@ CONTENT_TOPICS = [
         "keywords": ["Passive Income", "Dividends", "Financial Freedom"],
     },
     {
-        "title": "Your Net Worth: The #1 Number That Matters",
+        "title": "Your Net Worth Is More Important Than Your Salary (Here's Why)",
         "slides": [
             {"text": "Your net worth\nis the #1 most\nimportant number\nin your finances", "speech": "Your NET WORTH is the NUMBER ONE MOST IMPORTANT number in your entire financial life. It's your COMPLETE snapshot.", "img": "glowing golden number one symbol on dark pedestal"},
             {"text": "It's your complete\nfinancial health\nin one number\nthat's it", "speech": "It's your COMPLETE FINANCIAL HEALTH in ONE SINGLE NUMBER. That tells you EVERYTHING.", "img": "medical health checkup screen showing financial vital signs"},
@@ -457,7 +457,7 @@ CONTENT_TOPICS = [
         "keywords": ["Net Worth", "Financial Health", "Wealth Tracking"],
     },
     {
-        "title": "Bear vs Bull: How to DOMINATE Market Swings",
+        "title": "Bear vs Bull Market: How To Profit In Both (Secret Strategy)",
         "slides": [
             {"text": "Bear market vs\nBull market\nwhich CRUSHES", "speech": "BEAR MARKET versus BULL MARKET. Which one CRUSHES? Let me explain this DEFINITIVELY.",
             "img": "bear and bull statue facing off on Wall Street in gold"},
@@ -482,7 +482,7 @@ CONTENT_TOPICS = [
         "keywords": ["Bear Market", "Bull Market", "Investing"],
     },
     {
-        "title": "Inflation: The Silent Wealth KILLER",
+        "title": "Inflation Just Stole 45% Of Your Savings (5 Solutions)",
         "slides": [
             {"text": "What is inflation?\nIt KILLS your wealth\nevery single day", "speech": "What is INFLATION? It KILLS your WEALTH every single day whether you realize it or NOT.",
             "img": "rising red price arrows floating upward from store items"},
@@ -507,7 +507,7 @@ CONTENT_TOPICS = [
         "keywords": ["Inflation", "Purchasing Power", "Investing"],
     },
     {
-        "title": "Your Pay Stub: Understand Where Your Money GOES",
+        "title": "Read Your Pay Stub: You're Losing Money You Don't Know About",
         "slides": [
             {"text": "Can you actually\nread your pay stub?\nMost people CAN'T", "speech": "Can you actually READ your pay stub? MOST PEOPLE just see the deposit and IGNORE everything else. That's IGNORANCE.",
             "img": "detailed pay stub document on desk with sections highlighted"},
@@ -532,7 +532,7 @@ CONTENT_TOPICS = [
         "keywords": ["Pay Stub", "Payroll", "Take Home Pay"],
     },
     {
-        "title": "Good Debt vs Bad Debt: The TRUTH",
+        "title": "Good Debt Makes You Rich, Bad Debt Makes You Poor (Know The Difference)",
         "slides": [
             {"text": "Not all debt is bad\nsome debt makes\nyou RICHER", "speech": "Not all debt is CREATED EQUAL. Some debt actually makes you RICHER over time. Some DESTROYS you. Know the DIFFERENCE.",
             "img": "balance scale with green good debt vs red bad debt"},
@@ -641,7 +641,7 @@ CONTENT_TOPICS = [
 
 LONG_FORM_TOPICS = [
     {
-        "title": "How to Build Wealth From ZERO - Complete Money Blueprint",
+        "title": "How To Build Wealth From $0 (Complete Step-By-Step Blueprint)",
         "slides": [
             {"text": "You have ZERO\ndollars right now\nHere's your\nBLUEPRINT to wealth", "speech": "You have ZERO dollars right now. No savings. No investments. No clue where to start. THIS is your complete BLUEPRINT to building REAL WEALTH from NOTHING.", "img": "empty wallet on table with blueprint plans beside it"},
             {"text": "Step 1:\nSTOP the bleeding\nTrack every\nDOLLAR you spend", "speech": "Step ONE. STOP the bleeding. For the next thirty days, track EVERY SINGLE DOLLAR you spend. You will be SHOCKED where your money is going.", "img": "hand tracking expenses in notebook with calculator"},
@@ -668,7 +668,7 @@ LONG_FORM_TOPICS = [
         "keywords": ["Build Wealth", "Money Blueprint", "Financial Freedom"],
     },
     {
-        "title": "The Psychology of Money - Why Smart People Stay Broke",
+        "title": "Why Smart People Stay Broke (5 Money Psychology Traps)",
         "slides": [
             {"text": "Why do SMART\npeople stay\nBROKE?\nIt's not about IQ", "speech": "Why do incredibly SMART people stay BROKE their entire lives while high school dropouts become MILLIONAIRES? It has NOTHING to do with intelligence.", "img": "smart person with degree next to wealthy entrepreneur"},
             {"text": "Money is 80%\nBEHAVIOR and\nonly 20%\nknowledge", "speech": "Money is EIGHTY PERCENT BEHAVIOR and only TWENTY PERCENT knowledge. You can know EVERYTHING about finance and still be broke because of your HABITS.", "img": "brain split between behavior and knowledge percentages"},
@@ -720,7 +720,7 @@ LONG_FORM_TOPICS = [
         "keywords": ["Credit Score", "800 Credit", "Credit Secrets"],
     },
     {
-        "title": "Stock Market for Complete Beginners - Your First $1000 Investment",
+        "title": "Stock Market For Beginners: Turn $1000 Into $50K (Full Guide)",
         "slides": [
             {"text": "You want to\ninvest in STOCKS\nbut have NO IDEA\nwhere to start", "speech": "You want to invest in the STOCK MARKET but you have absolutely NO IDEA where to start. You've heard people make MILLIONS but also LOSE EVERYTHING. Let me break it down.", "img": "beginner looking at stock market charts confused"},
             {"text": "A STOCK is\nownership in a\nREAL company\nYou own a PIECE", "speech": "A STOCK is OWNERSHIP in a REAL company. When you buy one share of Apple, you literally OWN a tiny piece of Apple. Their profits? YOURS. Their growth? YOURS.", "img": "stock certificate showing ownership piece of company"},
@@ -850,7 +850,7 @@ LONG_FORM_TOPICS = [
         "keywords": ["Inflation", "Purchasing Power", "Beat Inflation"],
     },
     {
-        "title": "Side Hustles That Actually Pay - From $0 to $5000/Month",
+        "title": "6 Side Hustles That Actually Pay $5000/Month (Tested 2025)",
         "slides": [
             {"text": "Your 9-5 salary\nwill NEVER make\nyou wealthy\nYou need a\nSIDE HUSTLE", "speech": "Your nine to five salary will NEVER make you wealthy on its own. You need a SIDE HUSTLE. An extra income stream that can grow from zero to FIVE THOUSAND dollars per month or MORE.", "img": "person working day job then building side hustle"},
             {"text": "I'm not talking\nabout MLMs or\nget rich schemes\nREAL businesses", "speech": "I'm not talking about pyramid schemes, MLMs, or get rich quick scams. I'm talking about REAL businesses that provide REAL value and generate REAL income. No gimmicks.", "img": "crossing out scams and highlighting real businesses"},
@@ -876,7 +876,7 @@ LONG_FORM_TOPICS = [
         "keywords": ["Side Hustle", "Extra Income", "Make Money Online"],
     },
     {
-        "title": "Retirement Planning - How to Retire Early and Never Work Again",
+        "title": "Retire By 50: The Early Retirement Plan That Actually Works",
         "slides": [
             {"text": "What if you could\nRETIRE in 15 years\ninstead of 40?\nHere's HOW", "speech": "What if you could RETIRE in FIFTEEN YEARS instead of FORTY? What if you never HAD to work again by age FORTY FIVE? This isn't fantasy. Real people do this. Here's EXACTLY how.", "img": "young person retiring early on beach while others work"},
             {"text": "Traditional retirement\nat 65 means working\n40+ YEARS\nThat's INSANE", "speech": "Traditional retirement at SIXTY FIVE means working FORTY PLUS YEARS of your life away. FORTY YEARS of alarm clocks, commutes, and doing what someone else tells you. That's INSANE.", "img": "forty year work timeline stretching into old age"},
@@ -902,7 +902,7 @@ LONG_FORM_TOPICS = [
         "keywords": ["Early Retirement", "FIRE Movement", "Financial Independence"],
     },
     {
-        "title": "Real Estate Investing for Beginners - Your First Property Guide",
+        "title": "Buy Your First Property With $0 Down (Real Estate Beginner Guide)",
         "slides": [
             {"text": "90% of millionaires\nbuild wealth through\nREAL ESTATE\nHere's how to START", "speech": "NINETY PERCENT of millionaires built their wealth through REAL ESTATE. Not stocks. Not crypto. Not startups. REAL ESTATE. And you can start with way LESS money than you think.", "img": "millionaire next to real estate properties portfolio"},
             {"text": "Real estate builds\nwealth 4 WAYS\nat the same time\nNo other asset\ndoes this", "speech": "Real estate builds wealth FOUR WAYS simultaneously. No other investment gives you ALL FOUR at once. This is why it creates MORE millionaires than anything else.", "img": "four pillars of real estate wealth building"},
@@ -926,6 +926,162 @@ LONG_FORM_TOPICS = [
             {"text": "Your first property\nis the HARDEST\nAfter that each\none gets EASIER\nStart THIS year", "speech": "Your first property is the HARDEST one to buy. After that, each one gets EASIER because you have experience, equity, and cash flow. Start THIS YEAR. Your real estate empire begins with property number ONE.", "img": "first property as foundation of growing real estate empire"},
         ],
         "keywords": ["Real Estate", "Rental Property", "Property Investing"],
+    },
+    {
+        "title": "7 Money Rules That Changed My Life Forever",
+        "slides": [
+            {"text": "7 money rules\nthat changed\nEVERYTHING for me\nforever", "speech": "These SEVEN money rules changed everything for me. I went from broke to building real wealth. And they will work for YOU too.", "img": "golden rulebook with seven glowing chapters"},
+            {"text": "Rule 1:\nPay yourself FIRST\nnot last\nThis is NON\nnegotiable", "speech": "Rule ONE. Pay yourself FIRST. Before rent. Before bills. Before fun. Take twenty percent of every paycheck and INVEST it immediately. This is NON NEGOTIABLE.", "img": "paycheck with first portion going to savings"},
+            {"text": "The moment your\npaycheck hits\nmove 20% to\ninvestments\nAUTOMATICALLY", "speech": "Set up AUTOMATIC transfers. The moment your paycheck hits, twenty percent vanishes into your investment account. You never see it. You never miss it. But it GROWS.", "img": "automatic transfer from checking to investing"},
+            {"text": "Rule 2:\nNever buy\ndepreciating assets\non credit\nEVER", "speech": "Rule TWO. NEVER buy depreciating assets on credit. Cars, electronics, furniture. If it loses value, pay CASH or don't buy it. Credit cards on depreciating stuff is financial SUICIDE.", "img": "car losing value with credit card interest adding up"},
+            {"text": "Your brand new car\nloses 20% value\nthe second you\ndrive off the lot", "speech": "Your brand new car loses TWENTY PERCENT of its value the SECOND you drive off the lot. Twenty percent. GONE. That's not an investment. That's a DONATION to the dealership.", "img": "new car driving off lot with value dropping instantly"},
+            {"text": "Rule 3:\nLive on last\nmonth's income\nnot this month's", "speech": "Rule THREE. Live on LAST month's income, not this month's. This creates a one month BUFFER that makes you financially bulletproof. No more paycheck to paycheck.", "img": "calendar showing living one month behind income"},
+            {"text": "This one month\nbuffer means you\nNEVER stress about\nmoney again", "speech": "When you live on last month's income, you always know exactly how much you have. No surprises. No stress. No overdrafts. FREEDOM.", "img": "stress-free person with comfortable financial buffer"},
+            {"text": "Rule 4:\nEvery dollar needs\na JOB before\nyou spend it", "speech": "Rule FOUR. Every dollar needs a JOB before you spend it. Assign every dollar a purpose. Rent. Food. Investing. Fun. When dollars have jobs, they don't disappear.", "img": "dollars lined up with assigned job titles"},
+            {"text": "Unassigned dollars\nget WASTED on\nimpulse purchases\nyou don't need", "speech": "Unassigned dollars get WASTED on things you don't need. That random Amazon purchase. That extra takeout meal. Gone. ASSIGN every dollar a purpose.", "img": "impulse purchases eating unassigned cash"},
+            {"text": "Rule 5:\nMultiple income\nstreams or you're\nONE layoff from\nbroke", "speech": "Rule FIVE. Build MULTIPLE income streams. Your job is ONE stream. Add side hustles, investments, rentals. If one stream dies, others keep you alive.", "img": "multiple streams of income flowing into one person"},
+            {"text": "The average\nmillionaire has\nSEVEN income streams\nnot one", "speech": "The average millionaire has SEVEN income streams. Not one. SEVEN. That's job income, dividends, rental income, business income, interest, royalties, capital gains.", "img": "seven golden streams flowing into wealth pool"},
+            {"text": "Rule 6:\nTrack your\nnet worth monthly\nNot your salary\nNET WORTH", "speech": "Rule SIX. Track your NET WORTH monthly. Not your salary. Your salary is what you EARN. Your net worth is what you KEEP. Assets minus debts. Track it monthly. Watch it grow.", "img": "net worth tracker showing monthly growth"},
+            {"text": "Assets minus debts\nequals your real\nfinancial score\nTrack it", "speech": "Assets minus debts. That's your REAL financial score. Not your credit score. Not your salary. Your NET WORTH. This is the number that determines if you're actually wealthy.", "img": "balance sheet showing assets versus debts"},
+            {"text": "Rule 7:\nInvest in what\nyou UNDERSTAND\nnever follow\nhype", "speech": "Rule SEVEN. ONLY invest in what you UNDERSTAND. Never follow hype. Never YOLO into crypto because your friend said so. If you can't explain it in one sentence, don't invest.", "img": "person studying investment before buying"},
+            {"text": "Warren Buffett has\nNEVER invested in\nsomething he didn't\nunderstand\nFOLLOW HIS LEAD", "speech": "Warren Buffett has NEVER invested in something he didn't understand. He passed on tech stocks for DECADES because he didn't understand them. And he's still worth over ONE HUNDRED BILLION.", "img": "Warren Buffett wisdom about understanding investments"},
+            {"text": "BONUS: Teach your\nkids about money\nSchools WON'T do it\nYOU must", "speech": "BONUS RULE. Teach your kids about money. Schools won't do it. The system is designed to keep people financially illiterate. Break the cycle. Teach them YOUNG.", "img": "parent teaching child about saving and investing"},
+            {"text": "These 7 rules\nare SIMPLE but\n99% of people\nignore them", "speech": "These seven rules are SIMPLE. But ninety nine percent of people IGNORE them. That's why ninety nine percent of people retire broke. Don't be in that group.", "img": "99 percent ignoring rules versus 1 percent following"},
+            {"text": "Pick ONE rule\nimplement it TODAY\nadd another next\nmonth", "speech": "Pick ONE rule. Implement it TODAY. Add another next month. In seven months you'll have ALL SEVEN working for you. Your financial life will be TRANSFORMED.", "img": "step by step implementing rules one by one"},
+            {"text": "The difference between\nbroke and wealthy\nis HABITS not\nluck never luck", "speech": "The difference between broke and wealthy is HABITS. Not luck. Not inheritance. Not talent. HABITS. These seven rules ARE those habits. BUILD THEM.", "img": "habits building blocks creating wealth tower"},
+            {"text": "SUBSCRIBE for more\nmoney rules\nComment which rule\nyou'll start with\nTODAY", "speech": "SUBSCRIBE to The AI Dollar for more money rules every single day. Comment below which rule you're going to start with TODAY. Share this with someone who needs to hear it. Your wealth journey starts NOW.", "img": "community of people building wealth together"},
+        ],
+        "keywords": ["Money Rules", "Financial Habits", "Wealth Building"],
+    },
+    {
+        "title": "How To Make Your First $10,000 (Step By Step Blueprint)",
+        "slides": [
+            {"text": "How to make your\nfirst $10,000\nStep by step\nblueprint", "speech": "How to make your first TEN THOUSAND DOLLARS. Not theory. Not motivation. A step by step BLUEPRINT you can follow starting TODAY.", "img": "ten thousand dollars in cash with blueprint beside it"},
+            {"text": "Step 1: Pick a\nhigh-demand skill\nthe market NEEDS\nnot wants NEEDS", "speech": "Step ONE. Pick a HIGH-DEMAND skill that the market NEEDS. Not something cool. Something NEEDED. Writing. Design. Marketing. Coding. Sales.", "img": "high demand skills listed with dollar signs"},
+            {"text": "The fastest skills\nto monetize:\nCopywriting\nGraphic Design\nVideo Editing", "speech": "The fastest skills to monetize? COPYWRITING, GRAPHIC DESIGN, and VIDEO EDITING. You can learn basics in 30 days and start earning in 60.", "img": "three fast-to-learn profitable skills"},
+            {"text": "Step 2: Learn it\nFREE on YouTube\nfor 30 days\n2 hours per day", "speech": "Step TWO. Learn it FREE on YouTube. Two hours per day for 30 days. That's 60 hours of focused learning. Enough to be DANGEROUS.", "img": "person learning new skill on YouTube laptop"},
+            {"text": "Don't buy expensive\ncourses yet\nFree content is\nENOUGH to start", "speech": "Don't buy expensive courses yet. FREE content on YouTube is ENOUGH to start earning. Save courses for when you're already making money and want to level up.", "img": "free vs paid learning path comparison"},
+            {"text": "Step 3: Build\n3 portfolio pieces\nEven if they're\nFAKE clients", "speech": "Step THREE. Build THREE portfolio pieces. Create sample work. Make up fake clients if you need to. Nobody cares if your first portfolio is practice work. They care about QUALITY.", "img": "portfolio website with three sample projects"},
+            {"text": "Step 4: Sign up\non Fiverr Upwork\nand LinkedIn\nALL three", "speech": "Step FOUR. Sign up on Fiverr, Upwork, AND LinkedIn. ALL THREE. Cast a WIDE net. Your first client can come from anywhere.", "img": "three freelance platforms logos glowing"},
+            {"text": "Price your first\ngig at $50-100\nYes that's low\nYou need REVIEWS", "speech": "Price your first gig at FIFTY to ONE HUNDRED dollars. Yes that's low. You need REVIEWS. First three clients are about building your REPUTATION. Money comes AFTER trust.", "img": "first gig pricing strategy for reviews"},
+            {"text": "Step 5: Deliver\n10x more value\nthan they paid for\nOVERDELIVER always", "speech": "Step FIVE. OVERDELIVER on every project. Give TEN TIMES more value than they paid for. This gets you five-star reviews AND repeat clients. Reviews are your GROWTH ENGINE.", "img": "five star reviews stacking up from overdelivering"},
+            {"text": "After 5 reviews\nRAISE your prices\n$200 then $500\nthen $1000", "speech": "After FIVE solid reviews, RAISE your prices. Two hundred. Then five hundred. Then one thousand per project. Your reviews justify the price increases.", "img": "price ladder climbing with each review milestone"},
+            {"text": "Step 6: Cold email\n50 businesses per\nweek offering\nyour service", "speech": "Step SIX. Cold email FIFTY businesses per week offering your service. Not spam. PERSONALIZED emails showing how you can solve THEIR specific problem.", "img": "cold email outreach to fifty businesses weekly"},
+            {"text": "Even a 2% response\nrate = 1 new\nclient per week\nThat's $2000/month", "speech": "Even a TWO PERCENT response rate means ONE new client per week. At five hundred per project, that's TWO THOUSAND per month. From just emails.", "img": "email response rate converting to monthly income"},
+            {"text": "Step 7: Ask every\nclient for referrals\nThis is FREE\nmarketing", "speech": "Step SEVEN. Ask EVERY happy client for referrals. Do you know anyone else who needs this? This is FREE marketing that converts at INSANE rates.", "img": "referral chain growing from happy clients"},
+            {"text": "Referral clients\nconvert 4x better\nthan cold leads\nFree and powerful", "speech": "Referral clients convert FOUR TIMES better than cold leads. They already trust you because someone they trust recommended you. FREE and POWERFUL.", "img": "referral conversion rate versus cold lead"},
+            {"text": "Month 1: Learn skill\nMonth 2: First client\nMonth 3: $500-1000\nMonth 6: $3000+", "speech": "Timeline. Month one, learn the skill. Month two, first client. Month three, five hundred to one thousand. Month six, three thousand plus. Month twelve, FIVE THOUSAND or more.", "img": "income timeline growing month by month"},
+            {"text": "By month 8-10\nyou hit $10,000\nTOTAL earned\nThat's your first\nmilestone", "speech": "By month EIGHT to TEN, you'll hit TEN THOUSAND DOLLARS TOTAL earned. That's your FIRST milestone. But here's the thing. The skills you built? Those earn forever.", "img": "ten thousand dollar milestone celebration"},
+            {"text": "Most people quit\nat month 2\nwhen results are\nslow DON'T QUIT", "speech": "Most people QUIT at month two when results are slow. DON'T QUIT. Month two is the HARDEST. Month three is when momentum kicks in. Push through.", "img": "person pushing through difficulty to success"},
+            {"text": "The skill you\nbuilt is now worth\n$50K-100K per year\nFOREVER", "speech": "The skill you built in thirty days is now worth FIFTY to ONE HUNDRED THOUSAND per year FOREVER. That's the real prize. Not the ten thousand. The SKILL.", "img": "skill as lifelong asset generating income"},
+            {"text": "Scale it:\nHire helpers\nBuild an agency\n$10K becomes $100K\nper year", "speech": "Scale it. Hire helpers. Build an agency. That ten thousand becomes one hundred thousand per year. Then you hire more people. Then it becomes a BUSINESS that runs without you.", "img": "solo freelancer scaling to agency business"},
+            {"text": "Start TODAY\nnot Monday\nnot next month\nTODAY\nPick your skill\nGO", "speech": "Start TODAY. Not Monday. Not next month. TODAY. Pick your skill. Watch one YouTube tutorial. Create one sample. Message one potential client. Your ten thousand dollar journey starts with ONE ACTION. GO.", "img": "person taking first step on path to ten thousand"},
+        ],
+        "keywords": ["Make Money", "First 10K", "Freelancing"],
+    },
+    {
+        "title": "The Complete Crypto Guide For Beginners (2025 Edition)",
+        "slides": [
+            {"text": "Crypto explained\nfor COMPLETE\nbeginners\nNo jargon\njust FACTS", "speech": "Cryptocurrency explained for COMPLETE beginners. No confusing jargon. No hype. Just the FACTS you need to understand this technology and whether you should invest.", "img": "bitcoin and ethereum symbols with beginner friendly design"},
+            {"text": "What IS crypto?\nDigital money that\nno government or\nbank controls", "speech": "What IS cryptocurrency? It's DIGITAL MONEY that no government or bank controls. It lives on a network of computers called a blockchain. No middlemen. No banks. Just math.", "img": "decentralized network of computers processing transactions"},
+            {"text": "Bitcoin was the\nFIRST crypto\ncreated in 2009\nby mystery person\nSatoshi Nakamoto", "speech": "BITCOIN was the first cryptocurrency. Created in 2009 by a mystery person called Satoshi Nakamoto. Nobody knows who they are. The code is open source. Anyone can verify it.", "img": "bitcoin origin story with Satoshi mystery silhouette"},
+            {"text": "There are now\nOVER 20,000\ndifferent cryptos\n99% are garbage\n1% might survive", "speech": "There are now OVER twenty thousand different cryptocurrencies. But here's the truth. Ninety nine percent are garbage. Scams. Meme coins. Pump and dumps. Only about ONE percent have real value.", "img": "thousands of crypto coins with most fading away"},
+            {"text": "Bitcoin and Ethereum\nare the TWO\nyou should know\nEverything else\nis RISKY", "speech": "BITCOIN and ETHEREUM are the two you need to know. Bitcoin is digital gold. Ethereum is the platform that runs decentralized apps. Everything else is EXTREMELY risky.", "img": "bitcoin and ethereum as two pillars of crypto"},
+            {"text": "Bitcoin: Digital gold\nStore of value\nOnly 21 million\nwill EVER exist\nScarce", "speech": "Bitcoin is DIGITAL GOLD. A store of value. Only TWENTY ONE MILLION will ever exist. That scarcity is what gives it value. You can't print more. Ever.", "img": "bitcoin as digital gold with limited supply counter"},
+            {"text": "Ethereum: Digital\ncomputer\nRuns apps and\ncontracts without\nmiddlemen", "speech": "Ethereum is like a DIGITAL COMPUTER that the whole world shares. It runs applications and contracts without middlemen. DeFi, NFTs, and smart contracts all run on Ethereum.", "img": "ethereum running decentralized applications"},
+            {"text": "How to buy:\nCoinbase or Kraken\nSign up verify ID\nDeposit dollars\nBuy crypto", "speech": "How to buy. Sign up on COINBASE or KRAKEN. Verify your identity. Deposit dollars from your bank. Buy Bitcoin or Ethereum. Takes about ten minutes.", "img": "step by step buying crypto on exchange"},
+            {"text": "NEVER invest more\nthan you can\nafford to LOSE\nCrypto can drop\n80% overnight", "speech": "CRITICAL RULE. NEVER invest more than you can afford to LOSE completely. Crypto can drop EIGHTY PERCENT overnight. This is NOT a savings account. This is SPECULATION.", "img": "crypto volatility chart showing massive drops"},
+            {"text": "The 5% rule:\nOnly put 5%\nof your portfolio\nin crypto\nmax 10%", "speech": "The FIVE PERCENT RULE. Only put five percent of your total investment portfolio in crypto. Maximum ten percent. The other ninety percent should be in stocks, bonds, and real assets.", "img": "portfolio pie chart with crypto as small slice"},
+            {"text": "Dollar cost average\nBuy small amounts\nweekly or monthly\nDon't go all in", "speech": "DOLLAR COST AVERAGE. Buy small amounts weekly or monthly. Don't go ALL IN at once. This smooths out the wild price swings and reduces your risk.", "img": "dollar cost averaging into crypto over time"},
+            {"text": "NEVER store crypto\non an exchange\nMove it to a\nhardware wallet\nYOUR keys YOUR coins", "speech": "NEVER store large amounts on an exchange. Exchanges get HACKED. Move your crypto to a hardware wallet like Ledger or Trezor. YOUR keys, YOUR coins. Not your keys, NOT your coins.", "img": "hardware wallet securing crypto versus exchange hack"},
+            {"text": "Common SCAMS:\nAnyone promising\nguaranteed returns\nis LYING to you", "speech": "Common SCAMS. Anyone promising GUARANTEED returns in crypto is LYING. Anyone asking you to send crypto to double it is a SCAMMER. There are no guaranteed returns. EVER.", "img": "scam warning signs in crypto space"},
+            {"text": "Never share your\nseed phrase or\nprivate keys\nwith ANYONE\nNot even support", "speech": "NEVER share your seed phrase or private keys with ANYONE. Not customer support. Not your friend. Not someone on Twitter. NOBODY. If they have your keys, they have your money.", "img": "seed phrase protection locked in vault"},
+            {"text": "Crypto taxes:\nYES you owe taxes\non gains\nTrack EVERYTHING\nuse CoinTracker", "speech": "Yes, you OWE TAXES on crypto gains. The IRS treats it as property. Track EVERYTHING. Use CoinTracker or similar tools. Report your gains. Don't mess with the IRS.", "img": "crypto tax reporting requirements"},
+            {"text": "Crypto is NOT\na get rich quick\nscheme\nIt's a long term\nspeculative bet", "speech": "Cryptocurrency is NOT a get rich quick scheme. It's a long-term SPECULATIVE bet on future technology. Some people made millions. Many more lost everything. Be SMART about it.", "img": "long term perspective on crypto investment"},
+            {"text": "My honest opinion:\nBitcoin has VALUE\nas digital gold\nMost altcoins will\ngo to ZERO", "speech": "My honest opinion. Bitcoin has REAL value as digital gold and a hedge against monetary policy. Most altcoins will eventually go to ZERO. Be extremely selective.", "img": "bitcoin surviving while altcoins fade away"},
+            {"text": "If you invest:\nBitcoin 70%\nEthereum 20%\nEverything else 10%\nmax", "speech": "If you decide to invest in crypto, split it. Seventy percent Bitcoin. Twenty percent Ethereum. Ten percent maximum in everything else combined. This is the safest approach.", "img": "crypto allocation strategy pie chart"},
+            {"text": "Remember:\nStocks bonds and\nreal estate should\nbe your CORE\nCrypto is a\nSATELLITE", "speech": "Remember. Stocks, bonds, and real estate should be your CORE portfolio. Crypto is a SATELLITE position. A small speculative bet. Not your retirement plan.", "img": "core portfolio with crypto as small addition"},
+            {"text": "Educate yourself\nbefore investing\nDon't follow hype\nFollow FUNDAMENTALS\nand facts", "speech": "EDUCATE yourself before investing a single dollar. Don't follow hype. Don't follow influencers. Follow FUNDAMENTALS and facts. Subscribe for more financial education every day.", "img": "education and research before crypto investing"},
+        ],
+        "keywords": ["Cryptocurrency", "Bitcoin", "Ethereum", "Crypto Investing"],
+    },
+    {
+        "title": "10 Habits That Keep You Poor (Stop These NOW)",
+        "slides": [
+            {"text": "10 habits that\nare keeping you\nPOOR right now\nStop them TODAY", "speech": "TEN habits that are keeping you POOR right now. Most people do ALL of these without realizing it. Stop them TODAY and watch your finances transform.", "img": "chain of bad habits keeping person poor"},
+            {"text": "Habit 1:\nBuying stuff to\nimpress people you\ndon't even LIKE", "speech": "Habit ONE. Buying stuff to impress people you don't even LIKE. That designer bag. That fancy car. That expensive dinner. All to show off to people who DON'T CARE about you.", "img": "luxury items bought to impress strangers"},
+            {"text": "The rich don't\nflex with stuff\nThey flex with\nFREEDOM and TIME", "speech": "The truly rich don't flex with STUFF. They flex with FREEDOM and TIME. They drive regular cars. They wear simple clothes. But they can retire WHENEVER THEY WANT.", "img": "wealthy person enjoying freedom and time"},
+            {"text": "Habit 2:\nSubscriptions you\nforgot about\n$50-200 per month\nWASTED", "speech": "Habit TWO. Subscriptions you FORGOT about. Check your bank statement RIGHT NOW. I guarantee you're paying for things you haven't used in MONTHS. Fifty to two hundred wasted every month.", "img": "bank statement full of forgotten subscriptions"},
+            {"text": "Habit 3:\nEating out 5x\nper week\n$15 per meal\n= $300 per month\nGONE", "speech": "Habit THREE. Eating out five times per week. Fifteen dollars per meal. That's THREE HUNDRED per month. Three THOUSAND six hundred per year. Invested that would be FIFTY THOUSAND in ten years.", "img": "restaurant spending versus cooking at home"},
+            {"text": "Habit 4:\nNot negotiating\nyour salary\nLeaving $5K-20K\non the table\nEVERY YEAR", "speech": "Habit FOUR. Not negotiating your salary. You're leaving FIVE to TWENTY THOUSAND dollars on the table EVERY YEAR. Companies EXPECT negotiation. They budget for it. ASK.", "img": "money left on table from not negotiating"},
+            {"text": "Habit 5:\nPaying only minimum\non credit cards\n$5000 debt becomes\n$15000", "speech": "Habit FIVE. Paying only the MINIMUM on credit cards. That five thousand dollar balance? At minimum payments and twenty five percent interest, you'll pay FIFTEEN THOUSAND before it's gone.", "img": "minimum payment trap growing debt exponentially"},
+            {"text": "Habit 6:\nNo budget\nNo plan\nJust spend and\nhope for the best\nThat's GAMBLING", "speech": "Habit SIX. No budget. No financial plan. Just spend and HOPE there's money left at the end of the month. That's not a strategy. That's GAMBLING with your future.", "img": "gambling with finances hoping money lasts"},
+            {"text": "Habit 7:\nKeeping up with\nthe Joneses\nThe Joneses are\nBROKE", "speech": "Habit SEVEN. Keeping up with the Joneses. Fun fact. The Joneses are BROKE. They're in debt up to their eyeballs trying to keep up with someone ELSE. It's a TRAP.", "img": "neighbors competing in debt for appearances"},
+            {"text": "Habit 8:\nNot investing\nbecause you think\nyou need $10K\nto start\nYou need $50", "speech": "Habit EIGHT. Not investing because you think you need TEN THOUSAND dollars to start. You DON'T. You need FIFTY. Apps like Fidelity let you start with basically NOTHING.", "img": "small amount growing into big investment"},
+            {"text": "Habit 9:\nBlaming the economy\nyour boss your\nparents instead of\ntaking ACTION", "speech": "Habit NINE. Blaming everything EXCEPT yourself. The economy. Your boss. Your parents. Your background. Blaming keeps you STUCK. Taking ACTION moves you FORWARD.", "img": "person breaking free from blame cycle"},
+            {"text": "Habit 10:\nWaiting for the\nPERFECT time\nto start\nThere IS no\nperfect time", "speech": "Habit TEN. Waiting for the PERFECT time. The perfect time to invest was TEN YEARS AGO. The second best time is RIGHT NOW. There is no perfect moment. JUST START.", "img": "clock showing now is the perfect time"},
+            {"text": "These habits\ncost the average\nperson $500K+\nover their lifetime", "speech": "These ten habits cost the average person over FIVE HUNDRED THOUSAND DOLLARS over their lifetime. Half a million. GONE. To habits you can change TODAY.", "img": "lifetime cost of bad financial habits"},
+            {"text": "Replace bad habits\nwith WEALTH habits:\nBudget Track Invest\nRepeat forever", "speech": "Replace bad habits with WEALTH habits. Budget. Track spending. Invest consistently. Learn about money. Repeat FOREVER. That's the formula.", "img": "replacing bad habits with wealth building habits"},
+            {"text": "The rich automate\ntheir wealth habits\nAuto-invest\nAuto-save\nAuto-budget", "speech": "The rich AUTOMATE their wealth habits. Automatic investments. Automatic savings. Automatic bill payments. Remove willpower from the equation. Let SYSTEMS build your wealth.", "img": "automated systems building wealth passively"},
+            {"text": "Warren Buffett reads\n5 hours per day\nBill Gates reads\n1 book per week\nEducation matters", "speech": "Warren Buffett reads FIVE HOURS per day. Bill Gates reads one book per week. The richest people on earth NEVER stop learning. Education about money is your most valuable investment.", "img": "successful people reading and learning about money"},
+            {"text": "Challenge:\nPick THREE habits\nfrom this list\nEliminate them\nfor 30 days", "speech": "Here's your CHALLENGE. Pick THREE habits from this list. Eliminate them for THIRTY DAYS. Track how much money you save. I GUARANTEE it will shock you.", "img": "thirty day challenge to eliminate bad habits"},
+            {"text": "30 days of better\nhabits = $500-1000\nsaved per month\nThat changes your\nLIFE", "speech": "Thirty days of better habits equals FIVE HUNDRED to ONE THOUSAND dollars saved per month. That's six to twelve thousand per year. INVESTED, that becomes ONE HUNDRED THOUSAND in ten years.", "img": "thirty day savings transforming into wealth"},
+            {"text": "Your financial future\nis decided by\nyour DAILY HABITS\nnot your salary", "speech": "Your financial future is decided by your DAILY HABITS. Not your salary. People earning two hundred thousand go broke. People earning fifty thousand build wealth. The difference is HABITS.", "img": "daily habits determining financial destiny"},
+            {"text": "SUBSCRIBE for daily\nfinance tips\nComment which habit\nyou'll BREAK today\nLet's GO", "speech": "SUBSCRIBE to The AI Dollar for daily finance education. Comment below which habit you're going to BREAK today. Share this with a friend who needs to hear this. Let's build WEALTH together.", "img": "community building wealth with better habits"},
+        ],
+        "keywords": ["Bad Habits", "Financial Mistakes", "Wealth Building"],
+    },
+    {
+        "title": "ETFs Explained: Build A $500K Portfolio With Zero Effort",
+        "slides": [
+            {"text": "ETFs explained\nBuild a $500K\nportfolio with\nZERO effort", "speech": "ETFs. The SIMPLEST way to build a FIVE HUNDRED THOUSAND dollar portfolio with ZERO effort. This is how lazy investors get RICH.", "img": "ETF portfolio growing automatically to 500K"},
+            {"text": "ETF stands for\nExchange Traded Fund\nIt's a basket of\nstocks in ONE\npurchase", "speech": "ETF stands for Exchange Traded Fund. It's a BASKET of stocks you can buy in ONE single purchase. Instead of buying Apple AND Amazon AND Google separately, you buy ONE ETF that holds ALL of them.", "img": "basket of stocks combined into one ETF"},
+            {"text": "Think of it like\na variety pack\nof investments\nInstant diversity\nless risk", "speech": "Think of it like a variety pack. Instead of betting on ONE company, you bet on HUNDREDS. If one fails, the others carry you. INSTANT diversification.", "img": "variety pack of investments reducing risk"},
+            {"text": "The most popular\nETF: VOO\nTracks the S&P 500\n500 biggest US\ncompanies", "speech": "The most popular ETF is VOO from Vanguard. It tracks the S and P Five Hundred. The FIVE HUNDRED biggest US companies. Apple. Amazon. Google. Microsoft. All of them in ONE fund.", "img": "VOO ETF containing top 500 companies"},
+            {"text": "VOO costs just\n0.03% per year\nThat's 30 cents\nper $1000 invested\nALMOST FREE", "speech": "VOO costs just ZERO POINT ZERO THREE percent per year. That's THIRTY CENTS for every THOUSAND dollars invested. ALMOST FREE. Compare that to financial advisors charging ONE to TWO percent.", "img": "VOO ultra low cost versus advisor fees"},
+            {"text": "Other great ETFs:\nVTI total market\nVXUS international\nBND bonds", "speech": "Other great ETFs. VTI gives you the TOTAL US stock market. VXUS gives you international stocks. BND gives you bonds. With just THREE ETFs you own the entire WORLD economy.", "img": "three ETFs covering global economy"},
+            {"text": "The 3-fund\nportfolio strategy:\n60% VTI\n30% VXUS\n10% BND\nDONE", "speech": "The three fund portfolio. SIXTY percent VTI. THIRTY percent VXUS. TEN percent BND. That's it. You're DONE. This portfolio has beaten NINETY percent of professional fund managers.", "img": "three fund portfolio allocation pie chart"},
+            {"text": "This beats 90%\nof professional\nfund managers\nSeriously. NINETY\nPERCENT", "speech": "I'm not exaggerating. This simple three fund portfolio beats NINETY PERCENT of professional fund managers who charge thousands in fees. SIMPLICITY WINS.", "img": "ETF portfolio beating professional fund managers"},
+            {"text": "How to start:\nOpen account at\nFidelity or Vanguard\nTakes 5 minutes\nFREE", "speech": "How to start. Open a FREE account at Fidelity or Vanguard. Takes five minutes. No minimum balance required. Deposit as little as ONE dollar.", "img": "opening brokerage account on phone quickly"},
+            {"text": "Buy $50 of VOO\nevery single week\nSet it on\nAUTOPILOT\nforget about it", "speech": "Buy FIFTY dollars of VOO every single week. Set it on AUTOPILOT. Then FORGET about it. Don't check it daily. Don't panic when it drops. Just keep buying.", "img": "automatic weekly purchase of VOO ETF"},
+            {"text": "$50 per week\n= $2600 per year\nIn 30 years at 10%\n= $471,000", "speech": "FIFTY dollars per week is twenty six hundred per year. At ten percent average returns over thirty years, that grows to FOUR HUNDRED SEVENTY ONE THOUSAND DOLLARS. From fifty bucks a week.", "img": "fifty weekly growing to 471K in thirty years"},
+            {"text": "Increase to $100\nper week?\n$942,000 in 30 years\nAlmost a MILLION", "speech": "Increase to ONE HUNDRED per week? NINE HUNDRED FORTY TWO THOUSAND in thirty years. Almost a MILLION DOLLARS. From a hundred bucks a week.", "img": "doubling contribution approaching million dollars"},
+            {"text": "The KEY is\nCONSISTENCY\nNot timing\nNot picking stocks\nJust KEEP BUYING", "speech": "The KEY is CONSISTENCY. Not timing the market. Not picking individual stocks. Not reading charts. Just KEEP BUYING. Week after week. Month after month. CONSISTENCY wins.", "img": "consistent buying through market ups and downs"},
+            {"text": "When the market\nDROPS don't panic\nYou're buying\nstocks ON SALE\nCelebrate dips", "speech": "When the market DROPS, don't panic. You're buying stocks ON SALE. Lower prices mean MORE shares for the same money. CELEBRATE dips. They make you RICHER long term.", "img": "market dip as buying opportunity celebration"},
+            {"text": "Time IN the market\nbeats timing\nTHE market\nEvery single time\nProven by data", "speech": "Time IN the market beats timing THE market. Every single time. This is proven by DECADES of data. The best investors are the ones who STAYED IN longest.", "img": "time in market versus timing comparison"},
+            {"text": "Mistakes to avoid:\nDon't day trade\nDon't follow hype\nDon't panic sell\nDon't check daily", "speech": "Mistakes to AVOID. Don't day trade. Don't follow hype. Don't panic sell during crashes. Don't check your portfolio every day. Set it and FORGET it.", "img": "common mistakes to avoid with ETF investing"},
+            {"text": "ETFs vs mutual funds:\nETFs are CHEAPER\ntrade like stocks\nmore tax efficient", "speech": "ETFs versus mutual funds. ETFs are CHEAPER. They trade like stocks throughout the day. They're more TAX EFFICIENT. In almost every way, ETFs are BETTER for individual investors.", "img": "ETF advantages over mutual funds comparison"},
+            {"text": "At retirement:\n$500K portfolio\npaying 4% per year\n= $20K passive\nincome FOREVER", "speech": "At retirement, your five hundred thousand dollar portfolio can pay you FOUR PERCENT per year. That's TWENTY THOUSAND dollars of passive income FOREVER while your principal stays intact.", "img": "retirement income from ETF portfolio forever"},
+            {"text": "Add Social Security\nplus portfolio income\n= comfortable\nretirement WITHOUT\nworrying about money", "speech": "Add Social Security on top of your portfolio income and you have a COMFORTABLE retirement without EVER worrying about money again. This is FINANCIAL FREEDOM.", "img": "comfortable retirement with multiple income sources"},
+            {"text": "Start THIS WEEK\nOpen account Monday\nBuy first ETF\nTuesday\nYour future self\nwill THANK you", "speech": "Start THIS WEEK. Open an account Monday. Buy your first ETF Tuesday. Your future self will THANK YOU for this decision. This is the most important financial step you'll ever take. DO IT NOW.", "img": "calendar with action steps for this week"},
+        ],
+        "keywords": ["ETF", "Index Fund", "Portfolio", "Investing"],
+    },
+    {
+        "title": "Financial Freedom By 40 (The FIRE Movement Explained)",
+        "slides": [
+            {"text": "Retire by 40?\nThe FIRE movement\nexplained\nIt's REAL and\npeople DO it", "speech": "Retire by FORTY? It's not a fantasy. The FIRE movement is REAL and thousands of people are doing it RIGHT NOW. Financial Independence Retire Early. Let me show you HOW.", "img": "young person retiring at 40 on beach"},
+            {"text": "FIRE stands for\nFinancial Independence\nRetire Early\nSave 50-70% of\nyour income", "speech": "FIRE stands for Financial Independence Retire Early. The core idea? Save FIFTY to SEVENTY percent of your income instead of the normal ten to twenty percent. Live lean now, retire DECADES early.", "img": "FIRE acronym with savings rate highlighted"},
+            {"text": "The math is\nshockingly simple:\nSave 50% = retire\nin 17 years\nSave 70% = 8.5 years", "speech": "The math is SHOCKINGLY simple. If you save FIFTY percent of your income, you can retire in seventeen years. Save SEVENTY percent? EIGHT AND A HALF years. The math doesn't lie.", "img": "savings rate versus years to retirement chart"},
+            {"text": "The 25x rule:\nYou need 25 times\nyour yearly expenses\nsaved to retire", "speech": "The TWENTY FIVE TIMES rule. You need twenty five times your yearly expenses saved and invested to retire. If you spend forty thousand per year, you need ONE MILLION invested.", "img": "25x rule calculation for retirement"},
+            {"text": "The 4% rule:\nWithdraw 4% per\nyear from your\nportfolio\nIt lasts FOREVER", "speech": "The FOUR PERCENT rule. Once you hit your number, withdraw four percent per year. Studies show your money lasts THIRTY PLUS years. Basically FOREVER if invested properly.", "img": "4 percent withdrawal sustaining retirement"},
+            {"text": "Step 1:\nTrack EVERY expense\nEliminate the waste\nFind your real\ncost of living", "speech": "Step ONE. Track EVERY expense for three months. Find your REAL cost of living. Most people are SHOCKED at how much they waste. Eliminate the fat.", "img": "expense tracking revealing waste"},
+            {"text": "Step 2:\nIncrease income\nSide hustles raises\njob hopping\nEvery dollar counts", "speech": "Step TWO. INCREASE your income aggressively. Side hustles. Negotiate raises. Job hop for bigger salary. In FIRE, every extra dollar is MORE fuel for early retirement.", "img": "multiple income sources accelerating FIRE"},
+            {"text": "Step 3:\nInvest EVERYTHING\nextra into\nlow-cost index funds\nVOO VTI VXUS", "speech": "Step THREE. Invest EVERYTHING extra into low-cost index funds. VOO, VTI, VXUS. Automatic weekly purchases. Don't try to pick stocks. Don't try to time markets. Just INVEST consistently.", "img": "consistent investing into index funds"},
+            {"text": "Housing hack:\nHouse hack your\nfirst property\nRoommates pay YOUR\nmortgage", "speech": "Housing HACK. Buy a property. Live in one room. Rent out the others. Your roommates PAY your mortgage. Your housing cost drops to nearly ZERO. This alone can save you HUNDREDS OF THOUSANDS.", "img": "house hacking roommates paying mortgage"},
+            {"text": "Transportation hack:\nDrive a reliable\nused car\nSave $500 per\nmonth instantly", "speech": "Transportation HACK. Drive a reliable used car. Not a new BMW. A reliable Honda or Toyota. Save FIVE HUNDRED per month on car payments alone.", "img": "used reliable car versus expensive new car"},
+            {"text": "Food hack:\nMeal prep Sundays\n$200 per month\ninstead of $600\nSaves $4800 yearly", "speech": "Food HACK. Meal prep on Sundays. Cook in bulk. Eat leftovers. Your food bill drops from six hundred to TWO HUNDRED per month. That's FORTY EIGHT HUNDRED dollars saved per year.", "img": "meal prep saving thousands per year"},
+            {"text": "Example:\n$60K salary\nSave $30K per year\nInvest at 10%\nFIRE in 15 years", "speech": "Real example. Sixty thousand salary. Save THIRTY THOUSAND per year. Invest at ten percent returns. You hit FINANCIAL INDEPENDENCE in FIFTEEN YEARS. That's retiring at FORTY if you start at twenty five.", "img": "real example path to FIRE at 40"},
+            {"text": "Your FIRE number:\nMonthly expenses\nx 12 x 25\nThat's your\nFREEDOM number", "speech": "Calculate YOUR FIRE number. Monthly expenses times twelve times twenty five. If you spend three thousand per month, your FIRE number is NINE HUNDRED THOUSAND. That's your FREEDOM number.", "img": "calculating personal FIRE number"},
+            {"text": "Lean FIRE:\nMinimalist lifestyle\n$600K-800K needed\nSimple but FREE", "speech": "There's LEAN FIRE. Minimalist lifestyle. You need about six to eight hundred thousand. Simple living but complete FREEDOM.", "img": "lean fire minimalist lifestyle"},
+            {"text": "Fat FIRE:\nLuxury lifestyle\n$2M-3M needed\nRetire in STYLE", "speech": "And there's FAT FIRE. Luxury lifestyle in retirement. You need two to three million. Takes longer but you retire in STYLE.", "img": "fat fire luxury retirement lifestyle"},
+            {"text": "Coast FIRE:\nSave aggressively\nearly then STOP\nLet compound interest\nfinish the job", "speech": "And COAST FIRE. Save aggressively in your twenties and thirties. Then STOP saving and just let compound interest finish the job. You coast to retirement.", "img": "coast fire letting investments grow passively"},
+            {"text": "The hardest part?\nNot the saving\nIt's ignoring what\nEVERYONE else\nis doing", "speech": "The hardest part isn't the saving. It's ignoring what everyone ELSE is doing. While they buy new cars and designer clothes, you're building your FREEDOM MACHINE.", "img": "ignoring social pressure to spend"},
+            {"text": "But when you're\n40 and RETIRED\nand they're working\ntill 65\nWho wins?", "speech": "But when you're FORTY and RETIRED. Traveling. Pursuing passions. Living life on YOUR terms. And they're working until SIXTY FIVE. WHO WINS? You know the answer.", "img": "retired at 40 versus working until 65"},
+            {"text": "You don't have\nto go extreme\nEven saving 30-40%\ngets you retired\nby 50-55", "speech": "You don't have to go extreme. Even saving THIRTY to FORTY percent gets you retired by FIFTY to FIFTY FIVE. That's still TEN to FIFTEEN years early. That's TEN to FIFTEEN years of FREEDOM.", "img": "moderate FIRE path retiring 10-15 years early"},
+            {"text": "Start calculating\nyour FIRE number\nTODAY\nEvery dollar saved\nis a step toward\nFREEDOM", "speech": "Start calculating your FIRE number TODAY. Every dollar saved is a step toward FREEDOM. Subscribe for more financial education every day. Comment your FIRE number below. Let's build FREEDOM together.", "img": "community building toward financial freedom"},
+        ],
+        "keywords": ["FIRE Movement", "Early Retirement", "Financial Independence"],
     },
 ]
 
@@ -1191,10 +1347,11 @@ def prep_slides(images, slides, durations, work_dir):
         return ImageFont.load_default()
 
     W, H = 720, 1280
-    font_big = get_font(48)
-    font_med = get_font(40)
-    font_brand = get_font(24)
-    font_cta = get_font(36)
+    font_big = get_font(56)
+    font_med = get_font(46)
+    font_brand = get_font(28)
+    font_cta = get_font(38)
+    font_sub = get_font(22)
 
     for idx, slide in enumerate(slides):
         img_src = images[idx] if idx < len(images) else None
@@ -1245,7 +1402,21 @@ def prep_slides(images, slides, durations, work_dir):
             color = (255, 255, 255) if li == 0 else (255, 255, 100)
             draw.text((x, y), line, font=font, fill=color)
 
+        is_first = (idx == 0)
         is_last = (idx == len(slides) - 1)
+
+        if is_first:
+            hook = "FOLLOW FOR MORE FINANCE TIPS"
+            hb = draw.textbbox((0, 0), hook, font=font_sub)
+            hw = hb[2] - hb[0]
+            hx = (W - hw) // 2
+            hy = H - 60
+            draw.rounded_rectangle(
+                [hx - 15, hy - 6, hx + hw + 15, hy + 24],
+                radius=10, fill=(0, 120, 255)
+            )
+            draw.text((hx, hy), hook, font=font_sub, fill=(255, 255, 255))
+
         if is_last:
             cta = "SUBSCRIBE FOR MORE"
             cb = draw.textbbox((0, 0), cta, font=font_cta)

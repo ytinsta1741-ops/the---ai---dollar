@@ -317,10 +317,11 @@ def upload_to_facebook(video_path, title, keywords=None):
         return False
 
 
-def post_video():
-    """Generate and post video to YouTube + Instagram + Facebook"""
+def post_video(is_series_part=False, series_name="", part_num=0):
+    """Generate and post video to YouTube + Instagram + Facebook
+    is_series_part: True adds series info to title for binge-watching"""
     print(f"\n{'='*50}")
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] POSTING VIDEO")
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] POSTING VIDEO{' [SERIES PART]' if is_series_part else ''}")
     print(f"{'='*50}\n")
 
     try:
@@ -346,6 +347,9 @@ def post_video():
         print(f"\n[STEP 4] Uploading to Facebook...")
         facebook_success = upload_to_facebook(video_path, title, keywords=keywords)
 
+        print(f"\n[STEP 5] Uploading to TikTok...")
+        tiktok_success = upload_to_tiktok(video_path, title, keywords=keywords)
+
         with open("last_post_time.txt", "w") as f:
             f.write(str(time.time()))
 
@@ -354,6 +358,7 @@ def post_video():
         print(f"   YouTube:   {'posted' if youtube_success else 'skipped'}")
         print(f"   Instagram: {'posted' if instagram_success else 'skipped'}")
         print(f"   Facebook:  {'posted' if facebook_success else 'skipped'}")
+        print(f"   TikTok:    {'posted' if tiktok_success else 'skipped'}")
         print(f"{'='*50}\n")
 
     except Exception as e:
@@ -391,6 +396,9 @@ def post_long_video():
         print(f"\n[STEP 4] Uploading to Facebook...")
         facebook_success = upload_to_facebook(video_path, title, keywords=keywords)
 
+        print(f"\n[STEP 5] Uploading to TikTok...")
+        tiktok_success = upload_to_tiktok(video_path, title, keywords=keywords)
+
         with open("last_post_time.txt", "w") as f:
             f.write(str(time.time()))
 
@@ -399,6 +407,7 @@ def post_long_video():
         print(f"   YouTube:   {'posted' if youtube_success else 'skipped'}")
         print(f"   Instagram: {'posted' if instagram_success else 'skipped'}")
         print(f"   Facebook:  {'posted' if facebook_success else 'skipped'}")
+        print(f"   TikTok:    {'posted' if tiktok_success else 'skipped'}")
         print(f"{'='*50}\n")
 
     except Exception as e:
@@ -415,20 +424,53 @@ def keep_alive():
         pass
 
 
+def upload_to_tiktok(video_path, title, keywords=None):
+    """Upload video to TikTok using cookies-based upload"""
+    tiktok_session = os.getenv("TIKTOK_SESSION_ID", "")
+    if not tiktok_session:
+        print("[SKIP] TikTok: TIKTOK_SESSION_ID not set")
+        return False
+
+    try:
+        from tiktok_uploader.upload import upload_video as tiktok_upload
+        kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or []))
+        caption = (
+            f"{title[:80]} "
+            f"#Finance #Money #Investing #WealthBuilding #FinanceTips "
+            f"#PersonalFinance #MoneyTips #FinancialFreedom {kw_tags}"
+        )[:150]
+
+        cookies_file = "tiktok_cookies.txt"
+        if not os.path.exists(cookies_file):
+            with open(cookies_file, "w") as f:
+                f.write(f"sessionid={tiktok_session}")
+
+        tiktok_upload(video_path, description=caption, cookies=cookies_file)
+        print(f"[OK] TikTok posted! Title: {title[:50]}")
+        return True
+    except Exception as e:
+        print(f"[ERR] TikTok error: {e}")
+        return False
+
+
 def schedule_jobs():
-    schedule.every().day.at("07:00").do(post_long_video)  # 7 AM UTC = 10 AM KSA -- LONG-FORM VIDEO (BEST for watch time)
-    schedule.every().day.at("09:00").do(post_video)  # 9 AM UTC = Morning US East
-    schedule.every().day.at("12:00").do(post_video)  # 12 PM UTC = Lunch US
-    schedule.every().day.at("15:00").do(post_video)  # 3 PM UTC = Afternoon US
-    schedule.every().day.at("17:00").do(post_video)  # 5 PM UTC = Evening US
-    schedule.every().day.at("20:00").do(post_video)  # 8 PM UTC = Prime time US
-    schedule.every().day.at("21:00").do(post_video)  # 9 PM UTC = Night US (Shorts perform best)
-    schedule.every().day.at("23:00").do(post_video)  # 11 PM UTC = Late night US
-    schedule.every().day.at("02:00").do(post_video)  # 2 AM UTC = EU morning
-    schedule.every().day.at("04:00").do(post_video)  # 4 AM UTC = Early morning US
+    # LONG-FORM (3x daily = watch time for monetization)
+    schedule.every().day.at("07:00").do(post_long_video)  # Morning long-form
+    schedule.every().day.at("14:00").do(post_long_video)  # Afternoon long-form
+    schedule.every().day.at("20:00").do(post_long_video)  # Evening long-form
+
+    # SHORTS (6x daily = algorithm boost + viral potential)
+    schedule.every().day.at("09:00").do(post_video)   # Morning US
+    schedule.every().day.at("12:00").do(post_video)   # Lunch US
+    schedule.every().day.at("16:00").do(post_video)   # Afternoon US
+    schedule.every().day.at("18:00").do(post_video)   # Evening US
+    schedule.every().day.at("22:00").do(post_video)   # Night US (peak Shorts)
+    schedule.every().day.at("02:00").do(post_video)   # Late night / EU morning
+
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 9 Shorts + 1 Long-form daily (10 posts/day for MAXIMUM engagement)")
-    print("[OK] Best posting times for YouTube Shorts algorithm optimization")
+    print("[OK] Schedule: 3 Long-form + 6 Shorts = 9 posts/day")
+    print("[OK] Long-form = watch hours for monetization (4000h goal)")
+    print("[OK] Shorts = viral potential + subscriber growth")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
 
@@ -459,7 +501,7 @@ def main():
         print("\n[NOW] Posting first video now...\n")
         post_video()
 
-    print("\n[SCHED] Scheduler running (6 posts/day UTC + self-ping every 10 min)...")
+    print("\n[SCHED] Scheduler running (3 long + 6 shorts = 9 posts/day + self-ping every 10 min)...")
     try:
         while True:
             schedule.run_pending()

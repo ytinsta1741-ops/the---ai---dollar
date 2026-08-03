@@ -7,3 +7,4 @@ __pycache__/
 last_post_time.txt
 topic_counter.txt
 instagram_session.json
+.env
