@@ -147,8 +147,124 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
         return False
 
 
+def upload_to_instagram(video_path, title, keywords=None):
+    """Upload video to Instagram Reels using instagrapi"""
+    username = os.getenv("INSTAGRAM_USERNAME", "")
+    password = os.getenv("INSTAGRAM_PASSWORD", "")
+    if not username or not password:
+        print("[SKIP] Instagram: INSTAGRAM_USERNAME or INSTAGRAM_PASSWORD not set")
+        return False
+
+    try:
+        from instagrapi import Client
+
+        cl = Client()
+        cl.delay_range = [2, 5]
+
+        session_file = "instagram_session.json"
+        logged_in = False
+
+        if os.path.exists(session_file):
+            try:
+                cl.load_settings(session_file)
+                cl.login(username, password)
+                logged_in = True
+                print("[OK] Instagram: resumed session")
+            except Exception:
+                cl = Client()
+                cl.delay_range = [2, 5]
+
+        if not logged_in:
+            cl.login(username, password)
+            print("[OK] Instagram: fresh login")
+
+        kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or []))
+        caption = (
+            f"{title}\n\n"
+            f"Follow @theaidollar for daily finance tips!\n\n"
+            f"#Finance #Money #PersonalFinance #Investing "
+            f"#FinanceTips #WealthBuilding #FinancialLiteracy "
+            f"#Reels #MoneyTips #FinancialFreedom {kw_tags}"
+        )
+
+        media = cl.clip_upload(video_path, caption=caption)
+        print(f"[OK] Instagram Reel posted! ID: {media.pk}")
+
+        try:
+            cl.dump_settings(session_file)
+        except Exception:
+            pass
+
+        return True
+
+    except Exception as e:
+        print(f"[ERR] Instagram error: {e}")
+        return False
+
+
+def upload_to_facebook(video_path, title, keywords=None):
+    """Upload video to Facebook Page as Reel"""
+    page_token = os.getenv("FACEBOOK_PAGE_TOKEN", "")
+    page_id = os.getenv("FACEBOOK_PAGE_ID", "")
+    if not page_token or not page_id:
+        print("[SKIP] Facebook: FACEBOOK_PAGE_TOKEN or FACEBOOK_PAGE_ID not set")
+        return False
+
+    try:
+        kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or []))
+        description = (
+            f"{title}\n\n"
+            f"Follow The AI Dollar for daily finance education!\n\n"
+            f"#Finance #Money #PersonalFinance #Investing "
+            f"#FinanceTips #WealthBuilding #FinancialLiteracy {kw_tags}"
+        )
+
+        print("[UPLOAD] Facebook: uploading reel...")
+        init_url = f"https://graph.facebook.com/v18.0/{page_id}/video_reels"
+        init_resp = requests.post(init_url, data={
+            "upload_phase": "start",
+            "access_token": page_token,
+        })
+        if init_resp.status_code != 200:
+            print(f"[ERR] Facebook init failed: {init_resp.text}")
+            return False
+
+        video_id = init_resp.json().get("video_id")
+
+        upload_url = f"https://rupload.facebook.com/video-upload/v18.0/{video_id}"
+        file_size = os.path.getsize(video_path)
+        with open(video_path, "rb") as f:
+            upload_resp = requests.post(upload_url, data=f, headers={
+                "Authorization": f"OAuth {page_token}",
+                "offset": "0",
+                "file_size": str(file_size),
+                "Content-Type": "application/octet-stream",
+            })
+        if upload_resp.status_code != 200:
+            print(f"[ERR] Facebook upload failed: {upload_resp.text}")
+            return False
+
+        publish_resp = requests.post(init_url, data={
+            "upload_phase": "finish",
+            "access_token": page_token,
+            "video_id": video_id,
+            "title": title[:100],
+            "description": description,
+        })
+        if publish_resp.status_code == 200:
+            print(f"[OK] Facebook Reel posted! Video ID: {video_id}")
+            return True
+        else:
+            print(f"[ERR] Facebook publish failed: {publish_resp.text}")
+            return False
+
+    except Exception as e:
+        print(f"[ERR] Facebook error: {e}")
+        return False
+
+
 def post_video():
-    """Generate and post video to YouTube + Instagram"""
+    """Generate and post video to YouTube + Instagram + Facebook"""
     print(f"\n{'='*50}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] POSTING VIDEO")
     print(f"{'='*50}\n")
@@ -170,9 +286,11 @@ def post_video():
         print(f"\n[STEP 2] Uploading to YouTube...")
         youtube_success = upload_to_youtube(video_path, title, script, is_short=True, keywords=keywords)
 
-        print(f"\n[STEP 3] Instagram...")
-        print("[SKIP] Instagram disabled (anti-bot detection blocking automated posts)")
-        instagram_success = False
+        print(f"\n[STEP 3] Uploading to Instagram...")
+        instagram_success = upload_to_instagram(video_path, title, keywords=keywords)
+
+        print(f"\n[STEP 4] Uploading to Facebook...")
+        facebook_success = upload_to_facebook(video_path, title, keywords=keywords)
 
         with open("last_post_time.txt", "w") as f:
             f.write(str(time.time()))
@@ -181,6 +299,7 @@ def post_video():
         print(f"[DONE] POSTING COMPLETE")
         print(f"   YouTube:   {'posted' if youtube_success else 'skipped'}")
         print(f"   Instagram: {'posted' if instagram_success else 'skipped'}")
+        print(f"   Facebook:  {'posted' if facebook_success else 'skipped'}")
         print(f"{'='*50}\n")
 
     except Exception as e:
@@ -190,7 +309,7 @@ def post_video():
 
 
 def post_long_video():
-    """Generate and post a 2-3 minute long-form video to YouTube"""
+    """Generate and post a 2-3 minute long-form video to YouTube + Instagram + Facebook"""
     print(f"\n{'='*50}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] POSTING LONG-FORM VIDEO")
     print(f"{'='*50}\n")
@@ -212,12 +331,20 @@ def post_long_video():
         print(f"\n[STEP 2] Uploading to YouTube (long-form)...")
         youtube_success = upload_to_youtube(video_path, title, script, is_short=False, keywords=keywords)
 
+        print(f"\n[STEP 3] Uploading to Instagram...")
+        instagram_success = upload_to_instagram(video_path, title, keywords=keywords)
+
+        print(f"\n[STEP 4] Uploading to Facebook...")
+        facebook_success = upload_to_facebook(video_path, title, keywords=keywords)
+
         with open("last_post_time.txt", "w") as f:
             f.write(str(time.time()))
 
         print(f"\n{'='*50}")
         print(f"[DONE] LONG-FORM POSTING COMPLETE")
-        print(f"   YouTube: {'posted' if youtube_success else 'skipped'}")
+        print(f"   YouTube:   {'posted' if youtube_success else 'skipped'}")
+        print(f"   Instagram: {'posted' if instagram_success else 'skipped'}")
+        print(f"   Facebook:  {'posted' if facebook_success else 'skipped'}")
         print(f"{'='*50}\n")
 
     except Exception as e:
