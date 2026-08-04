@@ -1523,18 +1523,12 @@ def create_video_simple(slides, audio_file, durations, output_file):
 
 
 def _get_next_topic_index():
-    counter_file = "topic_counter.txt"
-    try:
-        if os.path.exists(counter_file):
-            with open(counter_file) as f:
-                idx = int(f.read().strip())
-        else:
-            idx = 0
-    except Exception:
-        idx = 0
-    next_idx = (idx + 1) % len(CONTENT_TOPICS)
-    with open(counter_file, "w") as f:
-        f.write(str(next_idx))
+    """Use date + hour to pick topic — survives Render restarts without repeating"""
+    now = datetime.now()
+    day_of_year = now.timetuple().tm_yday
+    hour = now.hour
+    idx = (day_of_year * 10 + hour) % len(CONTENT_TOPICS)
+    print(f"[TOPIC] Day {day_of_year}, Hour {hour} → Short topic #{idx}: {CONTENT_TOPICS[idx]['title'][:50]}")
     return idx
 
 
@@ -1605,20 +1599,13 @@ def generate_daily_video():
 
 
 def generate_long_video():
-    counter_file = "long_topic_counter.txt"
-    try:
-        if os.path.exists(counter_file):
-            with open(counter_file) as f:
-                idx = int(f.read().strip())
-        else:
-            idx = 0
-    except Exception:
-        idx = 0
-
-    topic = LONG_FORM_TOPICS[idx % len(LONG_FORM_TOPICS)]
-    next_idx = (idx + 1) % len(LONG_FORM_TOPICS)
-    with open(counter_file, "w") as f:
-        f.write(str(next_idx))
+    """Pick long-form topic by date + hour — survives Render restarts"""
+    now = datetime.now()
+    day_of_year = now.timetuple().tm_yday
+    hour = now.hour
+    idx = (day_of_year * 3 + hour // 8) % len(LONG_FORM_TOPICS)
+    topic = LONG_FORM_TOPICS[idx]
+    print(f"[TOPIC] Day {day_of_year}, Hour {hour} → Long topic #{idx}: {topic['title'][:50]}")
 
     slides = topic['slides']
     os.makedirs(CONFIG['output_dir'], exist_ok=True)

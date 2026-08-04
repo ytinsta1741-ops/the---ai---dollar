@@ -485,21 +485,13 @@ def main():
 
     schedule_jobs()
 
-    last_post_file = "last_post_time.txt"
-    should_post = True
-    if os.path.exists(last_post_file):
-        try:
-            with open(last_post_file) as f:
-                last = float(f.read().strip())
-            if time.time() - last < 3600:
-                print("[SKIP] Posted less than 1 hour ago -- waiting for next schedule")
-                should_post = False
-        except Exception:
-            pass
-
-    if should_post:
-        print("\n[NOW] Posting first video now...\n")
+    print("\n[NOW] Posting first short + long-form on startup...\n")
+    try:
         post_video()
+        time.sleep(30)
+        post_long_video()
+    except Exception as e:
+        print(f"[ERR] Startup post error: {e}")
 
     print("\n[SCHED] Scheduler running (3 long + 6 shorts = 9 posts/day + self-ping every 10 min)...")
     try:
