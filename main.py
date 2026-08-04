@@ -93,8 +93,10 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
             "wealth building", "passive income", "financial education",
             "stock market for beginners", "save money", "make money",
             "budget tips", "debt free", "credit score",
-            "side hustle", "financial freedom", "money advice 2025",
+            "side hustle", "financial freedom", "money advice 2026",
             "finance tips", "get rich", "TheAIDollar",
+            "money hacks", "rich vs poor", "compound interest",
+            "index funds", "roth ira", "how to save money",
         ]
         yt_tags = topic_tags + [t for t in base_tags if t.lower() not in [k.lower() for k in topic_tags]]
 
@@ -103,69 +105,42 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
         if is_short:
             yt_title = title[:100]
             yt_desc = (
-                f"💰 {title}\n\n"
-                f"🎯 {description}\n\n"
-                f"⚡ KEY INSIGHTS:\n"
-                f"• Master {kw_line[:40]}...\n"
-                f"• Learn proven wealth strategies in under 60 seconds\n"
-                f"• Join 1000s building financial freedom\n\n"
-                f"🔥 WATCH THIS FIRST if you're serious about money:\n"
-                f"• NEW Shorts EVERY 90 MINUTES (24/7 automation)\n"
-                f"• Weekly deep-dive videos for complete financial education\n"
-                f"• Real strategies used by millionaires (not theory, RESULTS)\n\n"
-                f"💬 ENGAGE & UNLOCK FREE VALUE:\n"
-                f"✅ LIKE if you want financial freedom\n"
-                f"✅ COMMENT: What's your biggest money struggle?\n"
-                f"✅ SUBSCRIBE & TURN ON NOTIFICATIONS (see our next video first)\n"
-                f"✅ SHARE with someone who needs to see this TODAY\n\n"
-                f"📚 LEARN MORE:\n"
-                f"Watch our full breakdown → [Complete Money Guide]\n"
-                f"Join The AI Dollar community → Financial freedom awaits\n\n"
-                f"#Shorts #Finance #Money #Investing #WealthBuilding #FinancialFreedom #PersonalFinance "
-                f"#FinanceTips #MoneyTips #HowToGetRich #StockMarket #Entrepreneurship "
-                f"#SideHustle #PassiveIncome #DebtFree #MoneyHacks #WealthTips "
-                f"#FinancialLiteracy #InvestingForBeginners #MakeMoney #TheAIDollar"
+                f"{title}\n\n"
+                f"This changes everything about how you think about money.\n\n"
+                f"WATCH NEXT: Check our channel for the full breakdown!\n\n"
+                f"COMMENT below: What's YOUR #1 money question?\n"
+                f"SUBSCRIBE for daily money lessons (new video every few hours)\n\n"
+                f"#Shorts #Finance #Money #Investing #PersonalFinance "
+                f"#WealthBuilding #FinancialFreedom #MoneyTips #FinanceTips "
+                f"#HowToGetRich #PassiveIncome #DebtFree #SideHustle "
+                f"#FinancialLiteracy #MakeMoney #MoneyHacks #CompoundInterest "
+                f"#InvestingForBeginners #BudgetTips #TheAIDollar #MoneyAdvice "
+                f"#RichVsPoor #WealthTips #StockMarket #IndexFunds "
+                f"#MillionaireMindset #MoneyMindset #FinancialEducation "
+                f"#MoneyMotivation #WealthSecrets"
             )
             yt_tags.append("Shorts")
         else:
             yt_title = title[:100]
             yt_desc = (
-                f"📊 {title} - Complete Money Mastery Guide\n\n"
-                f"🚀 IN THIS VIDEO:\n"
-                f"{description}\n\n"
-                f"⏱️ TIMESTAMPS:\n"
-                f"0:00 - Why this matters (watch this first!)\n"
-                f"0:45 - Core concepts explained simply\n"
-                f"2:30 - Proven strategies (how rich people do it)\n"
-                f"5:15 - Your action plan (start TODAY)\n"
-                f"7:30 - Common mistakes to avoid\n\n"
-                f"💎 WHAT YOU'LL LEARN:\n"
-                f"✓ Master {kw_line[:50]}...\n"
-                f"✓ Proven strategies from successful investors\n"
-                f"✓ How to implement TODAY (no waiting required)\n"
-                f"✓ Common mistakes that cost you thousands\n"
-                f"✓ Your complete action plan to wealth\n\n"
-                f"🎯 WHY THIS MATTERS:\n"
-                f"Most people never learn this information. That's why 90% stay broke while 10% build wealth. "
-                f"You just watched the blueprint. Now it's your turn to ACT.\n\n"
-                f"📢 NEXT STEPS:\n"
-                f"✅ SUBSCRIBE for daily financial education (new video every morning)\n"
-                f"✅ TURN ON NOTIFICATIONS so you see our latest uploads first\n"
-                f"✅ LIKE this video if the content resonated with you\n"
-                f"✅ COMMENT your biggest takeaway below - let's build a community!\n"
-                f"✅ SHARE with 3 friends who need to see this\n\n"
-                f"💰 LEVEL UP YOUR FINANCES:\n"
-                f"Watch our complete series → Master all wealth-building strategies\n"
-                f"Morning shorts → Bite-sized daily lessons (Shorts every 90 minutes)\n"
-                f"Join our community → Thousands building financial freedom together\n\n"
-                f"🔗 RESOURCES:\n"
-                f"• Free financial toolkit in description\n"
-                f"• Complete wealth-building roadmap → Available free\n"
-                f"• Join The AI Dollar community → Link in bio\n\n"
-                f"#Finance #Money #PersonalFinance #Investing #WealthBuilding #FinancialFreedom "
-                f"#MoneyTips #FinanceTips #FinancialLiteracy #HowToGetRich #StockMarket "
-                f"#Entrepreneurship #SideHustle #PassiveIncome #DebtFree #CreditScore "
-                f"#Budgeting #MakeMoney #WealthTips #InvestingForBeginners #TheAIDollar"
+                f"{title} | The AI Dollar\n\n"
+                f"In this video, you'll learn everything you need to know about {kw_line}.\n\n"
+                f"TIMESTAMPS:\n"
+                f"0:00 - Why this matters RIGHT NOW\n"
+                f"0:45 - The core concept (explained simply)\n"
+                f"2:30 - Proven strategies from real millionaires\n"
+                f"5:15 - Your step-by-step action plan\n"
+                f"7:30 - Mistakes that keep people broke\n\n"
+                f"If this helped you, SUBSCRIBE and turn on notifications.\n"
+                f"We post daily money education that schools don't teach.\n\n"
+                f"COMMENT your biggest takeaway below!\n"
+                f"SHARE with someone who needs to hear this.\n\n"
+                f"#Finance #Money #PersonalFinance #Investing #WealthBuilding "
+                f"#FinancialFreedom #MoneyTips #FinanceTips #FinancialLiteracy "
+                f"#HowToGetRich #StockMarket #PassiveIncome #DebtFree "
+                f"#Budgeting #MakeMoney #InvestingForBeginners #TheAIDollar "
+                f"#MoneyHacks #CompoundInterest #MillionaireMindset #WealthSecrets "
+                f"#IndexFunds #MoneyMotivation #FinancialEducation"
             )
 
         body = {
@@ -435,15 +410,16 @@ def upload_to_tiktok(video_path, title, keywords=None):
         from tiktok_uploader.upload import upload_video as tiktok_upload
         kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or []))
         caption = (
-            f"{title[:80]} "
-            f"#Finance #Money #Investing #WealthBuilding #FinanceTips "
-            f"#PersonalFinance #MoneyTips #FinancialFreedom {kw_tags}"
+            f"{title[:70]} "
+            f"#moneytok #fintok #investing #finance #personalfinance "
+            f"#moneytips #financialfreedom #wealthbuilding #sidehustle "
+            f"#learnontiktok {kw_tags}"
         )[:150]
 
         cookies_file = "tiktok_cookies.txt"
-        if not os.path.exists(cookies_file):
-            with open(cookies_file, "w") as f:
-                f.write(f"sessionid={tiktok_session}")
+        with open(cookies_file, "w") as f:
+            f.write("# Netscape HTTP Cookie File\n")
+            f.write(f".tiktok.com\tTRUE\t/\tTRUE\t0\tsessionid\t{tiktok_session}\n")
 
         tiktok_upload(video_path, description=caption, cookies=cookies_file)
         print(f"[OK] TikTok posted! Title: {title[:50]}")
@@ -455,22 +431,26 @@ def upload_to_tiktok(video_path, title, keywords=None):
 
 def schedule_jobs():
     # LONG-FORM (3x daily = watch time for monetization)
-    schedule.every().day.at("07:00").do(post_long_video)  # Morning long-form
-    schedule.every().day.at("14:00").do(post_long_video)  # Afternoon long-form
-    schedule.every().day.at("20:00").do(post_long_video)  # Evening long-form
+    # Post BEFORE peak hours so they're indexed when viewers arrive
+    schedule.every().day.at("06:30").do(post_long_video)  # Ready for morning viewers
+    schedule.every().day.at("13:30").do(post_long_video)  # Ready for afternoon viewers
+    schedule.every().day.at("19:30").do(post_long_video)  # Ready for evening viewers
 
-    # SHORTS (6x daily = algorithm boost + viral potential)
-    schedule.every().day.at("09:00").do(post_video)   # Morning US
-    schedule.every().day.at("12:00").do(post_video)   # Lunch US
-    schedule.every().day.at("16:00").do(post_video)   # Afternoon US
-    schedule.every().day.at("18:00").do(post_video)   # Evening US
-    schedule.every().day.at("22:00").do(post_video)   # Night US (peak Shorts)
-    schedule.every().day.at("02:00").do(post_video)   # Late night / EU morning
+    # SHORTS (8x daily = more algorithm lottery tickets)
+    # YouTube Shorts peak: 6-9am, 12-2pm, 7-10pm US time
+    schedule.every().day.at("06:00").do(post_video)   # Early birds (US East 6am)
+    schedule.every().day.at("08:30").do(post_video)   # Morning commute
+    schedule.every().day.at("11:00").do(post_video)   # Pre-lunch scroll
+    schedule.every().day.at("13:00").do(post_video)   # Lunch break peak
+    schedule.every().day.at("16:00").do(post_video)   # Afternoon slump scroll
+    schedule.every().day.at("19:00").do(post_video)   # Evening prime time
+    schedule.every().day.at("21:00").do(post_video)   # Night scroll (peak Shorts)
+    schedule.every().day.at("23:30").do(post_video)   # Late night + EU/Asia morning
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 3 Long-form + 6 Shorts = 9 posts/day")
+    print("[OK] Schedule: 3 Long-form + 8 Shorts = 11 posts/day")
     print("[OK] Long-form = watch hours for monetization (4000h goal)")
-    print("[OK] Shorts = viral potential + subscriber growth")
+    print("[OK] Shorts = 8 daily algorithm lottery tickets")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
 
@@ -493,7 +473,7 @@ def main():
     except Exception as e:
         print(f"[ERR] Startup post error: {e}")
 
-    print("\n[SCHED] Scheduler running (3 long + 6 shorts = 9 posts/day + self-ping every 10 min)...")
+    print("\n[SCHED] Scheduler running (3 long + 8 shorts = 11 posts/day + self-ping every 10 min)...")
     try:
         while True:
             schedule.run_pending()
