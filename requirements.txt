@@ -11,4 +11,5 @@ imageio-ffmpeg==0.4.9
 Pillow>=10.4.0
 pytz==2024.1
 tiktok-uploader>=0.1.0
+setuptools>=69.0.0
 
