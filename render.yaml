@@ -3,7 +3,7 @@ services:
     name: the-ai-dollar
     env: python
     plan: free
-    buildCommand: pip install -q -r requirements.txt
+    buildCommand: apt-get update && apt-get install -y chromium chromium-driver && pip install -q -r requirements.txt
     startCommand: python main.py
     autoDeploy: true
     healthCheckPath: /

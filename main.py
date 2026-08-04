@@ -99,6 +99,17 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
             "index funds", "roth ira", "how to save money",
         ]
         yt_tags = topic_tags + [t for t in base_tags if t.lower() not in [k.lower() for k in topic_tags]]
+        import re
+        yt_tags = [re.sub(r'[<>]', '', t).strip() for t in yt_tags if t.strip()]
+        yt_tags = [t[:100] for t in yt_tags if t]
+        total = 0
+        trimmed = []
+        for t in yt_tags:
+            if total + len(t) > 480:
+                break
+            trimmed.append(t)
+            total += len(t)
+        yt_tags = trimmed
 
         kw_line = ", ".join(topic_tags[:5]) if topic_tags else "money tips, finance, investing"
 
@@ -407,6 +418,12 @@ def upload_to_tiktok(video_path, title, keywords=None):
         return False
 
     try:
+        import shutil
+        chrome_bin = shutil.which("chromium") or shutil.which("chromium-browser") or shutil.which("google-chrome")
+        if chrome_bin:
+            os.environ["CHROME_BINARY"] = chrome_bin
+            os.environ["CHROMIUM_BINARY"] = chrome_bin
+
         from tiktok_uploader.upload import upload_video as tiktok_upload
         kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or []))
         caption = (
@@ -421,7 +438,7 @@ def upload_to_tiktok(video_path, title, keywords=None):
             f.write("# Netscape HTTP Cookie File\n")
             f.write(f".tiktok.com\tTRUE\t/\tTRUE\t0\tsessionid\t{tiktok_session}\n")
 
-        tiktok_upload(video_path, description=caption, cookies=cookies_file)
+        tiktok_upload(video_path, description=caption, cookies=cookies_file, headless=True)
         print(f"[OK] TikTok posted! Title: {title[:50]}")
         return True
     except Exception as e:
