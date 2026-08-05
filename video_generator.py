@@ -27,6 +27,8 @@ CONFIG = {"output_dir": "./videos"}
 
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
 
+from topic_generator import generate_short_topic, generate_long_topic
+
 
 
 CONTENT_TOPICS = [
@@ -1513,31 +1515,8 @@ def create_video_simple(slides, audio_file, durations, output_file):
     return True
 
 
-_used_short_topics = set()
-_used_long_topics = set()
-
-def _get_next_topic_index():
-    """Pick next unused short topic. Never repeats until all 35 are used."""
-    global _used_short_topics
-    total = len(CONTENT_TOPICS)
-    if len(_used_short_topics) >= total:
-        print("[TOPIC] All topics used — resetting cycle")
-        _used_short_topics = set()
-    now = datetime.now()
-    seed = now.timetuple().tm_yday * 1440 + now.hour * 60 + now.minute
-    idx = seed % total
-    attempts = 0
-    while idx in _used_short_topics and attempts < total:
-        idx = (idx + 1) % total
-        attempts += 1
-    _used_short_topics.add(idx)
-    print(f"[TOPIC] Short topic #{idx} ({len(_used_short_topics)}/{total} used): {CONTENT_TOPICS[idx]['title'][:50]}")
-    return idx
-
-
 def generate_daily_video():
-    index = _get_next_topic_index()
-    topic = CONTENT_TOPICS[index]
+    topic = generate_short_topic()
     slides = topic['slides']
 
     os.makedirs(CONFIG['output_dir'], exist_ok=True)
@@ -1602,23 +1581,7 @@ def generate_daily_video():
 
 
 def generate_long_video():
-    """Pick next unused long-form topic. Never repeats until all are used."""
-    global _used_long_topics
-    total = len(LONG_FORM_TOPICS)
-    if len(_used_long_topics) >= total:
-        print("[TOPIC] All long topics used — resetting cycle")
-        _used_long_topics = set()
-    now = datetime.now()
-    seed = now.timetuple().tm_yday * 1440 + now.hour * 60 + now.minute
-    idx = seed % total
-    attempts = 0
-    while idx in _used_long_topics and attempts < total:
-        idx = (idx + 1) % total
-        attempts += 1
-    _used_long_topics.add(idx)
-    topic = LONG_FORM_TOPICS[idx]
-    print(f"[TOPIC] Long topic #{idx} ({len(_used_long_topics)}/{total} used): {topic['title'][:50]}")
-
+    topic = generate_long_topic()
     slides = topic['slides']
     os.makedirs(CONFIG['output_dir'], exist_ok=True)
 
