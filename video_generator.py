@@ -1306,11 +1306,29 @@ def prep_slides(images, slides, durations, work_dir):
         return ImageFont.load_default()
 
     W, H = 720, 1280
-    font_big = get_font(56)
-    font_med = get_font(46)
+    PADDING = 30
+    MAX_TEXT_W = W - PADDING * 2
     font_brand = get_font(28)
     font_cta = get_font(38)
     font_sub = get_font(22)
+
+    def wrap_line(text_line, font, draw_ctx, max_w):
+        """Break a single line into multiple lines that fit within max_w."""
+        words = text_line.split()
+        if not words:
+            return [text_line]
+        lines_out = []
+        current = words[0]
+        for word in words[1:]:
+            test = current + " " + word
+            bb = draw_ctx.textbbox((0, 0), test, font=font)
+            if (bb[2] - bb[0]) <= max_w:
+                current = test
+            else:
+                lines_out.append(current)
+                current = word
+        lines_out.append(current)
+        return lines_out
 
     total_slides = len(slides)
 
@@ -1368,25 +1386,36 @@ def prep_slides(images, slides, durations, work_dir):
         draw.text((W - cw_count - 20, 35), counter, font=font_sub, fill=(255, 255, 255))
 
         text = slide['text'].upper()
-        lines = text.split('\n')
+        raw_lines = text.split('\n')
 
-        line_h = 90
-        total_h = len(lines) * line_h
-        start_y = H - total_h - 120
+        # Auto-scale: try font sizes until all wrapped lines fit
+        for font_size in [52, 46, 40, 34, 28]:
+            font_title = get_font(font_size)
+            font_body = get_font(max(font_size - 8, 22))
+            wrapped = []
+            for li, raw in enumerate(raw_lines):
+                f = font_title if li == 0 else font_body
+                wrapped.extend([(w, li == 0) for w in wrap_line(raw, f, draw, MAX_TEXT_W)])
+            line_h = font_size + 26
+            total_h = len(wrapped) * line_h
+            if total_h < (H * 0.55):
+                break
 
-        for li, line in enumerate(lines):
-            font = font_big if li == 0 else font_med
+        start_y = H - total_h - 100
+
+        for li, (line, is_title) in enumerate(wrapped):
+            font = font_title if is_title else font_body
             bbox = draw.textbbox((0, 0), line, font=font)
             tw = bbox[2] - bbox[0]
-            x = (W - tw) // 2
+            x = max((W - tw) // 2, PADDING)
             y = start_y + li * line_h
 
-            for ox in range(-4, 5):
-                for oy in range(-4, 5):
+            for ox in range(-3, 4):
+                for oy in range(-3, 4):
                     if abs(ox) + abs(oy) > 0:
                         draw.text((x + ox, y + oy), line, font=font, fill=(0, 0, 0))
 
-            color = (255, 255, 255) if li == 0 else (255, 255, 100)
+            color = (255, 255, 255) if is_title else (255, 255, 100)
             draw.text((x, y), line, font=font, fill=color)
 
         is_first = (idx == 0)
