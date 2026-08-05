@@ -1513,15 +1513,25 @@ def create_video_simple(slides, audio_file, durations, output_file):
     return True
 
 
+_used_short_topics = set()
+_used_long_topics = set()
+
 def _get_next_topic_index():
-    """Use date + hour to pick topic — survives Render restarts without repeating.
-    With 35 topics and multiplier 13 (prime), consecutive hours cycle through
-    different topics with minimal collision across days."""
+    """Pick next unused short topic. Never repeats until all 35 are used."""
+    global _used_short_topics
+    total = len(CONTENT_TOPICS)
+    if len(_used_short_topics) >= total:
+        print("[TOPIC] All topics used — resetting cycle")
+        _used_short_topics = set()
     now = datetime.now()
-    day_of_year = now.timetuple().tm_yday
-    hour = now.hour
-    idx = (day_of_year * 13 + hour) % len(CONTENT_TOPICS)
-    print(f"[TOPIC] Day {day_of_year}, Hour {hour} → Short topic #{idx}: {CONTENT_TOPICS[idx]['title'][:50]}")
+    seed = now.timetuple().tm_yday * 1440 + now.hour * 60 + now.minute
+    idx = seed % total
+    attempts = 0
+    while idx in _used_short_topics and attempts < total:
+        idx = (idx + 1) % total
+        attempts += 1
+    _used_short_topics.add(idx)
+    print(f"[TOPIC] Short topic #{idx} ({len(_used_short_topics)}/{total} used): {CONTENT_TOPICS[idx]['title'][:50]}")
     return idx
 
 
@@ -1592,13 +1602,22 @@ def generate_daily_video():
 
 
 def generate_long_video():
-    """Pick long-form topic by date + hour — survives Render restarts"""
+    """Pick next unused long-form topic. Never repeats until all are used."""
+    global _used_long_topics
+    total = len(LONG_FORM_TOPICS)
+    if len(_used_long_topics) >= total:
+        print("[TOPIC] All long topics used — resetting cycle")
+        _used_long_topics = set()
     now = datetime.now()
-    day_of_year = now.timetuple().tm_yday
-    hour = now.hour
-    idx = (day_of_year * 3 + hour // 8) % len(LONG_FORM_TOPICS)
+    seed = now.timetuple().tm_yday * 1440 + now.hour * 60 + now.minute
+    idx = seed % total
+    attempts = 0
+    while idx in _used_long_topics and attempts < total:
+        idx = (idx + 1) % total
+        attempts += 1
+    _used_long_topics.add(idx)
     topic = LONG_FORM_TOPICS[idx]
-    print(f"[TOPIC] Day {day_of_year}, Hour {hour} → Long topic #{idx}: {topic['title'][:50]}")
+    print(f"[TOPIC] Long topic #{idx} ({len(_used_long_topics)}/{total} used): {topic['title'][:50]}")
 
     slides = topic['slides']
     os.makedirs(CONFIG['output_dir'], exist_ok=True)
