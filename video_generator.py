@@ -1168,9 +1168,11 @@ def _run_edge_tts(text, output_path, voice, rate, pitch):
 
 
 VOICE_LIST = [
-    ("en-US-GuyNeural", "+20%", "-5Hz"),
-    ("en-US-ChristopherNeural", "+20%", "-4Hz"),
-    ("en-GB-RyanNeural", "+20%", "-5Hz"),
+    ("en-US-DavisNeural", "+2%", "-3Hz"),
+    ("en-US-AndrewMultilingualNeural", "+3%", "-2Hz"),
+    ("en-US-GuyNeural", "+5%", "-4Hz"),
+    ("en-US-ChristopherNeural", "+5%", "-3Hz"),
+    ("en-GB-RyanNeural", "+5%", "-4Hz"),
 ]
 
 
@@ -1327,12 +1329,16 @@ def prep_slides(images, slides, durations, work_dir):
         else:
             bg = Image.new("RGB", (W, H), (10, 10, 46))
 
-        draw = ImageDraw.Draw(bg)
+        # Dark gradient overlay — proper alpha composite so image shows through
+        overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ov_draw = ImageDraw.Draw(overlay)
+        grad_start = int(H * 0.45)
+        for gy in range(grad_start, H):
+            alpha = int(210 * ((gy - grad_start) / (H - grad_start)) ** 1.5)
+            ov_draw.rectangle([0, gy, W, gy + 1], fill=(0, 0, 0, min(alpha, 210)))
+        bg = Image.alpha_composite(bg.convert("RGBA"), overlay).convert("RGB")
 
-        # Dark gradient overlay at bottom for text readability
-        for gy in range(H // 2, H):
-            alpha = int(180 * (gy - H // 2) / (H // 2))
-            draw.rectangle([0, gy, W, gy + 1], fill=(0, 0, 0, min(alpha, 180)))
+        draw = ImageDraw.Draw(bg)
 
         # Brand watermark top center
         brand = "THE AI DOLLAR"
