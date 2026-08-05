@@ -1049,7 +1049,7 @@ def enhance_image(img_path):
         from PIL import Image, ImageEnhance, ImageFilter
         img = Image.open(img_path).convert("RGB")
         w, h = img.size
-        if w >= 1080 and h >= 1920:
+        if w >= 1080 and h >= 1920 and abs(w/h - 9/16) < 0.05:
             return
         img = img.resize((1080, 1920), Image.LANCZOS)
         img = img.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=3))
@@ -1113,7 +1113,7 @@ def fetch_hd_images(slides, save_dir):
                     photos = resp.json().get("photos", [])
                     if photos:
                         photo = photos[i % len(photos)]
-                        img_url = photo["src"].get("large2x") or photo["src"].get("portrait") or photo["src"]["large"]
+                        img_url = photo["src"].get("original") or photo["src"].get("large2x") or photo["src"].get("portrait") or photo["src"]["large"]
                         img_resp = requests.get(img_url, timeout=20)
                         if img_resp.status_code == 200 and len(img_resp.content) > 20000:
                             with open(img_path, 'wb') as f:
@@ -1128,7 +1128,7 @@ def fetch_hd_images(slides, save_dir):
             style = "cinematic photorealistic, sharp focus, dramatic lighting, no text no watermark"
             prompt = f"{style}, {desc}"
             encoded = urllib.parse.quote(prompt)
-            url = f"https://image.pollinations.ai/prompt/{encoded}?width=768&height=1344&nologo=true&seed={i + 42}&model=flux&enhance=true"
+            url = f"https://image.pollinations.ai/prompt/{encoded}?width=1080&height=1920&nologo=true&seed={i + 42}&model=flux&enhance=true"
             try:
                 resp = requests.get(url, timeout=90)
                 if resp.status_code == 200 and len(resp.content) > 5000:
@@ -1261,15 +1261,27 @@ def create_audio(text, output_path):
 
 
 def generate_bg_music(output_path, duration):
+    """Generate a warm ambient pad using layered sine waves — sounds professional."""
     cmd = [
         FFMPEG, '-y',
         '-f', 'lavfi', '-i',
-        f'anoisesrc=d={duration}:c=pink:r=44100:a=0.015',
-        '-af', 'lowpass=f=300,highpass=f=80,volume=0.4',
+        (f'sine=f=110:d={duration}[a];'
+         f'sine=f=165:d={duration}[b];'
+         f'sine=f=220:d={duration}[c];'
+         f'sine=f=330:d={duration}[d];'
+         f'[a][b]amix=inputs=2[ab];'
+         f'[c][d]amix=inputs=2[cd];'
+         f'[ab][cd]amix=inputs=2'),
+        '-af', (
+            'lowpass=f=400,highpass=f=60,'
+            'afade=t=in:st=0:d=2,afade=t=out:st=' + f'{max(duration-3,1)}' + ':d=3,'
+            'volume=0.08'
+        ),
         '-c:a', 'aac', '-b:a', '64k',
+        '-t', str(duration),
         output_path
     ]
-    proc = subprocess.run(cmd, capture_output=True, timeout=30)
+    proc = subprocess.run(cmd, capture_output=True, timeout=60)
     return proc.returncode == 0 and os.path.exists(output_path)
 
 
@@ -1287,10 +1299,10 @@ def get_audio_duration(audio_path):
 
 
 def prep_slides(images, slides, durations, work_dir):
-    """Prepare slides: full image + text overlay at bottom (white text with black outline)."""
+    """Create professional cinematic slides — full HD, clean design, readable text."""
     os.makedirs(work_dir, exist_ok=True)
 
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
     def get_font(size):
         font_search = [
@@ -1305,30 +1317,48 @@ def prep_slides(images, slides, durations, work_dir):
                 continue
         return ImageFont.load_default()
 
-    W, H = 720, 1280
-    PADDING = 30
-    MAX_TEXT_W = W - PADDING * 2
-    font_brand = get_font(28)
-    font_cta = get_font(38)
-    font_sub = get_font(22)
+    W, H = 1080, 1920
+    PAD = 50
+    MAX_TW = W - PAD * 2
+
+    font_brand = get_font(32)
+    font_cta = get_font(44)
+    font_sub = get_font(26)
+    font_counter = get_font(24)
+
+    GOLD = (255, 200, 50)
+    WHITE = (255, 255, 255)
+    LIGHT_GRAY = (200, 200, 210)
 
     def wrap_line(text_line, font, draw_ctx, max_w):
-        """Break a single line into multiple lines that fit within max_w."""
         words = text_line.split()
         if not words:
             return [text_line]
-        lines_out = []
-        current = words[0]
+        out = []
+        cur = words[0]
         for word in words[1:]:
-            test = current + " " + word
+            test = cur + " " + word
             bb = draw_ctx.textbbox((0, 0), test, font=font)
             if (bb[2] - bb[0]) <= max_w:
-                current = test
+                cur = test
             else:
-                lines_out.append(current)
-                current = word
-        lines_out.append(current)
-        return lines_out
+                out.append(cur)
+                cur = word
+        out.append(cur)
+        return out
+
+    def draw_text_shadow(draw_ctx, pos, text, font, fill):
+        """Clean drop shadow + thin outline for readability on any background."""
+        x, y = pos
+        # Drop shadow
+        draw_ctx.text((x + 3, y + 3), text, font=font, fill=(0, 0, 0))
+        draw_ctx.text((x + 2, y + 2), text, font=font, fill=(0, 0, 0))
+        # Thin outline
+        for ox in range(-2, 3):
+            for oy in range(-2, 3):
+                if ox * ox + oy * oy <= 4:
+                    draw_ctx.text((x + ox, y + oy), text, font=font, fill=(0, 0, 0))
+        draw_ctx.text((x, y), text, font=font, fill=fill)
 
     total_slides = len(slides)
 
@@ -1336,6 +1366,7 @@ def prep_slides(images, slides, durations, work_dir):
         img_src = images[idx] if idx < len(images) else None
         out = os.path.join(work_dir, f"s_{idx}.jpg")
 
+        # Load and fit image to full frame
         if img_src and os.path.exists(img_src):
             bg = Image.open(img_src).convert("RGB")
             iw, ih = bg.size
@@ -1345,118 +1376,123 @@ def prep_slides(images, slides, durations, work_dir):
             top = (bg.height - H) // 2
             bg = bg.crop((left, top, left + W, top + H))
         else:
-            bg = Image.new("RGB", (W, H), (10, 10, 46))
+            bg = Image.new("RGB", (W, H), (12, 12, 40))
 
-        # Dark gradient overlay — proper alpha composite so image shows through
+        # Cinematic gradient overlay — image visible everywhere, darker at bottom for text
         overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         ov_draw = ImageDraw.Draw(overlay)
-        grad_start = int(H * 0.45)
+        # Light top vignette
+        for gy in range(0, int(H * 0.12)):
+            a = int(60 * (1 - gy / (H * 0.12)))
+            ov_draw.rectangle([0, gy, W, gy + 1], fill=(0, 0, 0, a))
+        # Bottom gradient for text readability
+        grad_start = int(H * 0.38)
         for gy in range(grad_start, H):
-            alpha = int(210 * ((gy - grad_start) / (H - grad_start)) ** 1.5)
-            ov_draw.rectangle([0, gy, W, gy + 1], fill=(0, 0, 0, min(alpha, 210)))
+            frac = (gy - grad_start) / (H - grad_start)
+            a = int(220 * (frac ** 1.3))
+            ov_draw.rectangle([0, gy, W, gy + 1], fill=(0, 0, 0, min(a, 220)))
         bg = Image.alpha_composite(bg.convert("RGBA"), overlay).convert("RGB")
 
         draw = ImageDraw.Draw(bg)
 
-        # Brand watermark top center
+        # Top accent bar
+        draw.rectangle([0, 0, W, 5], fill=GOLD)
+
+        # Brand name — top left
         brand = "THE AI DOLLAR"
-        bb = draw.textbbox((0, 0), brand, font=font_brand)
-        bw = bb[2] - bb[0]
-        bx = (W - bw) // 2
-        for ox in range(-2, 3):
-            for oy in range(-2, 3):
-                if abs(ox) + abs(oy) > 0:
-                    draw.text((bx + ox, 30 + oy), brand, font=font_brand, fill=(0, 0, 0))
-        draw.text((bx, 30), brand, font=font_brand, fill=(255, 215, 0))
+        draw_text_shadow(draw, (PAD, 24), brand, font_brand, GOLD)
 
-        # Progress bar at top (shows viewers how far along they are - boosts retention)
-        progress = (idx + 1) / total_slides
-        bar_h = 4
-        draw.rectangle([0, 0, int(W * progress), bar_h], fill=(255, 215, 0))
-        draw.rectangle([int(W * progress), 0, W, bar_h], fill=(60, 60, 60))
-
-        # Slide counter top-right
+        # Slide counter — top right
         counter = f"{idx + 1}/{total_slides}"
-        cb_count = draw.textbbox((0, 0), counter, font=font_sub)
-        cw_count = cb_count[2] - cb_count[0]
-        for ox in range(-2, 3):
-            for oy in range(-2, 3):
-                if abs(ox) + abs(oy) > 0:
-                    draw.text((W - cw_count - 20 + ox, 35 + oy), counter, font=font_sub, fill=(0, 0, 0))
-        draw.text((W - cw_count - 20, 35), counter, font=font_sub, fill=(255, 255, 255))
+        cb = draw.textbbox((0, 0), counter, font=font_counter)
+        cw = cb[2] - cb[0]
+        draw_text_shadow(draw, (W - cw - PAD, 28), counter, font_counter, LIGHT_GRAY)
 
+        # Progress bar below brand area
+        bar_y = 65
+        bar_h = 3
+        progress = (idx + 1) / total_slides
+        draw.rectangle([PAD, bar_y, W - PAD, bar_y + bar_h], fill=(60, 60, 80))
+        draw.rectangle([PAD, bar_y, PAD + int((W - PAD * 2) * progress), bar_y + bar_h], fill=GOLD)
+
+        # Text rendering with auto-wrap and auto-scale
         text = slide['text'].upper()
         raw_lines = text.split('\n')
 
-        # Auto-scale: try font sizes until all wrapped lines fit
-        for font_size in [52, 46, 40, 34, 28]:
-            font_title = get_font(font_size)
-            font_body = get_font(max(font_size - 8, 22))
+        for font_size in [62, 54, 48, 42, 36, 30]:
+            ft_title = get_font(font_size)
+            ft_body = get_font(max(font_size - 10, 24))
             wrapped = []
             for li, raw in enumerate(raw_lines):
-                f = font_title if li == 0 else font_body
-                wrapped.extend([(w, li == 0) for w in wrap_line(raw, f, draw, MAX_TEXT_W)])
-            line_h = font_size + 26
+                f = ft_title if li == 0 else ft_body
+                wrapped.extend([(w, li == 0) for w in wrap_line(raw, f, draw, MAX_TW)])
+            line_h = font_size + 30
             total_h = len(wrapped) * line_h
-            if total_h < (H * 0.55):
+            if total_h < (H * 0.50):
                 break
 
-        start_y = H - total_h - 100
+        start_y = H - total_h - 130
 
         for li, (line, is_title) in enumerate(wrapped):
-            font = font_title if is_title else font_body
+            font = ft_title if is_title else ft_body
             bbox = draw.textbbox((0, 0), line, font=font)
             tw = bbox[2] - bbox[0]
-            x = max((W - tw) // 2, PADDING)
+            x = max((W - tw) // 2, PAD)
             y = start_y + li * line_h
+            color = WHITE if is_title else GOLD
+            draw_text_shadow(draw, (x, y), line, font, color)
 
-            for ox in range(-3, 4):
-                for oy in range(-3, 4):
-                    if abs(ox) + abs(oy) > 0:
-                        draw.text((x + ox, y + oy), line, font=font, fill=(0, 0, 0))
-
-            color = (255, 255, 255) if is_title else (255, 255, 100)
-            draw.text((x, y), line, font=font, fill=color)
+        # Gold accent line under title block
+        accent_y = start_y - 12
+        accent_w = min(280, W - PAD * 2)
+        draw.rectangle(
+            [(W - accent_w) // 2, accent_y, (W + accent_w) // 2, accent_y + 3],
+            fill=GOLD
+        )
 
         is_first = (idx == 0)
         is_last = (idx == len(slides) - 1)
 
         if is_first:
-            hook = "FOLLOW FOR MORE MONEY TIPS"
+            hook = "WATCH TIL THE END"
             hb = draw.textbbox((0, 0), hook, font=font_sub)
             hw = hb[2] - hb[0]
             hx = (W - hw) // 2
-            hy = H - 60
+            hy = H - 80
             draw.rounded_rectangle(
-                [hx - 15, hy - 6, hx + hw + 15, hy + 24],
-                radius=10, fill=(0, 120, 255)
+                [hx - 20, hy - 8, hx + hw + 20, hy + 30],
+                radius=12, fill=(220, 40, 40)
             )
-            draw.text((hx, hy), hook, font=font_sub, fill=(255, 255, 255))
+            draw.text((hx, hy), hook, font=font_sub, fill=WHITE)
 
         if is_last:
-            cta = "SUBSCRIBE FOR MORE"
+            # Subscribe button
+            cta = "SUBSCRIBE"
             cb = draw.textbbox((0, 0), cta, font=font_cta)
-            cw = cb[2] - cb[0]
-            ch = cb[3] - cb[1]
-            cx = (W - cw) // 2
-            cy = 80
+            cw_btn = cb[2] - cb[0]
+            ch_btn = cb[3] - cb[1]
+            cx = (W - cw_btn) // 2
+            cy = 100
             draw.rounded_rectangle(
-                [cx - 20, cy - 10, cx + cw + 20, cy + ch + 10],
-                radius=12, fill=(255, 0, 0)
+                [cx - 30, cy - 14, cx + cw_btn + 30, cy + ch_btn + 14],
+                radius=14, fill=(220, 20, 20)
             )
-            draw.text((cx, cy), cta, font=font_cta, fill=(255, 255, 255))
+            draw.text((cx, cy), cta, font=font_cta, fill=WHITE)
 
-            # Second CTA below main text
-            cta2 = "LIKE + COMMENT YOUR #1 MONEY TIP"
+            # Engagement prompt
+            cta2 = "COMMENT YOUR #1 MONEY GOAL"
             cb2 = draw.textbbox((0, 0), cta2, font=font_sub)
             cw2 = cb2[2] - cb2[0]
             cx2 = (W - cw2) // 2
-            cy2 = H - 55
+            cy2 = H - 75
             draw.rounded_rectangle(
-                [cx2 - 12, cy2 - 4, cx2 + cw2 + 12, cy2 + 22],
-                radius=8, fill=(0, 180, 80)
+                [cx2 - 16, cy2 - 6, cx2 + cw2 + 16, cy2 + 28],
+                radius=10, fill=(30, 30, 60, 200)
             )
-            draw.text((cx2, cy2), cta2, font=font_sub, fill=(255, 255, 255))
+            draw.text((cx2, cy2), cta2, font=font_sub, fill=GOLD)
+
+        # Bottom brand bar
+        draw.rectangle([0, H - 6, W, H], fill=GOLD)
 
         bg.save(out, "JPEG", quality=95)
         del draw, bg
@@ -1494,7 +1530,7 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file):
             '-i', audio_file,
             '-i', bg_music_path,
             '-filter_complex',
-            '[0:v]scale=720:1280,fps=24[v];[2:a]volume=0.12[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
+            '[0:v]scale=1080:1920,fps=30[v];[2:a]volume=0.10[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
             '-map', '[v]', '-map', '[aout]',
             '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
             '-c:a', 'aac', '-b:a', '128k',
@@ -1507,7 +1543,7 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file):
             FFMPEG, '-y',
             '-f', 'concat', '-safe', '0', '-i', concat_file,
             '-i', audio_file,
-            '-vf', 'scale=720:1280,fps=24',
+            '-vf', 'scale=1080:1920,fps=30',
             '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
             '-c:a', 'aac', '-b:a', '128k',
             '-pix_fmt', 'yuv420p',
@@ -1534,7 +1570,7 @@ def create_video_simple(slides, audio_file, durations, output_file):
     total_dur = sum(durations)
     cmd = [
         FFMPEG, '-y',
-        '-f', 'lavfi', '-i', f'color=c=0x0A0A2E:size=720x1280:rate=24:d={total_dur:.2f}',
+        '-f', 'lavfi', '-i', f'color=c=0x0C0C28:size=1080x1920:rate=30:d={total_dur:.2f}',
         '-i', audio_file,
         '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
         '-c:a', 'aac', '-b:a', '128k',

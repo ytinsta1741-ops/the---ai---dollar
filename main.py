@@ -503,27 +503,17 @@ def upload_to_tiktok(video_path, title, keywords=None):
 
 
 def schedule_jobs():
-    # LONG-FORM (3x daily = watch time for monetization)
-    # Post BEFORE peak hours so they're indexed when viewers arrive
-    schedule.every().day.at("06:30").do(post_long_video)  # Ready for morning viewers
-    schedule.every().day.at("13:30").do(post_long_video)  # Ready for afternoon viewers
-    schedule.every().day.at("19:30").do(post_long_video)  # Ready for evening viewers
+    # LONG-FORM (1x daily — quality over quantity, maximizes watch time per video)
+    schedule.every().day.at("14:00").do(post_long_video)  # US afternoon = peak discovery
 
-    # SHORTS (8x daily = more algorithm lottery tickets)
-    # YouTube Shorts peak: 6-9am, 12-2pm, 7-10pm US time
-    schedule.every().day.at("06:00").do(post_video)   # Early birds (US East 6am)
-    schedule.every().day.at("08:30").do(post_video)   # Morning commute
-    schedule.every().day.at("11:00").do(post_video)   # Pre-lunch scroll
-    schedule.every().day.at("13:00").do(post_video)   # Lunch break peak
-    schedule.every().day.at("16:00").do(post_video)   # Afternoon slump scroll
-    schedule.every().day.at("19:00").do(post_video)   # Evening prime time
-    schedule.every().day.at("21:00").do(post_video)   # Night scroll (peak Shorts)
-    schedule.every().day.at("23:30").do(post_video)   # Late night + EU/Asia morning
+    # SHORTS (3x daily — spaced at peak scroll hours, lets algorithm test each one)
+    schedule.every().day.at("07:00").do(post_video)   # Morning commute scroll
+    schedule.every().day.at("12:30").do(post_video)   # Lunch break peak
+    schedule.every().day.at("19:00").do(post_video)   # Evening prime time (biggest window)
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 3 Long-form + 8 Shorts = 11 posts/day")
-    print("[OK] Long-form = watch hours for monetization (4000h goal)")
-    print("[OK] Shorts = 8 daily algorithm lottery tickets")
+    print("[OK] Schedule: 1 Long-form + 3 Shorts = 4 posts/day")
+    print("[OK] Quality > quantity — algorithm rewards engagement, not volume")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
 
@@ -546,7 +536,7 @@ def main():
     except Exception as e:
         print(f"[ERR] Startup post error: {e}")
 
-    print("\n[SCHED] Scheduler running (3 long + 8 shorts = 11 posts/day + self-ping every 10 min)...")
+    print("\n[SCHED] Scheduler running (1 long + 3 shorts = 4 posts/day + self-ping every 10 min)...")
     try:
         while True:
             schedule.run_pending()
