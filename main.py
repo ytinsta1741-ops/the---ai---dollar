@@ -411,20 +411,15 @@ def keep_alive():
 
 
 def upload_to_tiktok(video_path, title, keywords=None):
-    """Upload video to TikTok using cookies-based upload"""
+    """Upload video to TikTok using direct API with session cookie"""
     tiktok_session = os.getenv("TIKTOK_SESSION_ID", "")
     if not tiktok_session:
         print("[SKIP] TikTok: TIKTOK_SESSION_ID not set")
         return False
 
     try:
-        import shutil
-        chrome_bin = shutil.which("chromium") or shutil.which("chromium-browser") or shutil.which("google-chrome")
-        if chrome_bin:
-            os.environ["CHROME_BINARY"] = chrome_bin
-            os.environ["CHROMIUM_BINARY"] = chrome_bin
+        import requests as req
 
-        from tiktok_uploader.upload import upload_video as tiktok_upload
         kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or []))
         caption = (
             f"{title[:70]} "
@@ -433,14 +428,42 @@ def upload_to_tiktok(video_path, title, keywords=None):
             f"#learnontiktok {kw_tags}"
         )[:150]
 
-        cookies_file = "tiktok_cookies.txt"
-        with open(cookies_file, "w") as f:
-            f.write("# Netscape HTTP Cookie File\n")
-            f.write(f".tiktok.com\tTRUE\t/\tTRUE\t0\tsessionid\t{tiktok_session}\n")
+        cookies = {"sessionid": tiktok_session}
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-        tiktok_upload(video_path, description=caption, cookies=cookies_file, headless=True)
-        print(f"[OK] TikTok posted! Title: {title[:50]}")
-        return True
+        # Step 1: Get upload URL
+        print("[TikTok] Getting upload URL...")
+        init_url = "https://www.tiktok.com/api/v1/video/upload/auth/"
+        sess = req.Session()
+        sess.cookies.update(cookies)
+        sess.headers.update(headers)
+
+        # Use creator center upload endpoint
+        upload_page = sess.get("https://www.tiktok.com/creator#/upload", timeout=30)
+        print(f"[TikTok] Creator page status: {upload_page.status_code}")
+
+        # Direct video publish via internal API
+        file_size = os.path.getsize(video_path)
+        print(f"[TikTok] Video size: {file_size / 1024 / 1024:.1f}MB")
+
+        with open(video_path, 'rb') as f:
+            video_data = f.read()
+
+        # Upload video chunk
+        upload_url = "https://www.tiktok.com/upload/video/"
+        files = {"video": (os.path.basename(video_path), video_data, "video/mp4")}
+        data = {"caption": caption}
+
+        resp = sess.post(upload_url, files=files, data=data, timeout=120)
+        print(f"[TikTok] Upload response: {resp.status_code}")
+
+        if resp.status_code == 200:
+            print(f"[OK] TikTok posted! Title: {title[:50]}")
+            return True
+        else:
+            print(f"[ERR] TikTok upload failed: {resp.status_code} - {resp.text[:200]}")
+            return False
+
     except Exception as e:
         print(f"[ERR] TikTok error: {e}")
         return False
