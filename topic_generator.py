@@ -41,6 +41,26 @@ SHORT_TITLE_TEMPLATES = [
     "{country} People Save {percent}% Of Income — Here's Their Secret",
     "My ${amount}/Month Side Hustle Takes {minutes} Minutes Per Day",
     "The Investing Mistake That Cost Me ${amount} (Don't Do This)",
+    "This Side Hustle Pays ${amount}/Month — Nobody Talks About It",
+    "Rich People Do THIS Every Morning (Broke People Never Do)",
+    "I Tried Living On ${small_amount}/Day For {time} — Here's What Happened",
+    "The {time} Money Challenge That Made Me ${amount} Richer",
+    "STOP Scrolling — This {method} Trick Changes EVERYTHING",
+    "A {age} Year Old Discovered THIS And Made ${amount} In {time}",
+    "Banks Are HIDING This From You (${amount} Strategy)",
+    "Why {percent}% Of Millionaires Drive Used Cars (Not What You Think)",
+    "This Is The #1 Side Hustle Of {year} (${amount}/Month Proof)",
+    "I Asked AI How To Make ${amount} — It Gave Me THIS Plan",
+    "The Broke Person's Guide To ${big_amount} (No BS Strategy)",
+    "{person} Quit Their Job At {age} — Now Makes ${amount}/Month Online",
+    "POV: You Follow These {count} Rules And Retire At {age}",
+    "The ${small_amount} Per Week Hack That Builds ${big_amount}",
+    "Nobody Told Me THIS About Money Until I Was {age} (Too Late?)",
+    "This Is Why You're STILL Broke (Fix It In {time})",
+    "I Tested {count} Money Strategies — Only {small_count} Actually Work",
+    "The Ugly Truth About {method} (What Gurus Won't Tell You)",
+    "How To Turn ${small_amount} Into ${big_amount} (Step By Step)",
+    "The {age} Year Old Millionaire's Daily Routine (Copy This)",
 ]
 
 # ── STORY PERSONAS ──
@@ -60,6 +80,15 @@ PERSONAS = [
     {"name": "Nina", "job": "freelancer", "age": 27, "story": "working from a tiny apartment"},
     {"name": "Chris", "job": "security guard", "age": 40, "story": "on the night shift"},
     {"name": "Emma", "job": "retail worker", "age": 23, "story": "making $12 per hour"},
+    {"name": "Mike", "job": "plumber", "age": 36, "story": "running his own one-man business"},
+    {"name": "Aisha", "job": "pharmacy tech", "age": 25, "story": "working night shifts to pay rent"},
+    {"name": "Brandon", "job": "construction worker", "age": 31, "story": "supporting his parents back home"},
+    {"name": "Rosa", "job": "hotel cleaner", "age": 42, "story": "a single mom working two jobs"},
+    {"name": "Jason", "job": "fast food manager", "age": 27, "story": "with zero financial education"},
+    {"name": "Fatima", "job": "daycare worker", "age": 33, "story": "earning barely above minimum wage"},
+    {"name": "Alex", "job": "graphic designer", "age": 24, "story": "freelancing with inconsistent income"},
+    {"name": "Tony", "job": "truck driver", "age": 44, "story": "on the road 60 hours a week"},
+    {"name": "Keisha", "job": "cashier", "age": 20, "story": "saving for college with no family help"},
 ]
 
 # ── FAMOUS PEOPLE WITH MONEY LESSONS ──
@@ -74,6 +103,15 @@ FAMOUS_PEOPLE = [
     {"name": "Charlie Munger", "rule": "avoid stupidity instead of seeking brilliance", "lesson": "invert always invert when solving money problems", "worth": "2 billion"},
     {"name": "Peter Lynch", "rule": "invest in what you know", "lesson": "the best stock ideas come from your daily life", "worth": "450 million"},
     {"name": "Benjamin Graham", "rule": "margin of safety", "lesson": "buy a dollar for fifty cents", "worth": "pioneer of value investing"},
+    {"name": "Elon Musk", "rule": "think in first principles", "lesson": "break problems down to fundamentals instead of following convention", "worth": "250 billion"},
+    {"name": "Jeff Bezos", "rule": "think long term always", "lesson": "your margin is my opportunity", "worth": "150 billion"},
+    {"name": "Oprah Winfrey", "rule": "invest in yourself first", "lesson": "the biggest investment you can make is in your own abilities", "worth": "2.5 billion"},
+    {"name": "Jay-Z", "rule": "own don't rent", "lesson": "you're not a businessman you're a business man", "worth": "2.5 billion"},
+    {"name": "Sara Blakely", "rule": "embrace failure as data", "lesson": "my dad asked us what we failed at this week and celebrated it", "worth": "1.2 billion"},
+    {"name": "Kevin O'Leary", "rule": "never spend more than you make", "lesson": "money equals freedom and if you don't control it you don't control your life", "worth": "400 million"},
+    {"name": "Tony Robbins", "rule": "automate and diversify", "lesson": "the secret to wealth is simple make your money work harder than you do", "worth": "600 million"},
+    {"name": "Daymond John", "rule": "be broke not poor", "lesson": "broke is temporary poor is a mindset", "worth": "350 million"},
+    {"name": "Barbara Corcoran", "rule": "use other people's money smartly", "lesson": "the joy is in the getting not the having", "worth": "100 million"},
 ]
 
 # ── MONEY METHODS / STRATEGIES ──
@@ -93,6 +131,15 @@ METHODS = [
     {"name": "the no-spend challenge", "effort": "30 days of discipline", "min_start": 0, "potential": "save 1000 to 3000 in one month"},
     {"name": "flipping items on eBay", "effort": "weekends at thrift stores", "min_start": 50, "potential": "500 to 2000 per month"},
     {"name": "cashback apps stacking", "effort": "scan receipts", "min_start": 0, "potential": "600 per year for doing nothing"},
+    {"name": "print on demand", "effort": "design once sell forever", "min_start": 0, "potential": "1000 to 5000 per month passive"},
+    {"name": "YouTube automation", "effort": "faceless channel", "min_start": 0, "potential": "3000 to 20000 per month"},
+    {"name": "digital course creation", "effort": "create once sell unlimited", "min_start": 0, "potential": "5000 to 50000 per month"},
+    {"name": "Amazon KDP publishing", "effort": "write or outsource ebooks", "min_start": 0, "potential": "1000 to 10000 per month"},
+    {"name": "real estate wholesaling", "effort": "find deals connect buyers", "min_start": 0, "potential": "5000 to 20000 per deal"},
+    {"name": "dropshipping", "effort": "run online store no inventory", "min_start": 100, "potential": "2000 to 15000 per month"},
+    {"name": "social media management", "effort": "manage accounts for businesses", "min_start": 0, "potential": "2000 to 6000 per month per client"},
+    {"name": "stock photography", "effort": "upload photos earn royalties", "min_start": 0, "potential": "500 to 3000 per month passive"},
+    {"name": "newsletter monetization", "effort": "build email list sell ads", "min_start": 0, "potential": "1000 to 10000 per month"},
 ]
 
 # ── BAD MONEY HABITS ──
@@ -201,6 +248,54 @@ SLIDE_FRAMEWORKS = {
         {"role": "compound_power", "template": "Starting late?\n${late_start}/month\nat age {late_age}\nstill becomes\n${late_result} by 65"},
         {"role": "cta", "template": "The best time\nto start was\n10 years ago\nThe second best\ntime is TODAY"},
     ],
+    "side_hustle": [
+        {"role": "hook", "template": "This side hustle\npays ${amount}/month\nand takes\n{time_required}\nto set up"},
+        {"role": "what", "template": "It's called:\n{hustle_name}\nand ANYONE\ncan start it"},
+        {"role": "why_works", "template": "Why it works:\n{reason_1}\n{reason_2}\nZero experience needed"},
+        {"role": "step1", "template": "Step 1:\n{setup_step_1}\nThis takes\n{step1_time}"},
+        {"role": "step2", "template": "Step 2:\n{setup_step_2}\nFREE tools\nonly"},
+        {"role": "step3", "template": "Step 3:\n{setup_step_3}\nThis is where\nmoney starts flowing"},
+        {"role": "week1", "template": "Week 1 earnings:\n${week1_amount}\nNot much but\nit PROVES it works"},
+        {"role": "month3", "template": "Month 3:\n${month3_amount}/month\nConsistency\nis the secret"},
+        {"role": "scale", "template": "Scale it:\n{scale_strategy}\nTurn ${month3_amount}\ninto ${scaled_amount}/month"},
+        {"role": "cta", "template": "Start THIS WEEK\nnot next month\nSubscribe for more\nhustles that PAY"},
+    ],
+    "rich_vs_poor": [
+        {"role": "hook", "template": "Rich people do\nTHIS every day\nBroke people\ndo the OPPOSITE"},
+        {"role": "habit1_rich", "template": "Rich:\n{rich_habit_1}\nBroke:\n{poor_habit_1}"},
+        {"role": "habit2_rich", "template": "Rich:\n{rich_habit_2}\nBroke:\n{poor_habit_2}"},
+        {"role": "habit3_rich", "template": "Rich:\n{rich_habit_3}\nBroke:\n{poor_habit_3}"},
+        {"role": "habit4_rich", "template": "Rich:\n{rich_habit_4}\nBroke:\n{poor_habit_4}"},
+        {"role": "habit5_rich", "template": "Rich:\n{rich_habit_5}\nBroke:\n{poor_habit_5}"},
+        {"role": "why_matters", "template": "Same 24 hours\nDifferent CHOICES\nDifferent RESULTS"},
+        {"role": "the_switch", "template": "The switch:\nPick ONE rich habit\nReplace ONE broke habit\nDo it for 30 days"},
+        {"role": "proof", "template": "After 30 days:\nYou'll have ${proof_amount}\nmore saved\nand a NEW mindset"},
+        {"role": "cta", "template": "Which habit will\nyou switch FIRST?\nComment below\nSubscribe for daily tips"},
+    ],
+    "money_challenge": [
+        {"role": "hook", "template": "Try this {duration}\nmoney challenge\nand save ${save_goal}\nGuaranteed."},
+        {"role": "rules", "template": "The rules:\n{rule_1}\n{rule_2}\n{rule_3}\nThat's IT"},
+        {"role": "week1", "template": "Week 1:\n{week1_action}\nDifficulty: Easy\nSaved: ${week1_saved}"},
+        {"role": "week2", "template": "Week 2:\n{week2_action}\nGetting easier\nTotal saved: ${week2_total}"},
+        {"role": "week3", "template": "Week 3:\n{week3_action}\nIt's becoming\na HABIT now"},
+        {"role": "week4", "template": "Week 4:\n{week4_action}\nFinal push\nTotal: ${total_saved}"},
+        {"role": "results", "template": "RESULTS:\n${total_saved} saved\nin just {duration}\nFrom ZERO effort"},
+        {"role": "what_changed", "template": "But the REAL win:\n{mindset_change}\nThis changes\nEVERYTHING"},
+        {"role": "next_level", "template": "Next level:\nRepeat for {next_duration}\n= ${annual_amount}/year\nThat's life changing"},
+        {"role": "cta", "template": "Start TODAY\nnot Monday\nNot next month\nTODAY\nSubscribe for more"},
+    ],
+    "secret_strategy": [
+        {"role": "hook", "template": "This {who} strategy\nis hidden in\nplain sight\nand it builds\n${result} quietly"},
+        {"role": "what_is_it", "template": "The strategy:\n{strategy_name}\nUsed by the\ntop {percent}%"},
+        {"role": "why_hidden", "template": "Why nobody\ntalks about it:\n{hidden_reason}\nIt's not sexy\nbut it WORKS"},
+        {"role": "how_step1", "template": "How it works:\nStep 1: {step_1}\nTakes {time_1}"},
+        {"role": "how_step2", "template": "Step 2:\n{step_2}\nThis is the\nkey move"},
+        {"role": "how_step3", "template": "Step 3:\n{step_3}\nNow sit back\nand let it compound"},
+        {"role": "real_numbers", "template": "Real numbers:\n${start_amount}/month\nfor {years} years\n= ${end_amount}"},
+        {"role": "who_uses", "template": "Who uses this:\n{user_1}\n{user_2}\n{user_3}\nAll quietly wealthy"},
+        {"role": "start_now", "template": "You can start\nwith ${min_amount}\nRIGHT NOW\nNo excuses"},
+        {"role": "cta", "template": "The wealthy\ndon't have secrets\nThey have HABITS\nSubscribe to learn them"},
+    ],
 }
 
 # ── SPEECH TEMPLATES (matching slide frameworks) ──
@@ -215,7 +310,7 @@ SPEECH_TEMPLATES = {
         "After just {short_time}, {pronoun} had {early_result} dollars saved and invested. From NOTHING to {early_result} dollars. Let that sink in.",
         "After {long_time}, {pronoun_possessive} net worth hit {big_result} dollars. A {job} with a {big_result} dollar net worth. Sounds impossible but the math doesn't lie.",
         "The lesson is simple. {key_lesson}. Anyone can do this. Literally anyone. You don't need a degree. You don't need connections. You need discipline.",
-        "Start with just {min_start} dollars today. Set it up right now. Your future self will be a completely different person because of what you do in the next five minutes.",
+        "Start with just {min_start} dollars today. Set it up right now. Your future self will be a completely different person because of this moment. Subscribe to The AI Dollar for more stories like this every single day.",
     ],
     "myth_buster": [
         "Everything you KNOW about {topic} is completely WRONG. And these myths are keeping you BROKE.",
@@ -227,7 +322,7 @@ SPEECH_TEMPLATES = {
         "The simple fix. First, {fix_step_1}. Second, {fix_step_2}. That's literally it. No magic required.",
         "Proof it works. {proof_amount} dollars in {proof_time} from doing just this ONE thing. The numbers don't lie.",
         "The REAL difference between rich and poor isn't money. It's {mindset_shift}. Change your mind and the money follows.",
-        "Stop believing the myths that keep you broke. Start building REAL wealth today. Subscribe for more money truths.",
+        "Stop believing the myths that keep you broke. Start building REAL wealth today. Subscribe to The AI Dollar for more money truths that actually work. Hit that bell so you never miss one.",
     ],
     "money_math": [
         "Your {daily_cost} dollar {expense} habit is secretly costing you {lifetime_cost} dollars. And I'm going to prove it right now.",
@@ -239,7 +334,7 @@ SPEECH_TEMPLATES = {
         "Put that {save_amount} dollars into {investment}. Every single month. Automatically. Set it and forget it.",
         "In {years} years that becomes {future_value} dollars. From ONE simple swap. Not a sacrifice. A SWAP.",
         "You're not giving up {expense}. You're BUYING your freedom. You're trading a small pleasure today for total financial freedom tomorrow.",
-        "Make the swap today. {save_amount} dollars per month equals {future_value} dollars in your future. The math is on your side.",
+        "Make the swap today. {save_amount} dollars per month equals {future_value} dollars in your future. Subscribe and share this with someone who needs to hear it.",
     ],
     "rules_list": [
         "{count} money rules that separate the RICH from the POOR. If you follow even THREE of these, your finances will transform.",
@@ -251,7 +346,7 @@ SPEECH_TEMPLATES = {
         "The number one mistake that keeps people broke is {big_mistake}. If you fix just THIS, everything else gets easier.",
         "Rich people {rich_do}. Poor people {poor_do}. Same hours in a day. Different choices. Different results.",
         "Pick just ONE rule to follow this week. Not all five. Just ONE. Master it. Then add another. Small steps build empires.",
-        "Follow The AI Dollar for more wealth building rules. We drop new money lessons every single day. Subscribe and turn on notifications.",
+        "Follow The AI Dollar for more wealth building rules. We post new money lessons every single day. Subscribe and turn on ALL notifications so you never miss one.",
     ],
     "famous_person": [
         "{famous_name} said ONE thing about money that changed EVERYTHING. And most people completely ignore it.",
@@ -276,6 +371,54 @@ SPEECH_TEMPLATES = {
         "Catch up strategy two. {catchup_2}. Combine both strategies and you'll be back on track within a year.",
         "Starting late? {late_start} dollars per month at age {late_age} still becomes {late_result} dollars by age sixty five. The math works at ANY age.",
         "The best time to start was ten years ago. The second best time is RIGHT NOW. Not tomorrow. Not next month. Today. Open that account. Start that transfer. DO IT.",
+    ],
+    "side_hustle": [
+        "This side hustle pays {amount} dollars per month. And it takes {time_required} to set up. No degree. No experience. No boss. Just you and your phone.",
+        "It's called {hustle_name}. And ANYONE can start it. I don't care if you're 18 or 58. This works if you work it.",
+        "Why does this work so well? {reason_1}. And {reason_2}. The barrier to entry is literally ZERO. That's what makes it beautiful.",
+        "Step one. {setup_step_1}. This takes {step1_time}. If you can follow instructions, you can do this step. Stop overthinking it.",
+        "Step two. {setup_step_2}. Use only FREE tools. Don't spend a SINGLE dollar until you've made your first dollar. That's the rule.",
+        "Step three. {setup_step_3}. This is where the magic happens. This is where money starts hitting your account. But here's the thing most people miss...",
+        "Week one earnings. {week1_amount} dollars. Not life changing. But it PROVES the concept. You just made money from nothing. Most people never get this far.",
+        "But watch what happens by month three. {month3_amount} dollars per month. CONSISTENTLY. Because consistency is the REAL secret. Not some hack. Not some trick. Just showing up.",
+        "Now scale it. {scale_strategy}. Turn {month3_amount} into {scaled_amount} dollars per month. Now you have a REAL business. Not a hobby. A business.",
+        "Start THIS WEEK. Not next month. Not when you feel ready. THIS WEEK. Subscribe to The AI Dollar for more hustles that actually PAY. We drop these daily.",
+    ],
+    "rich_vs_poor": [
+        "Rich people do THIS every single day. And broke people do the EXACT opposite. Same twenty four hours. Completely different results. Watch closely.",
+        "Habit one. Rich people {rich_habit_1}. Broke people? {poor_habit_1}. This ONE difference compounds over years into MILLIONS.",
+        "Habit two. Rich people {rich_habit_2}. Broke people {poor_habit_2}. And here's the part nobody tells you...",
+        "Habit three. Rich people {rich_habit_3}. Broke people {poor_habit_3}. This is the habit that separates the top one percent.",
+        "Habit four. Rich people {rich_habit_4}. Broke people {poor_habit_4}. If you're still watching, you're already different from 90 percent of people.",
+        "Habit five. Rich people {rich_habit_5}. Broke people {poor_habit_5}. This last one is the BIGGEST game changer.",
+        "Same twenty four hours in a day. Same access to information. Different CHOICES lead to completely different RESULTS. It's not about money. It's about DECISIONS.",
+        "The switch is simple. Pick ONE rich habit from this list. Replace ONE broke habit. Do it for thirty days straight. That's it. That's the entire plan.",
+        "After just thirty days of this, you'll have {proof_amount} dollars more saved. But more importantly, you'll have a completely NEW mindset. And THAT is priceless.",
+        "Which habit will you switch FIRST? Comment below and let me know. And subscribe to The AI Dollar because we post money lessons like this EVERY single day.",
+    ],
+    "money_challenge": [
+        "Try this {duration} money challenge and save {save_goal} dollars. GUARANTEED. If you follow the rules, the money appears. It's simple math.",
+        "Here are the rules. {rule_1}. {rule_2}. {rule_3}. That's IT. No complicated spreadsheets. No budgeting apps. Just three simple rules for {duration}.",
+        "Week one. {week1_action}. Difficulty level easy. You'll save {week1_saved} dollars. This is the warm up. Don't skip it.",
+        "Week two. {week2_action}. It's getting easier now. Your brain is rewiring. Total saved so far {week2_total} dollars. You can already FEEL the difference.",
+        "Week three. {week3_action}. Something magical happens in week three. It becomes a HABIT. You stop THINKING about it and just DO it.",
+        "Week four. {week4_action}. Final push. You're almost there. Total saved {total_saved} dollars. But hold on because what comes NEXT is the real game changer.",
+        "RESULTS. {total_saved} dollars saved in just {duration}. From basically ZERO effort. No suffering. No deprivation. Just simple smart choices.",
+        "But the REAL win isn't the money. It's this. {mindset_change}. Your relationship with money has completely CHANGED. And THAT is worth more than any amount.",
+        "Want to go next level? Repeat this for {next_duration}. That turns into {annual_amount} dollars per year. Every single year. That is literally life changing money.",
+        "Start TODAY. Not Monday. Not the first of the month. TODAY. Right now. Subscribe to The AI Dollar for more challenges that build REAL wealth.",
+    ],
+    "secret_strategy": [
+        "This {who} strategy is hiding in PLAIN SIGHT. Nobody talks about it because it's not exciting. But it quietly builds {result} dollars while you sleep.",
+        "The strategy is called {strategy_name}. It's used by the top {percent} percent of wealthy people. And most of them won't tell you about it.",
+        "Why does nobody talk about it? Because {hidden_reason}. It's not sexy. It doesn't make for good social media content. But you know what it DOES make? MONEY.",
+        "Here's how it works. Step one. {step_1}. This takes {time_1}. Simple. Nothing fancy. But this first step is where ninety percent of people quit.",
+        "Step two. {step_2}. THIS is the key move. This is what separates the people who talk about wealth from the people who actually BUILD it.",
+        "Step three. {step_3}. Now you sit back and let compound interest do what it does best. Time becomes your best friend. Not your enemy.",
+        "Let me show you real numbers. {start_amount} dollars per month for {years} years equals {end_amount} dollars. Read that number again. That's not a typo.",
+        "Who uses this exact strategy? {user_1}. {user_2}. {user_3}. All quietly wealthy. No Lamborghini posts. No flexing. Just real money in real accounts.",
+        "And you can start with just {min_amount} dollars. Right now. TODAY. No minimum really. Just START. The hardest part is the first step.",
+        "The wealthy don't have secrets. They have HABITS. And now you know one of them. Subscribe to The AI Dollar to learn a new one every day.",
     ],
 }
 
@@ -331,6 +474,36 @@ IMAGE_PROMPTS = {
     "catch_up_1": ["aggressive savings strategy", "catching up on retirement", "accelerated wealth building"],
     "catch_up_2": ["income boost side hustle", "additional income strategy", "extra money earning method"],
     "compound_power": ["compound interest at any age", "late start still works", "math proof starting late"],
+    "what": ["side hustle revealed exciting", "money making opportunity unveiled", "business idea lightbulb moment"],
+    "why_works": ["reasons this works explained", "proof this business model works", "success factors breakdown"],
+    "step1": ["first step getting started", "beginner taking action", "simple setup process"],
+    "step2": ["second step building momentum", "tools and resources setup", "progress being made"],
+    "step3": ["third step scaling up", "money starting to flow in", "system working automatically"],
+    "week1": ["first week small earnings", "early results proof of concept", "small wins celebration"],
+    "month3": ["three month results impressive", "consistent income growing", "momentum building wealth"],
+    "scale": ["scaling business to next level", "growth strategy implementation", "multiplying income streams"],
+    "habit1_rich": ["wealthy person morning routine", "rich daily habit comparison", "successful person discipline"],
+    "habit2_rich": ["investing habit wealthy people", "smart money decision", "rich person reading about finance"],
+    "habit3_rich": ["wealth building daily practice", "rich mindset in action", "top one percent habits"],
+    "habit4_rich": ["financial discipline daily", "wealthy person simple lifestyle", "smart spending choices"],
+    "habit5_rich": ["game changing money habit", "ultimate wealth building practice", "millionaire daily routine"],
+    "why_matters": ["choices lead to results", "same hours different outcomes", "decision making power"],
+    "the_switch": ["switching habits transformation", "old habit to new habit", "thirty day challenge start"],
+    "rules": ["challenge rules simple list", "three simple rules displayed", "clear instructions on screen"],
+    "week2": ["second week progress", "building momentum savings", "challenge getting easier"],
+    "week3": ["third week habit forming", "automatic behavior change", "challenge becoming natural"],
+    "week4": ["final week strong finish", "challenge completion celebration", "savings goal reached"],
+    "results": ["impressive results revealed", "before and after savings", "challenge total displayed"],
+    "what_changed": ["mindset transformation moment", "internal shift visualization", "new relationship with money"],
+    "next_level": ["leveling up the challenge", "scaling savings annually", "long term impact projection"],
+    "what_is_it": ["secret strategy revealed", "hidden wealth building method", "strategy used by wealthy"],
+    "why_hidden": ["reason strategy is unknown", "not sexy but effective", "boring but profitable"],
+    "how_step1": ["first step secret strategy", "getting started quietly", "simple beginning powerful end"],
+    "how_step2": ["key move in strategy", "critical step wealth building", "the turning point action"],
+    "how_step3": ["letting compound interest work", "passive growth visualization", "time doing the work"],
+    "real_numbers": ["actual numbers on screen", "math proof real calculation", "compound growth result"],
+    "who_uses": ["quietly wealthy people", "real millionaires no flex", "ordinary looking rich people"],
+    "start_now": ["starting with small amount", "no excuses just start", "first dollar invested today"],
 }
 
 # ── MONEY RULES POOL ──
@@ -432,6 +605,69 @@ AGE_TIMELINES = [
      "late": {"start": 500, "age": 40, "result": "380,000"}},
 ]
 
+# ── SIDE HUSTLE DATA ──
+SIDE_HUSTLES = [
+    {"name": "freelance writing", "amount": "3,000", "time": "one weekend", "steps": ["Create a portfolio with 3 sample articles", "Sign up on Upwork Fiverr and Contently", "Apply to 10 jobs per day for the first week"], "week1": 150, "month3": 2500, "scaled": "8,000", "scale": "Hire writers and become an agency", "reasons": ["Businesses ALWAYS need content", "You can work from anywhere in the world"]},
+    {"name": "print on demand t-shirts", "amount": "2,000", "time": "2 hours", "steps": ["Create designs using free Canva templates", "Upload to Redbubble Merch by Amazon and TeePublic", "Make 50 designs in your first month"], "week1": 30, "month3": 1500, "scaled": "5,000", "scale": "Use trending niches and scale to 500 designs", "reasons": ["Zero inventory zero shipping zero risk", "Designs sell while you sleep forever"]},
+    {"name": "social media management", "amount": "4,000", "time": "one day", "steps": ["Learn scheduling tools like Buffer or Later", "Reach out to 20 local businesses this week", "Offer first month at 50 percent off to build portfolio"], "week1": 200, "month3": 3000, "scaled": "10,000", "scale": "Get 5 clients and hire a virtual assistant", "reasons": ["Every business needs social media", "Recurring monthly income not one time"]},
+    {"name": "Amazon KDP ebooks", "amount": "2,500", "time": "one week", "steps": ["Research profitable niches on Amazon bestsellers", "Write or outsource a 10000 word ebook", "Create a cover using Canva and publish"], "week1": 50, "month3": 2000, "scaled": "7,000", "scale": "Publish one new book every two weeks", "reasons": ["Books sell forever with zero extra work", "Amazon does ALL the marketing for you"]},
+    {"name": "YouTube faceless channel", "amount": "5,000", "time": "3 days", "steps": ["Pick a niche like finance facts or scary stories", "Use AI voiceover and stock footage", "Upload 3 videos per week consistently"], "week1": 0, "month3": 500, "scaled": "15,000", "scale": "Run multiple channels in different niches", "reasons": ["Videos earn money YEARS after posting", "No face no voice just content and cash"]},
+    {"name": "virtual bookkeeping", "amount": "3,500", "time": "2 weeks of learning", "steps": ["Learn QuickBooks basics with free YouTube courses", "Get certified through QuickBooks ProAdvisor free", "Find clients on local Facebook groups"], "week1": 100, "month3": 2500, "scaled": "8,000", "scale": "Hire junior bookkeepers and manage 15 clients", "reasons": ["Small businesses desperately need this", "Recurring income every single month"]},
+    {"name": "flipping items from thrift stores", "amount": "2,000", "time": "this Saturday", "steps": ["Visit 3 thrift stores and look for brands", "List items on eBay Poshmark or Facebook Marketplace", "Start with clothes electronics and books"], "week1": 200, "month3": 2000, "scaled": "6,000", "scale": "Hit estate sales and liquidation auctions", "reasons": ["Buy for 3 dollars sell for 30 dollars", "You get PAID to go shopping"]},
+    {"name": "AI prompt engineering", "amount": "4,000", "time": "one day of practice", "steps": ["Master ChatGPT Claude and Midjourney prompts", "Create prompt packs and sell on Gumroad", "Offer prompt consulting to businesses"], "week1": 100, "month3": 3000, "scaled": "10,000", "scale": "Create a course teaching prompt engineering", "reasons": ["Brand new skill everyone needs", "Companies will PAY for better AI results"]},
+]
+
+# ── RICH VS POOR HABITS ──
+RICH_POOR_HABITS = [
+    {"rich": "wake up before 6am and plan the day", "poor": "hit snooze 5 times and rush out the door"},
+    {"rich": "read 30 minutes about money every day", "poor": "scroll social media for 3 hours every night"},
+    {"rich": "track every dollar in and out", "poor": "check their balance and hope it's enough"},
+    {"rich": "invest FIRST then spend what's left", "poor": "spend first then save what's left which is nothing"},
+    {"rich": "buy assets that make money", "poor": "buy liabilities that lose value"},
+    {"rich": "say no to 90 percent of things", "poor": "say yes to everything and wonder why they're tired and broke"},
+    {"rich": "surround themselves with people smarter than them", "poor": "hang around people who complain about being broke"},
+    {"rich": "see problems as opportunities", "poor": "see problems as reasons to give up"},
+    {"rich": "live below their means even as income grows", "poor": "upgrade their lifestyle every time they get a raise"},
+    {"rich": "invest in courses skills and mentors", "poor": "think education ends after school"},
+    {"rich": "have 3 to 7 income streams", "poor": "depend on one single paycheck"},
+    {"rich": "automate savings and investments", "poor": "try to save manually and always fail"},
+    {"rich": "think in decades and build long term", "poor": "think in days and want instant results"},
+    {"rich": "embrace failure as a learning tool", "poor": "avoid failure and never take any risks"},
+    {"rich": "pay themselves first before any bills", "poor": "pay everyone else first and keep nothing"},
+]
+
+# ── MONEY CHALLENGE DATA ──
+MONEY_CHALLENGES = [
+    {"name": "No Spend Challenge", "duration": "30 days", "goal": 1500, "rules": ["Only buy absolute necessities food and bills", "No eating out no online shopping no impulse buys", "Track every dollar you DIDN'T spend"],
+     "weeks": [{"action": "Cook every meal at home and cancel unused subscriptions", "saved": 300}, {"action": "Use free entertainment only and pack lunch for work", "saved": 350}, {"action": "Negotiate one bill and sell 3 things you don't use", "saved": 400}, {"action": "Final week no spending at all except groceries and gas", "saved": 450}],
+     "mindset": "You realize 80 percent of what you buy you don't actually NEED", "next_duration": "3 months", "annual": 6000},
+    {"name": "Round Up Challenge", "duration": "30 days", "goal": 200, "rules": ["Round up every purchase to the nearest dollar", "Transfer the difference to savings immediately", "Do this for EVERY single transaction"],
+     "weeks": [{"action": "Set up auto round ups on your bank app", "saved": 35}, {"action": "Keep rounding up every single purchase", "saved": 45}, {"action": "You don't even notice the money leaving anymore", "saved": 55}, {"action": "Check your savings and be SHOCKED", "saved": 65}],
+     "mindset": "Small amounts become BIG amounts when you're consistent", "next_duration": "12 months", "annual": 2400},
+    {"name": "50 Dollar Bill Challenge", "duration": "30 days", "goal": 1000, "rules": ["Every time you get a 50 dollar bill save it", "If you use cash break 100s to get 50s on purpose", "Never spend a 50 dollar bill again ever"],
+     "weeks": [{"action": "Start using cash for daily purchases to get change", "saved": 200}, {"action": "Ask for change in 50s whenever possible", "saved": 250}, {"action": "The habit is automatic now you see 50s differently", "saved": 250}, {"action": "Count your stash and watch your jaw DROP", "saved": 300}],
+     "mindset": "You trained your brain to see saving as a GAME not a sacrifice", "next_duration": "6 months", "annual": 6000},
+    {"name": "Side Hustle Sprint", "duration": "30 days", "goal": 2000, "rules": ["Dedicate 2 hours per day to a side hustle", "Reinvest zero percent spend zero percent save 100 percent", "Track daily earnings no matter how small"],
+     "weeks": [{"action": "Pick one hustle and do the setup work completely", "saved": 200}, {"action": "Start getting your first sales or clients", "saved": 400}, {"action": "Optimize what's working and double down", "saved": 600}, {"action": "Push hard final week and hit your target", "saved": 800}],
+     "mindset": "You proved you can make money OUTSIDE your job and that changes everything", "next_duration": "6 months", "annual": 12000},
+]
+
+# ── SECRET STRATEGY DATA ──
+SECRET_STRATEGIES = [
+    {"name": "backdoor Roth IRA", "who": "millionaire", "result": "500,000", "percent": 1, "hidden": "financial advisors make no commission recommending it so they push expensive products instead",
+     "steps": ["Open a traditional IRA and contribute the max 7000 dollars", "Convert it to a Roth IRA the next day called a conversion", "Pay a small tax now and NEVER pay taxes on growth again"],
+     "numbers": {"start": 583, "years": 30, "end": "1,200,000"}, "users": ["Most tech executives in Silicon Valley", "Every smart accountant you've ever met", "Millionaires who pay almost zero tax legally"], "min": 50},
+    {"name": "dividend growth snowball", "who": "quietly wealthy", "result": "800,000", "percent": 5, "hidden": "it takes 5 to 10 years to see big results so impatient people quit before the magic happens",
+     "steps": ["Buy dividend stocks that INCREASE their payout every year", "Reinvest ALL dividends automatically buying more shares", "Watch your income grow by 10 to 15 percent per year without adding a dollar"],
+     "numbers": {"start": 500, "years": 25, "end": "850,000"}, "users": ["Warren Buffett literally built billions this way", "Every pension fund in the country", "The janitor who died with 8 million dollars"], "min": 25},
+    {"name": "geographic arbitrage", "who": "remote worker", "result": "300,000", "percent": 10, "hidden": "employers don't want you to know your salary goes 3x further somewhere else",
+     "steps": ["Get a remote job paying US or UK salary", "Move to a low cost of living area or country", "Save 50 to 70 percent of your income effortlessly"],
+     "numbers": {"start": 2000, "years": 10, "end": "410,000"}, "users": ["Digital nomads earning six figures in Thailand", "Remote workers in Portugal on US salaries", "People in small US towns earning big city money"], "min": 0},
+    {"name": "I bond ladder", "who": "risk averse saver", "result": "200,000", "percent": 15, "hidden": "the government literally created this for regular people but barely advertises it",
+     "steps": ["Buy I Bonds from TreasuryDirect dot gov up to 10K per year", "The interest rate adjusts with inflation so you never lose purchasing power", "Build a ladder buying max amount every year for guaranteed safe growth"],
+     "numbers": {"start": 833, "years": 20, "end": "250,000"}, "users": ["Financial advisors for their OWN personal money", "Government employees who know the system", "Conservative investors who sleep well at night"], "min": 25},
+]
+
 # ── USED TITLE HASHES (never repeat tracker) ──
 _generated_title_hashes = set()
 
@@ -489,6 +725,14 @@ def _build_topic(framework_name):
             return _build_famous_person()
         elif framework_name == "age_timeline":
             return _build_age_timeline()
+        elif framework_name == "side_hustle":
+            return _build_side_hustle()
+        elif framework_name == "rich_vs_poor":
+            return _build_rich_vs_poor()
+        elif framework_name == "money_challenge":
+            return _build_money_challenge()
+        elif framework_name == "secret_strategy":
+            return _build_secret_strategy()
     except Exception as e:
         print(f"[WARN] Topic build failed ({framework_name}): {e}")
         return None
@@ -502,7 +746,14 @@ def _get_img(role):
 def _build_person_story():
     persona = random.choice(PERSONAS)
     method = random.choice(METHODS)
-    pronoun = random.choice(["he", "she", "they"])
+    female_names = {"Sarah", "Priya", "Lisa", "Ana", "Maria", "Nina", "Emma", "Aisha", "Rosa", "Fatima", "Keisha"}
+    male_names = {"Marcus", "James", "Kevin", "Daniel", "Tyler", "Jordan", "Derek", "Chris", "Mike", "Brandon", "Jason", "Tony"}
+    if persona["name"] in female_names:
+        pronoun = "she"
+    elif persona["name"] in male_names:
+        pronoun = "he"
+    else:
+        pronoun = random.choice(["he", "she", "they"])
     pronoun_cap = pronoun.capitalize()
     pronoun_poss = {"he": "his", "she": "her", "they": "their"}[pronoun]
     low_salary = random.choice([18, 20, 22, 25, 28, 30, 32, 35])
@@ -888,10 +1139,192 @@ def _build_age_timeline():
     return {"title": title, "slides": slides, "keywords": ["Savings Goals", "Age Milestones", "Retirement"]}
 
 
+def _build_side_hustle():
+    hustle = random.choice(SIDE_HUSTLES)
+    title_templates = [
+        f"This Side Hustle Pays ${hustle['amount']}/Month — Takes {hustle['time']} To Start",
+        f"I Found A Side Hustle That Pays ${hustle['amount']}/Month (No Experience Needed)",
+        f"${hustle['amount']}/Month From {hustle['name'].title()} — Full Breakdown",
+        f"The ${hustle['amount']}/Month Side Hustle Nobody Talks About (2026 Edition)",
+    ]
+    title = random.choice(title_templates)
+    slides = [
+        {"text": f"This side hustle\npays ${hustle['amount']}/month\nand takes\n{hustle['time']}\nto set up",
+         "speech": SPEECH_TEMPLATES["side_hustle"][0].format(amount=hustle['amount'], time_required=hustle['time']),
+         "img": _get_img("hook")},
+        {"text": f"It's called:\n{hustle['name'].upper()}\nand ANYONE\ncan start it",
+         "speech": SPEECH_TEMPLATES["side_hustle"][1].format(hustle_name=hustle['name']),
+         "img": _get_img("what")},
+        {"text": f"Why it works:\n{hustle['reasons'][0][:40]}\n{hustle['reasons'][1][:40]}",
+         "speech": SPEECH_TEMPLATES["side_hustle"][2].format(reason_1=hustle['reasons'][0], reason_2=hustle['reasons'][1]),
+         "img": _get_img("why_works")},
+        {"text": f"Step 1:\n{hustle['steps'][0][:50]}",
+         "speech": SPEECH_TEMPLATES["side_hustle"][3].format(setup_step_1=hustle['steps'][0], step1_time="about an hour"),
+         "img": _get_img("step1")},
+        {"text": f"Step 2:\n{hustle['steps'][1][:50]}",
+         "speech": SPEECH_TEMPLATES["side_hustle"][4].format(setup_step_2=hustle['steps'][1]),
+         "img": _get_img("step2")},
+        {"text": f"Step 3:\n{hustle['steps'][2][:50]}",
+         "speech": SPEECH_TEMPLATES["side_hustle"][5].format(setup_step_3=hustle['steps'][2]),
+         "img": _get_img("step3")},
+        {"text": f"Week 1 earnings:\n${hustle['week1']}\nSmall but\nit PROVES it works",
+         "speech": SPEECH_TEMPLATES["side_hustle"][6].format(week1_amount=hustle['week1']),
+         "img": _get_img("week1")},
+        {"text": f"Month 3:\n${hustle['month3']:,}/month\nConsistency\nis the secret",
+         "speech": SPEECH_TEMPLATES["side_hustle"][7].format(month3_amount=f"{hustle['month3']:,}"),
+         "img": _get_img("month3")},
+        {"text": f"Scale it:\n{hustle['scale'][:50]}\n${hustle['month3']:,} → ${hustle['scaled']}/month",
+         "speech": SPEECH_TEMPLATES["side_hustle"][8].format(scale_strategy=hustle['scale'], month3_amount=f"{hustle['month3']:,}", scaled_amount=hustle['scaled']),
+         "img": _get_img("scale")},
+        {"text": f"Start THIS WEEK\nnot next month\nSubscribe for more\nhustles that PAY",
+         "speech": SPEECH_TEMPLATES["side_hustle"][9],
+         "img": _get_img("cta")},
+    ]
+    return {"title": title, "slides": slides, "keywords": [hustle["name"].title(), "Side Hustle", "Make Money"]}
+
+
+def _build_rich_vs_poor():
+    habits = random.sample(RICH_POOR_HABITS, 5)
+    proof_amounts = [500, 1000, 1500, 2000, 3000]
+    proof = random.choice(proof_amounts)
+    title_templates = [
+        f"5 Things Rich People Do Every Day (Broke People Do The Opposite)",
+        f"Rich vs Broke — {random.choice([5,7])} Habits That Separate Them",
+        f"The Daily Habits Of Millionaires (Copy These And Watch What Happens)",
+        f"Do You Have Rich Habits Or Broke Habits? (Honest Check)",
+    ]
+    title = random.choice(title_templates)
+    slides = [
+        {"text": "Rich people do\nTHIS every day\nBroke people\ndo the OPPOSITE",
+         "speech": SPEECH_TEMPLATES["rich_vs_poor"][0],
+         "img": _get_img("hook")},
+        {"text": f"Rich:\n{habits[0]['rich'][:35]}\nBroke:\n{habits[0]['poor'][:35]}",
+         "speech": SPEECH_TEMPLATES["rich_vs_poor"][1].format(rich_habit_1=habits[0]['rich'], poor_habit_1=habits[0]['poor']),
+         "img": _get_img("habit1_rich")},
+        {"text": f"Rich:\n{habits[1]['rich'][:35]}\nBroke:\n{habits[1]['poor'][:35]}",
+         "speech": SPEECH_TEMPLATES["rich_vs_poor"][2].format(rich_habit_2=habits[1]['rich'], poor_habit_2=habits[1]['poor']),
+         "img": _get_img("habit2_rich")},
+        {"text": f"Rich:\n{habits[2]['rich'][:35]}\nBroke:\n{habits[2]['poor'][:35]}",
+         "speech": SPEECH_TEMPLATES["rich_vs_poor"][3].format(rich_habit_3=habits[2]['rich'], poor_habit_3=habits[2]['poor']),
+         "img": _get_img("habit3_rich")},
+        {"text": f"Rich:\n{habits[3]['rich'][:35]}\nBroke:\n{habits[3]['poor'][:35]}",
+         "speech": SPEECH_TEMPLATES["rich_vs_poor"][4].format(rich_habit_4=habits[3]['rich'], poor_habit_4=habits[3]['poor']),
+         "img": _get_img("habit4_rich")},
+        {"text": f"Rich:\n{habits[4]['rich'][:35]}\nBroke:\n{habits[4]['poor'][:35]}",
+         "speech": SPEECH_TEMPLATES["rich_vs_poor"][5].format(rich_habit_5=habits[4]['rich'], poor_habit_5=habits[4]['poor']),
+         "img": _get_img("habit5_rich")},
+        {"text": "Same 24 hours\nDifferent CHOICES\nDifferent RESULTS",
+         "speech": SPEECH_TEMPLATES["rich_vs_poor"][6],
+         "img": _get_img("why_matters")},
+        {"text": "The switch:\nPick ONE rich habit\nReplace ONE broke habit\nDo it for 30 days",
+         "speech": SPEECH_TEMPLATES["rich_vs_poor"][7],
+         "img": _get_img("the_switch")},
+        {"text": f"After 30 days:\n${proof:,} more saved\nand a NEW mindset",
+         "speech": SPEECH_TEMPLATES["rich_vs_poor"][8].format(proof_amount=f"{proof:,}"),
+         "img": _get_img("proof")},
+        {"text": "Which habit will\nyou switch FIRST?\nComment below\nSubscribe for daily tips",
+         "speech": SPEECH_TEMPLATES["rich_vs_poor"][9],
+         "img": _get_img("cta")},
+    ]
+    return {"title": title, "slides": slides, "keywords": ["Rich vs Poor", "Money Habits", "Millionaire Mindset"]}
+
+
+def _build_money_challenge():
+    challenge = random.choice(MONEY_CHALLENGES)
+    title_templates = [
+        f"The {challenge['duration']} {challenge['name']} — Save ${challenge['goal']:,} Guaranteed",
+        f"Try This {challenge['duration']} Challenge And Save ${challenge['goal']:,}",
+        f"I Tried The {challenge['name']} For {challenge['duration']} (Results Were INSANE)",
+        f"${challenge['goal']:,} In {challenge['duration']} — The {challenge['name']} Works",
+    ]
+    title = random.choice(title_templates)
+    w = challenge["weeks"]
+    running_total_2 = w[0]["saved"] + w[1]["saved"]
+    total = sum(week["saved"] for week in w)
+    slides = [
+        {"text": f"Try this {challenge['duration']}\nmoney challenge\nand save ${challenge['goal']:,}\nGuaranteed.",
+         "speech": SPEECH_TEMPLATES["money_challenge"][0].format(duration=challenge['duration'], save_goal=f"{challenge['goal']:,}"),
+         "img": _get_img("hook")},
+        {"text": f"The rules:\n{challenge['rules'][0][:35]}\n{challenge['rules'][1][:35]}\n{challenge['rules'][2][:35]}",
+         "speech": SPEECH_TEMPLATES["money_challenge"][1].format(rule_1=challenge['rules'][0], rule_2=challenge['rules'][1], rule_3=challenge['rules'][2], duration=challenge['duration']),
+         "img": _get_img("rules")},
+        {"text": f"Week 1:\n{w[0]['action'][:40]}\nSaved: ${w[0]['saved']}",
+         "speech": SPEECH_TEMPLATES["money_challenge"][2].format(week1_action=w[0]['action'], week1_saved=w[0]['saved']),
+         "img": _get_img("week1")},
+        {"text": f"Week 2:\n{w[1]['action'][:40]}\nTotal: ${running_total_2}",
+         "speech": SPEECH_TEMPLATES["money_challenge"][3].format(week2_action=w[1]['action'], week2_total=running_total_2),
+         "img": _get_img("week2")},
+        {"text": f"Week 3:\n{w[2]['action'][:40]}\nIt's becoming\na HABIT now",
+         "speech": SPEECH_TEMPLATES["money_challenge"][4].format(week3_action=w[2]['action']),
+         "img": _get_img("week3")},
+        {"text": f"Week 4:\n{w[3]['action'][:40]}\nTotal: ${total:,}",
+         "speech": SPEECH_TEMPLATES["money_challenge"][5].format(week4_action=w[3]['action'], total_saved=f"{total:,}"),
+         "img": _get_img("week4")},
+        {"text": f"RESULTS:\n${total:,} saved\nin just {challenge['duration']}\nFrom ZERO effort",
+         "speech": SPEECH_TEMPLATES["money_challenge"][6].format(total_saved=f"{total:,}", duration=challenge['duration']),
+         "img": _get_img("results")},
+        {"text": f"The REAL win:\n{challenge['mindset'][:50]}",
+         "speech": SPEECH_TEMPLATES["money_challenge"][7].format(mindset_change=challenge['mindset']),
+         "img": _get_img("what_changed")},
+        {"text": f"Next level:\nRepeat for {challenge['next_duration']}\n= ${challenge['annual']:,}/year",
+         "speech": SPEECH_TEMPLATES["money_challenge"][8].format(next_duration=challenge['next_duration'], annual_amount=f"{challenge['annual']:,}"),
+         "img": _get_img("next_level")},
+        {"text": "Start TODAY\nnot Monday\nNot next month\nTODAY\nSubscribe for more",
+         "speech": SPEECH_TEMPLATES["money_challenge"][9],
+         "img": _get_img("cta")},
+    ]
+    return {"title": title, "slides": slides, "keywords": [challenge["name"], "Money Challenge", "Saving Money"]}
+
+
+def _build_secret_strategy():
+    strategy = random.choice(SECRET_STRATEGIES)
+    title_templates = [
+        f"The {strategy['name'].title()} — A {strategy['who'].title()} Strategy Hidden In Plain Sight",
+        f"This {strategy['who'].title()} Strategy Quietly Builds ${strategy['result']} (Nobody Talks About It)",
+        f"The Strategy That Built ${strategy['result']} While People Slept (Not Clickbait)",
+        f"Top {strategy['percent']}% Use THIS Strategy — Now You Can Too",
+    ]
+    title = random.choice(title_templates)
+    n = strategy["numbers"]
+    slides = [
+        {"text": f"This {strategy['who']} strategy\nis hidden in\nplain sight\nand it builds\n${strategy['result']} quietly",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][0].format(who=strategy['who'], result=strategy['result']),
+         "img": _get_img("hook")},
+        {"text": f"The strategy:\n{strategy['name'].upper()}\nUsed by the\ntop {strategy['percent']}%",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][1].format(strategy_name=strategy['name'], percent=strategy['percent']),
+         "img": _get_img("what_is_it")},
+        {"text": f"Why nobody\ntalks about it:\n{strategy['hidden'][:50]}",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][2].format(hidden_reason=strategy['hidden']),
+         "img": _get_img("why_hidden")},
+        {"text": f"Step 1:\n{strategy['steps'][0][:55]}",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][3].format(step_1=strategy['steps'][0], time_1="about 30 minutes"),
+         "img": _get_img("how_step1")},
+        {"text": f"Step 2:\n{strategy['steps'][1][:55]}",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][4].format(step_2=strategy['steps'][1]),
+         "img": _get_img("how_step2")},
+        {"text": f"Step 3:\n{strategy['steps'][2][:55]}",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][5].format(step_3=strategy['steps'][2]),
+         "img": _get_img("how_step3")},
+        {"text": f"Real numbers:\n${n['start']}/month\nfor {n['years']} years\n= ${n['end']}",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][6].format(start_amount=n['start'], years=n['years'], end_amount=n['end']),
+         "img": _get_img("real_numbers")},
+        {"text": f"Who uses this:\n{strategy['users'][0][:35]}\n{strategy['users'][1][:35]}\n{strategy['users'][2][:35]}",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][7].format(user_1=strategy['users'][0], user_2=strategy['users'][1], user_3=strategy['users'][2]),
+         "img": _get_img("who_uses")},
+        {"text": f"Start with\n${strategy['min']}\nRIGHT NOW\nNo excuses",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][8].format(min_amount=strategy['min']),
+         "img": _get_img("start_now")},
+        {"text": "The wealthy\ndon't have secrets\nThey have HABITS\nSubscribe to\nlearn them ALL",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][9],
+         "img": _get_img("cta")},
+    ]
+    return {"title": title, "slides": slides, "keywords": [strategy["name"].title(), "Wealth Strategy", "Investing"]}
+
+
 def _build_long_topic():
     """Build a 20-slide long-form topic by combining two frameworks or expanding one."""
-    framework1 = random.choice(["person_story", "famous_person", "myth_buster"])
-    framework2 = random.choice(["money_math", "rules_list", "age_timeline"])
+    framework1 = random.choice(["person_story", "famous_person", "myth_buster", "rich_vs_poor", "side_hustle"])
+    framework2 = random.choice(["money_math", "rules_list", "age_timeline", "money_challenge", "secret_strategy"])
 
     topic1 = _build_topic(framework1)
     topic2 = _build_topic(framework2)

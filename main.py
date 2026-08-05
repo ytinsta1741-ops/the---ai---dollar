@@ -8,6 +8,7 @@ Runs on schedule: 6 slots optimized for US peak hours
 import os
 import sys
 import time
+import random
 import threading
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -115,12 +116,27 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
 
         if is_short:
             yt_title = title[:100]
+            hooks = [
+                "This changes everything about how you think about money.",
+                "99% of people don't know this. Now you do.",
+                "Watch this before you spend another dollar.",
+                "This is the money lesson schools refuse to teach.",
+                "If you're broke, this video is your wake-up call.",
+                "I wish someone told me this at 18.",
+                "This is why most people stay broke forever.",
+                "The money truth nobody wants to hear.",
+            ]
             yt_desc = (
                 f"{title}\n\n"
-                f"This changes everything about how you think about money.\n\n"
-                f"WATCH NEXT: Check our channel for the full breakdown!\n\n"
-                f"COMMENT below: What's YOUR #1 money question?\n"
-                f"SUBSCRIBE for daily money lessons (new video every few hours)\n\n"
+                f"{random.choice(hooks)}\n\n"
+                f"WATCH TIL THE END - the last part is the game changer.\n\n"
+                f"DROP a comment: What's YOUR biggest money struggle?\n"
+                f"SUBSCRIBE for daily money lessons that actually WORK\n"
+                f"SHARE this with someone who needs to hear it\n\n"
+                f"We post 11 videos EVERY DAY - shorts + deep dives.\n"
+                f"Turn on notifications so you never miss a lesson.\n\n"
+                f"Follow The AI Dollar:\n"
+                f"Subscribe: https://www.youtube.com/@TheAIDollar?sub_confirmation=1\n\n"
                 f"#Shorts #Finance #Money #Investing #PersonalFinance "
                 f"#WealthBuilding #FinancialFreedom #MoneyTips #FinanceTips "
                 f"#HowToGetRich #PassiveIncome #DebtFree #SideHustle "
@@ -128,30 +144,47 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
                 f"#InvestingForBeginners #BudgetTips #TheAIDollar #MoneyAdvice "
                 f"#RichVsPoor #WealthTips #StockMarket #IndexFunds "
                 f"#MillionaireMindset #MoneyMindset #FinancialEducation "
-                f"#MoneyMotivation #WealthSecrets"
+                f"#MoneyMotivation #WealthSecrets #SideHustle2026 "
+                f"#MoneyTok #FinTok #LearnOnYouTube"
             )
             yt_tags.append("Shorts")
         else:
             yt_title = title[:100]
+            intros = [
+                f"Most people will scroll past this. But if you watch to the end, you'll know more about {kw_line} than 99% of people.",
+                f"This is the complete breakdown of {kw_line} that nobody else is giving you for free.",
+                f"Everything you need to know about {kw_line} in one video. No fluff. No BS. Just actionable steps.",
+                f"I spent hours researching {kw_line} so you don't have to. Here's everything that actually matters.",
+            ]
             yt_desc = (
-                f"{title} | The AI Dollar\n\n"
-                f"In this video, you'll learn everything you need to know about {kw_line}.\n\n"
+                f"{title} | The AI Dollar - Complete Money Education\n\n"
+                f"{random.choice(intros)}\n\n"
                 f"TIMESTAMPS:\n"
                 f"0:00 - Why this matters RIGHT NOW\n"
-                f"0:45 - The core concept (explained simply)\n"
-                f"2:30 - Proven strategies from real millionaires\n"
-                f"5:15 - Your step-by-step action plan\n"
-                f"7:30 - Mistakes that keep people broke\n\n"
-                f"If this helped you, SUBSCRIBE and turn on notifications.\n"
-                f"We post daily money education that schools don't teach.\n\n"
-                f"COMMENT your biggest takeaway below!\n"
-                f"SHARE with someone who needs to hear this.\n\n"
+                f"0:45 - The core concept explained simply\n"
+                f"2:00 - Real-world examples and proof\n"
+                f"4:00 - Step-by-step action plan you can start TODAY\n"
+                f"6:00 - Common mistakes that keep people broke\n"
+                f"8:00 - The one thing to do RIGHT NOW\n\n"
+                f"FREE RESOURCES mentioned in this video:\n"
+                f"- High yield savings: Most online banks offer 4-5% APY\n"
+                f"- Index fund investing: Fidelity, Vanguard, Schwab (zero minimums)\n"
+                f"- Budget tracking: Free apps like Mint or YNAB trial\n\n"
+                f"If this helped you, do these 3 things:\n"
+                f"1. SUBSCRIBE and turn on ALL notifications\n"
+                f"2. COMMENT your biggest takeaway below\n"
+                f"3. SHARE with someone who needs to hear this\n\n"
+                f"We post 11 videos EVERY DAY - shorts + full breakdowns.\n"
+                f"New here? Start with our most popular videos on the channel page.\n\n"
+                f"Follow The AI Dollar:\n"
+                f"Subscribe: https://www.youtube.com/@TheAIDollar?sub_confirmation=1\n\n"
                 f"#Finance #Money #PersonalFinance #Investing #WealthBuilding "
                 f"#FinancialFreedom #MoneyTips #FinanceTips #FinancialLiteracy "
                 f"#HowToGetRich #StockMarket #PassiveIncome #DebtFree "
                 f"#Budgeting #MakeMoney #InvestingForBeginners #TheAIDollar "
                 f"#MoneyHacks #CompoundInterest #MillionaireMindset #WealthSecrets "
-                f"#IndexFunds #MoneyMotivation #FinancialEducation"
+                f"#IndexFunds #MoneyMotivation #FinancialEducation "
+                f"#SideHustle #RichVsPoor #MoneyMindset"
             )
 
         body = {
