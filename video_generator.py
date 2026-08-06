@@ -1043,15 +1043,21 @@ LONG_FORM_TOPICS = [
 ]
 
 
-def enhance_image(img_path):
+def enhance_image(img_path, landscape=False):
     """Upscale, sharpen, and enhance a downloaded AI image to HD quality"""
     try:
         from PIL import Image, ImageEnhance, ImageFilter
         img = Image.open(img_path).convert("RGB")
         w, h = img.size
-        if w >= 1080 and h >= 1920 and abs(w/h - 9/16) < 0.05:
-            return
-        img = img.resize((1080, 1920), Image.LANCZOS)
+        if landscape:
+            target_w, target_h = 1920, 1080
+            if w >= 1920 and h >= 1080 and abs(w/h - 16/9) < 0.05:
+                return
+        else:
+            target_w, target_h = 1080, 1920
+            if w >= 1080 and h >= 1920 and abs(w/h - 9/16) < 0.05:
+                return
+        img = img.resize((target_w, target_h), Image.LANCZOS)
         img = img.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=3))
         img = ImageEnhance.Contrast(img).enhance(1.15)
         img = ImageEnhance.Color(img).enhance(1.1)
@@ -1087,11 +1093,13 @@ def _extract_search_keywords(desc, text=""):
     return ' '.join(result[:3]) if result else 'finance money'
 
 
-def fetch_hd_images(slides, save_dir):
+def fetch_hd_images(slides, save_dir, landscape=False):
     """Fetch sharp HD images from Pexels (primary) with Pollinations fallback."""
     os.makedirs(save_dir, exist_ok=True)
     images = []
     headers = {"Authorization": PEXELS_API_KEY} if PEXELS_API_KEY else {}
+    orientation = "landscape" if landscape else "portrait"
+    img_w, img_h = (1920, 1080) if landscape else (1080, 1920)
 
     for i, slide in enumerate(slides):
         img_path = os.path.join(save_dir, f"slide_{i}.jpg")
@@ -1107,13 +1115,16 @@ def fetch_hd_images(slides, save_dir):
 
         if PEXELS_API_KEY:
             try:
-                purl = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&orientation=portrait&per_page=15"
+                purl = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&orientation={orientation}&per_page=15"
                 resp = requests.get(purl, headers=headers, timeout=15)
                 if resp.status_code == 200:
                     photos = resp.json().get("photos", [])
                     if photos:
                         photo = photos[i % len(photos)]
-                        img_url = photo["src"].get("original") or photo["src"].get("large2x") or photo["src"].get("portrait") or photo["src"]["large"]
+                        if landscape:
+                            img_url = photo["src"].get("original") or photo["src"].get("large2x") or photo["src"].get("landscape") or photo["src"]["large"]
+                        else:
+                            img_url = photo["src"].get("original") or photo["src"].get("large2x") or photo["src"].get("portrait") or photo["src"]["large"]
                         img_resp = requests.get(img_url, timeout=20)
                         if img_resp.status_code == 200 and len(img_resp.content) > 20000:
                             with open(img_path, 'wb') as f:
@@ -1128,13 +1139,13 @@ def fetch_hd_images(slides, save_dir):
             style = "cinematic photorealistic, sharp focus, dramatic lighting, no text no watermark"
             prompt = f"{style}, {desc}"
             encoded = urllib.parse.quote(prompt)
-            url = f"https://image.pollinations.ai/prompt/{encoded}?width=1080&height=1920&nologo=true&seed={i + 42}&model=flux&enhance=true"
+            url = f"https://image.pollinations.ai/prompt/{encoded}?width={img_w}&height={img_h}&nologo=true&seed={i + 42}&model=flux&enhance=true"
             try:
                 resp = requests.get(url, timeout=90)
                 if resp.status_code == 200 and len(resp.content) > 5000:
                     with open(img_path, 'wb') as f:
                         f.write(resp.content)
-                    enhance_image(img_path)
+                    enhance_image(img_path, landscape=landscape)
                     images.append(img_path)
                     print(f"  [AI] Slide {i+1}: {query} (fallback)")
                     got = True
@@ -1298,7 +1309,7 @@ def get_audio_duration(audio_path):
     return 4
 
 
-def prep_slides(images, slides, durations, work_dir):
+def prep_slides(images, slides, durations, work_dir, landscape=False):
     """Create professional cinematic slides — full HD, clean design, readable text."""
     os.makedirs(work_dir, exist_ok=True)
 
@@ -1317,7 +1328,10 @@ def prep_slides(images, slides, durations, work_dir):
                 continue
         return ImageFont.load_default()
 
-    W, H = 1080, 1920
+    if landscape:
+        W, H = 1920, 1080
+    else:
+        W, H = 1080, 1920
     PAD = 50
     MAX_TW = W - PAD * 2
 
@@ -1500,17 +1514,18 @@ def prep_slides(images, slides, durations, work_dir):
         print(f"  slide {idx+1}/{len(slides)} ready")
 
 
-def create_video_ffmpeg(slides, images, audio_file, durations, output_file):
+def create_video_ffmpeg(slides, images, audio_file, durations, output_file, landscape=False):
     valid_images = [img for img in images if img is not None]
     if not valid_images:
-        return create_video_simple(slides, audio_file, durations, output_file)
+        return create_video_simple(slides, audio_file, durations, output_file, landscape=landscape)
 
     work_dir = output_file + "_work"
     print("[BUILD] Preparing slides...")
-    prep_slides(images, slides, durations, work_dir)
+    prep_slides(images, slides, durations, work_dir, landscape=landscape)
 
     n = len(slides)
     audio_duration = get_audio_duration(audio_file)
+    res = "1920:1080" if landscape else "1080:1920"
 
     print("[BUILD] Creating video (single-pass concat + audio)...")
     concat_file = os.path.join(work_dir, "concat.txt")
@@ -1530,7 +1545,7 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file):
             '-i', audio_file,
             '-i', bg_music_path,
             '-filter_complex',
-            '[0:v]scale=1080:1920,fps=30[v];[2:a]volume=0.10[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
+            f'[0:v]scale={res},fps=30[v];[2:a]volume=0.10[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
             '-map', '[v]', '-map', '[aout]',
             '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
             '-c:a', 'aac', '-b:a', '128k',
@@ -1543,7 +1558,7 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file):
             FFMPEG, '-y',
             '-f', 'concat', '-safe', '0', '-i', concat_file,
             '-i', audio_file,
-            '-vf', 'scale=1080:1920,fps=30',
+            '-vf', f'scale={res},fps=30',
             '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
             '-c:a', 'aac', '-b:a', '128k',
             '-pix_fmt', 'yuv420p',
@@ -1565,12 +1580,13 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file):
     return True
 
 
-def create_video_simple(slides, audio_file, durations, output_file):
+def create_video_simple(slides, audio_file, durations, output_file, landscape=False):
     """Fallback: solid color background with audio, no text."""
     total_dur = sum(durations)
+    size = "1920x1080" if landscape else "1080x1920"
     cmd = [
         FFMPEG, '-y',
-        '-f', 'lavfi', '-i', f'color=c=0x0C0C28:size=1080x1920:rate=30:d={total_dur:.2f}',
+        '-f', 'lavfi', '-i', f'color=c=0x0C0C28:size={size}:rate=30:d={total_dur:.2f}',
         '-i', audio_file,
         '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
         '-c:a', 'aac', '-b:a', '128k',
@@ -1651,6 +1667,106 @@ def generate_daily_video():
         return {"status": "error", "message": str(e)}
 
 
+def generate_thumbnail(title, first_image, output_path):
+    """Generate a high-CTR 1920x1080 YouTube thumbnail with bold text + face/emotion."""
+    try:
+        from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
+
+        W, H = 1920, 1080
+
+        def get_font(size):
+            for path in ["C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf",
+                         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"]:
+                try:
+                    return ImageFont.truetype(path, size)
+                except Exception:
+                    continue
+            return ImageFont.load_default()
+
+        if first_image and os.path.exists(first_image):
+            bg = Image.open(first_image).convert("RGB")
+            iw, ih = bg.size
+            ratio = max(W / iw, H / ih)
+            bg = bg.resize((int(iw * ratio), int(ih * ratio)), Image.LANCZOS)
+            left = (bg.width - W) // 2
+            top = (bg.height - H) // 2
+            bg = bg.crop((left, top, left + W, top + H))
+        else:
+            bg = Image.new("RGB", (W, H), (12, 12, 40))
+
+        bg = ImageEnhance.Contrast(bg).enhance(1.3)
+        bg = ImageEnhance.Color(bg).enhance(1.2)
+
+        overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ov_draw = ImageDraw.Draw(overlay)
+        for x in range(W):
+            frac = x / W
+            a = int(200 * frac)
+            ov_draw.rectangle([x, 0, x + 1, H], fill=(0, 0, 0, min(a, 200)))
+        for gy in range(int(H * 0.7), H):
+            frac = (gy - H * 0.7) / (H * 0.3)
+            a = int(180 * frac)
+            ov_draw.rectangle([0, gy, W, gy + 1], fill=(0, 0, 0, min(a, 180)))
+        bg = Image.alpha_composite(bg.convert("RGBA"), overlay).convert("RGB")
+
+        draw = ImageDraw.Draw(bg)
+
+        YELLOW = (255, 230, 0)
+        WHITE = (255, 255, 255)
+
+        words = title.upper().split()
+        mid = len(words) // 2
+        line1 = " ".join(words[:mid]) if mid > 0 else title.upper()
+        line2 = " ".join(words[mid:]) if mid > 0 else ""
+
+        text_x = W // 2 + 100
+        max_tw = W - text_x - 60
+
+        for fsize in [110, 96, 82, 72, 60]:
+            ft = get_font(fsize)
+            bb1 = draw.textbbox((0, 0), line1, font=ft)
+            w1 = bb1[2] - bb1[0]
+            if line2:
+                bb2 = draw.textbbox((0, 0), line2, font=ft)
+                w2 = bb2[2] - bb2[0]
+            else:
+                w2 = 0
+            if max(w1, w2) <= max_tw:
+                break
+
+        total_h = fsize * 2 + 20 if line2 else fsize
+        y_start = (H - total_h) // 2
+
+        for ox in range(-4, 5):
+            for oy in range(-4, 5):
+                if ox * ox + oy * oy <= 16:
+                    draw.text((text_x + ox, y_start + oy), line1, font=ft, fill=(0, 0, 0))
+        draw.text((text_x, y_start), line1, font=ft, fill=YELLOW)
+
+        if line2:
+            y2 = y_start + fsize + 20
+            for ox in range(-4, 5):
+                for oy in range(-4, 5):
+                    if ox * ox + oy * oy <= 16:
+                        draw.text((text_x + ox, y2 + oy), line2, font=ft, fill=(0, 0, 0))
+            draw.text((text_x, y2), line2, font=ft, fill=WHITE)
+
+        brand_font = get_font(36)
+        brand = "THE AI DOLLAR"
+        draw.rounded_rectangle([text_x - 10, H - 90, text_x + 320, H - 40], radius=8, fill=(220, 20, 20))
+        draw.text((text_x + 10, H - 84), brand, font=brand_font, fill=WHITE)
+
+        draw.rectangle([0, 0, W, 6], fill=YELLOW)
+        draw.rectangle([0, H - 6, W, H], fill=YELLOW)
+
+        bg.save(output_path, "JPEG", quality=95)
+        print(f"[OK] Thumbnail generated: {output_path}")
+        return output_path
+    except Exception as e:
+        print(f"[WARN] Thumbnail generation failed: {e}")
+        return None
+
+
 def generate_long_video():
     topic = generate_long_topic()
     slides = topic['slides']
@@ -1660,6 +1776,7 @@ def generate_long_video():
     output_file = f"{CONFIG['output_dir']}/the_ai_dollar_long_{timestamp}.mp4"
     audio_dir = f"{CONFIG['output_dir']}/audio_long_{timestamp}"
     img_dir = f"{CONFIG['output_dir']}/imgs_long_{timestamp}"
+    thumb_path = f"{CONFIG['output_dir']}/thumb_long_{timestamp}.jpg"
 
     try:
         print("[TTS] Generating per-slide audio (long-form)...")
@@ -1679,12 +1796,16 @@ def generate_long_video():
             per_slide = total_dur / len(slides)
             durations = [per_slide] * len(slides)
 
-        print("[IMG] Fetching HD images (long-form)...")
-        images = fetch_hd_images(slides, img_dir)
+        print("[IMG] Fetching HD landscape images (long-form)...")
+        images = fetch_hd_images(slides, img_dir, landscape=True)
         print(f"[OK] Got {sum(1 for i in images if i)} images")
 
-        print("[VIDEO] Creating long-form video...")
-        ok = create_video_ffmpeg(slides, images, audio_file, durations, output_file)
+        print("[THUMB] Generating YouTube thumbnail...")
+        first_img = next((img for img in images if img), None)
+        generate_thumbnail(topic['title'], first_img, thumb_path)
+
+        print("[VIDEO] Creating long-form video (1920x1080)...")
+        ok = create_video_ffmpeg(slides, images, audio_file, durations, output_file, landscape=True)
 
         if not ok:
             return {"status": "error", "message": "Long video creation failed"}
@@ -1706,7 +1827,8 @@ def generate_long_video():
             "title": topic['title'],
             "script": voiceover_text,
             "keywords": topic['keywords'],
-            "is_long": True
+            "is_long": True,
+            "thumbnail": thumb_path if os.path.exists(thumb_path) else None,
         }
 
     except Exception as e:

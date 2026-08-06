@@ -58,7 +58,7 @@ def start_health_server():
     server.serve_forever()
 
 
-def upload_to_youtube(video_path, title, description, is_short=True, keywords=None):
+def upload_to_youtube(video_path, title, description, is_short=True, keywords=None, thumbnail_path=None):
     """Upload video to YouTube using OAuth refresh token"""
     try:
         refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "")
@@ -92,12 +92,14 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
             "personal finance", "money tips", "investing for beginners",
             "financial literacy", "how to invest", "money management",
             "wealth building", "passive income", "financial education",
-            "stock market for beginners", "save money", "make money",
-            "budget tips", "debt free", "credit score",
-            "side hustle", "financial freedom", "money advice 2026",
-            "finance tips", "get rich", "TheAIDollar",
-            "money hacks", "rich vs poor", "compound interest",
-            "index funds", "roth ira", "how to save money",
+            "stock market for beginners", "save money", "make money online",
+            "budget tips", "debt free journey", "credit score tips",
+            "side hustle ideas 2026", "financial freedom", "money advice",
+            "finance tips", "how to get rich", "TheAIDollar",
+            "money hacks that work", "rich vs poor habits", "compound interest explained",
+            "index funds for beginners", "roth ira explained", "how to save money fast",
+            "money mistakes to avoid", "millionaire habits", "financial independence",
+            "how to build wealth", "money rules", "investing tips 2026",
         ]
         yt_tags = topic_tags + [t for t in base_tags if t.lower() not in [k.lower() for k in topic_tags]]
         import re
@@ -125,26 +127,37 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
                 "I wish someone told me this at 18.",
                 "This is why most people stay broke forever.",
                 "The money truth nobody wants to hear.",
+                "Stop what you're doing and watch this.",
+                "The financial advice that actually works in 2026.",
+                "Most financial gurus won't tell you this for free.",
+                "This one money move changed everything for me.",
+            ]
+            open_loops = [
+                "The last tip is the one that changes everything.",
+                "Wait for the final part — it's worth 10x the rest.",
+                "Tip #3 alone is worth watching the whole video.",
+                "The ending will shock you.",
             ]
             yt_desc = (
-                f"{title}\n\n"
-                f"{random.choice(hooks)}\n\n"
-                f"WATCH TIL THE END - the last part is the game changer.\n\n"
-                f"DROP a comment: What's YOUR biggest money struggle?\n"
-                f"SUBSCRIBE for daily money lessons that actually WORK\n"
-                f"SHARE this with someone who needs to hear it\n\n"
-                f"We post 11 videos EVERY DAY - shorts + deep dives.\n"
-                f"Turn on notifications so you never miss a lesson.\n\n"
-                f"Follow The AI Dollar:\n"
-                f"Subscribe: https://www.youtube.com/@TheAIDollar?sub_confirmation=1\n\n"
+                f"{kw_line} — {title}\n"
+                f"Learn {kw_line} in 60 seconds. Free finance education daily.\n\n"
+                f"{random.choice(hooks)}\n"
+                f"{random.choice(open_loops)}\n\n"
+                f"WATCH MORE:\n"
+                f"Subscribe for daily money lessons: https://www.youtube.com/@TheAIDollar?sub_confirmation=1\n\n"
+                f"ENGAGE:\n"
+                f"Comment your #1 money struggle below\n"
+                f"Share this with someone who needs to hear it\n"
+                f"Turn on notifications — new videos every day\n\n"
+                f"TOPICS COVERED: {kw_line}, personal finance tips, "
+                f"how to build wealth, money management for beginners, "
+                f"investing basics, financial literacy 2026\n\n"
                 f"#Shorts #Finance #Money #Investing #PersonalFinance "
-                f"#WealthBuilding #FinancialFreedom #MoneyTips #FinanceTips "
+                f"#WealthBuilding #FinancialFreedom #MoneyTips "
                 f"#HowToGetRich #PassiveIncome #DebtFree #SideHustle "
-                f"#FinancialLiteracy #MakeMoney #MoneyHacks #CompoundInterest "
-                f"#InvestingForBeginners #BudgetTips #TheAIDollar #MoneyAdvice "
-                f"#RichVsPoor #WealthTips #StockMarket #IndexFunds "
-                f"#MillionaireMindset #MoneyMindset #FinancialEducation "
-                f"#MoneyMotivation #WealthSecrets #SideHustle2026 "
+                f"#FinancialLiteracy #MakeMoney #MoneyHacks "
+                f"#InvestingForBeginners #TheAIDollar "
+                f"#MillionaireMindset #FinancialEducation "
                 f"#MoneyTok #FinTok #LearnOnYouTube"
             )
             yt_tags.append("Shorts")
@@ -155,18 +168,27 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
                 f"This is the complete breakdown of {kw_line} that nobody else is giving you for free.",
                 f"Everything you need to know about {kw_line} in one video. No fluff. No BS. Just actionable steps.",
                 f"I spent hours researching {kw_line} so you don't have to. Here's everything that actually matters.",
+                f"This {kw_line} guide is what I wish I had when I started. Watch it twice.",
+                f"WARNING: Once you learn this about {kw_line}, you can't unlearn it.",
             ]
             yt_desc = (
-                f"{title} | The AI Dollar - Complete Money Education\n\n"
+                f"{kw_line} — {title} | The AI Dollar\n"
+                f"Learn {kw_line}, personal finance tips, and wealth-building strategies. "
+                f"Free financial education for beginners and beyond.\n\n"
                 f"{random.choice(intros)}\n\n"
                 f"TIMESTAMPS:\n"
-                f"0:00 - Why this matters RIGHT NOW\n"
+                f"0:00 - Introduction — why {kw_line} matters\n"
                 f"0:45 - The core concept explained simply\n"
                 f"2:00 - Real-world examples and proof\n"
                 f"4:00 - Step-by-step action plan you can start TODAY\n"
                 f"6:00 - Common mistakes that keep people broke\n"
-                f"8:00 - The one thing to do RIGHT NOW\n\n"
-                f"FREE RESOURCES mentioned in this video:\n"
+                f"8:00 - The #1 thing to do RIGHT NOW\n\n"
+                f"WHAT YOU'LL LEARN:\n"
+                f"- How {kw_line} actually works in real life\n"
+                f"- The biggest mistakes beginners make\n"
+                f"- A step-by-step action plan anyone can follow\n"
+                f"- Why starting TODAY beats waiting for 'the right time'\n\n"
+                f"FREE RESOURCES:\n"
                 f"- High yield savings: Most online banks offer 4-5% APY\n"
                 f"- Index fund investing: Fidelity, Vanguard, Schwab (zero minimums)\n"
                 f"- Budget tracking: Free apps like Mint or YNAB trial\n\n"
@@ -174,17 +196,18 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
                 f"1. SUBSCRIBE and turn on ALL notifications\n"
                 f"2. COMMENT your biggest takeaway below\n"
                 f"3. SHARE with someone who needs to hear this\n\n"
-                f"We post 11 videos EVERY DAY - shorts + full breakdowns.\n"
+                f"We post 4 videos EVERY DAY — shorts + deep dives.\n"
                 f"New here? Start with our most popular videos on the channel page.\n\n"
-                f"Follow The AI Dollar:\n"
+                f"RELATED TOPICS: {kw_line}, personal finance for beginners, "
+                f"how to invest money, budgeting tips, wealth building strategies, "
+                f"financial literacy 2026, money management, passive income ideas\n\n"
                 f"Subscribe: https://www.youtube.com/@TheAIDollar?sub_confirmation=1\n\n"
                 f"#Finance #Money #PersonalFinance #Investing #WealthBuilding "
-                f"#FinancialFreedom #MoneyTips #FinanceTips #FinancialLiteracy "
+                f"#FinancialFreedom #MoneyTips #FinancialLiteracy "
                 f"#HowToGetRich #StockMarket #PassiveIncome #DebtFree "
-                f"#Budgeting #MakeMoney #InvestingForBeginners #TheAIDollar "
-                f"#MoneyHacks #CompoundInterest #MillionaireMindset #WealthSecrets "
-                f"#IndexFunds #MoneyMotivation #FinancialEducation "
-                f"#SideHustle #RichVsPoor #MoneyMindset"
+                f"#InvestingForBeginners #TheAIDollar "
+                f"#MillionaireMindset #FinancialEducation "
+                f"#MoneyMindset #WealthSecrets"
             )
 
         body = {
@@ -211,6 +234,17 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
 
         video_id = response.get("id", "")
         print(f"[OK] YouTube uploaded! https://youtube.com/watch?v={video_id}")
+
+        if thumbnail_path and os.path.exists(thumbnail_path) and video_id:
+            try:
+                youtube.thumbnails().set(
+                    videoId=video_id,
+                    media_body=MediaFileUpload(thumbnail_path, mimetype="image/jpeg")
+                ).execute()
+                print(f"[OK] Custom thumbnail set for {video_id}")
+            except Exception as te:
+                print(f"[WARN] Thumbnail upload failed (requires verified channel): {te}")
+
         return True
 
     except Exception as e:
@@ -251,13 +285,23 @@ def upload_to_instagram(video_path, title, keywords=None):
             cl.login(username, password)
             print("[OK] Instagram: fresh login")
 
-        kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or []))
+        kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or [])[:5])
+        ig_hooks = [
+            "Save this for later.",
+            "Share this with someone who needs it.",
+            "Tag a friend who needs to hear this.",
+            "Double tap if you agree.",
+        ]
         caption = (
             f"{title}\n\n"
-            f"Follow @theaidollar for daily finance tips!\n\n"
+            f"{random.choice(ig_hooks)}\n\n"
+            f"Follow @theaidollar for daily money tips that actually work.\n"
+            f"New videos every single day.\n\n"
             f"#Finance #Money #PersonalFinance #Investing "
             f"#FinanceTips #WealthBuilding #FinancialLiteracy "
-            f"#Reels #MoneyTips #FinancialFreedom {kw_tags}"
+            f"#Reels #MoneyTips #FinancialFreedom "
+            f"#MoneyHacks #InvestingTips #DebtFree "
+            f"#FinancialEducation #MoneySavingTips {kw_tags}"
         )
 
         media = cl.clip_upload(video_path, caption=caption)
@@ -284,12 +328,15 @@ def upload_to_facebook(video_path, title, keywords=None):
         return False
 
     try:
-        kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or []))
+        kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or [])[:5])
         description = (
             f"{title}\n\n"
-            f"Follow The AI Dollar for daily finance education!\n\n"
+            f"Like + Follow The AI Dollar for daily money education.\n"
+            f"New shorts and deep dives every day.\n\n"
             f"#Finance #Money #PersonalFinance #Investing "
-            f"#FinanceTips #WealthBuilding #FinancialLiteracy {kw_tags}"
+            f"#FinanceTips #WealthBuilding #FinancialLiteracy "
+            f"#MoneyHacks #FinancialFreedom #DebtFree "
+            f"#InvestingForBeginners #MoneyTips {kw_tags}"
         )
 
         print("[UPLOAD] Facebook: uploading reel...")
@@ -404,10 +451,11 @@ def post_long_video():
         title      = result['title']
         script     = result['script']
         keywords   = result.get('keywords', [])
+        thumb      = result.get('thumbnail')
         print(f"[OK] Long video generated: {title}")
 
         print(f"\n[STEP 2] Uploading to YouTube (long-form)...")
-        youtube_success = upload_to_youtube(video_path, title, script, is_short=False, keywords=keywords)
+        youtube_success = upload_to_youtube(video_path, title, script, is_short=False, keywords=keywords, thumbnail_path=thumb)
 
         print(f"\n[STEP 3] Uploading to Instagram...")
         instagram_success = upload_to_instagram(video_path, title, keywords=keywords)
@@ -453,12 +501,12 @@ def upload_to_tiktok(video_path, title, keywords=None):
     try:
         import requests as req
 
-        kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or []))
+        kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or [])[:3])
         caption = (
-            f"{title[:70]} "
+            f"{title[:60]} "
             f"#moneytok #fintok #investing #finance #personalfinance "
-            f"#moneytips #financialfreedom #wealthbuilding #sidehustle "
-            f"#learnontiktok {kw_tags}"
+            f"#moneytips #financialfreedom #wealthbuilding "
+            f"#learnontiktok #fyp #viral {kw_tags}"
         )[:150]
 
         cookies = {"sessionid": tiktok_session}

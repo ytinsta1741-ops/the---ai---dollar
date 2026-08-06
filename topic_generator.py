@@ -61,6 +61,26 @@ SHORT_TITLE_TEMPLATES = [
     "The Ugly Truth About {method} (What Gurus Won't Tell You)",
     "How To Turn ${small_amount} Into ${big_amount} (Step By Step)",
     "The {age} Year Old Millionaire's Daily Routine (Copy This)",
+    "I Made ${amount} In {time} — Here's My Exact Blueprint",
+    "{famous_person} Says Do THIS With Your Money RIGHT NOW",
+    "The {method} Nobody Talks About (${amount}/Month Potential)",
+    "Watch This BEFORE You {bad_habit} Again (It's Costing You ${amount})",
+    "${amount} Invested At {age} = ${big_amount} By Retirement (Math Proof)",
+    "I STOPPED {bad_habit} For {time} And Saved ${amount} (Not Clickbait)",
+    "5 Things Rich People NEVER Spend Money On (Surprising)",
+    "What Happens When You Invest ${small_amount}/Day For {long_time}?",
+    "The Financial Advice Your Parents Got WRONG (Don't Repeat It)",
+    "I Gave A {job} My ${big_amount} Investment Plan — They Were Shocked",
+    "You're {time} Away From Financial Freedom (Do This NOW)",
+    "Rich At {age}? Follow These {count} Non-Negotiable Rules",
+    "How A {job} Built ${big_amount} Net Worth On ${amount}/Month Salary",
+    "{person}'s ${amount} Side Hustle Takes {minutes} Min/Day (Proof Inside)",
+    "If You're Under {age}, This Video Is Worth ${big_amount} To You",
+    "The Money Mistake {percent}% Of Americans Make Every Single Day",
+    "This FREE {method} Strategy Made Me ${amount} Last Month",
+    "BROKE At {age}? Here's Your Exact {time} Comeback Plan",
+    "The ${small_amount}/Week Rule That Creates Millionaires",
+    "Why {famous_person} Refuses To {bad_habit} (And You Should Too)",
 ]
 
 # ── STORY PERSONAS ──
@@ -301,7 +321,7 @@ SLIDE_FRAMEWORKS = {
 # ── SPEECH TEMPLATES (matching slide frameworks) ──
 SPEECH_TEMPLATES = {
     "person_story": [
-        "{person_name} was a {job}, {story_detail}, making just {low_salary} thousand dollars a year. Nobody thought {pronoun} would ever build wealth.",
+        "Stop scrolling. {person_name} was a {job}, {story_detail}, making just {low_salary} thousand dollars a year. Nobody thought {pronoun} would ever build wealth. But what happened next will change how you think about money.",
         "Every month it was the same cycle. Earn money. Spend money. Nothing left. {pronoun_cap} had {debt} thousand dollars in debt and zero savings.",
         "Then {pronoun} discovered {method_name}. And EVERYTHING changed. Not overnight. But the shift started immediately.",
         "Step one. {speech_action_1}. This alone changed the game.",
@@ -313,7 +333,7 @@ SPEECH_TEMPLATES = {
         "Start with just {min_start} dollars today. Set it up right now. Your future self will be a completely different person because of this moment. Subscribe to The AI Dollar for more stories like this every single day.",
     ],
     "myth_buster": [
-        "Everything you KNOW about {topic} is completely WRONG. And these myths are keeping you BROKE.",
+        "Wait. Everything you KNOW about {topic} is completely WRONG. And I can prove it. These myths are keeping you BROKE and you don't even realize it.",
         "Myth number one. {myth_1}. WRONG. The reality is {reality_1}. This myth alone keeps millions of people poor.",
         "Myth number two. {myth_2}. Also WRONG. The reality is {reality_2}. Once you understand this, everything changes.",
         "Myth number three. {myth_3}. Completely FALSE. The reality is {reality_3}. Your parents probably told you this one.",
@@ -325,7 +345,7 @@ SPEECH_TEMPLATES = {
         "Stop believing the myths that keep you broke. Start building REAL wealth today. Subscribe to The AI Dollar for more money truths that actually work. Hit that bell so you never miss one.",
     ],
     "money_math": [
-        "Your {daily_cost} dollar {expense} habit is secretly costing you {lifetime_cost} dollars. And I'm going to prove it right now.",
+        "Don't skip this. Your {daily_cost} dollar {expense} habit is secretly costing you {lifetime_cost} dollars over your lifetime. And I'm going to prove it with actual math right now.",
         "{daily_cost} dollars per day. That's {monthly_cost} per month. {yearly_cost} per year. Seems small right? Watch what happens next.",
         "If you invested that money at {percent} percent per year for {years} years, compound interest turns it into {compound_total} dollars. Read that number again.",
         "That's enough to {comparison_1}. Or {comparison_2}. Or {comparison_3}. From just cutting ONE habit.",
@@ -337,7 +357,7 @@ SPEECH_TEMPLATES = {
         "Make the swap today. {save_amount} dollars per month equals {future_value} dollars in your future. Subscribe and share this with someone who needs to hear it.",
     ],
     "rules_list": [
-        "{count} money rules that separate the RICH from the POOR. If you follow even THREE of these, your finances will transform.",
+        "Listen carefully. {count} money rules that separate the RICH from the POOR. Rule number three alone changed everything for me. If you follow even THREE of these, your entire financial life will transform.",
         "Rule one. {rule_1}. {rule_1_explain}. This is the foundation of ALL wealth building.",
         "Rule two. {rule_2}. {rule_2_explain}. Most people do the exact opposite of this.",
         "Rule three. {rule_3}. {rule_3_explain}. This one will save you THOUSANDS every year.",
@@ -385,7 +405,7 @@ SPEECH_TEMPLATES = {
         "Start THIS WEEK. Not next month. Not when you feel ready. THIS WEEK. Subscribe to The AI Dollar for more hustles that actually PAY. We drop these daily.",
     ],
     "rich_vs_poor": [
-        "Rich people do THIS every single day. And broke people do the EXACT opposite. Same twenty four hours. Completely different results. Watch closely.",
+        "I need you to hear this. Rich people do THIS every single day. And broke people do the EXACT opposite. Same twenty four hours. Completely different results. Habit number five is the one that will blow your mind.",
         "Habit one. Rich people {rich_habit_1}. Broke people? {poor_habit_1}. This ONE difference compounds over years into MILLIONS.",
         "Habit two. Rich people {rich_habit_2}. Broke people {poor_habit_2}. And here's the part nobody tells you...",
         "Habit three. Rich people {rich_habit_3}. Broke people {poor_habit_3}. This is the habit that separates the top one percent.",
@@ -409,7 +429,7 @@ SPEECH_TEMPLATES = {
         "Start TODAY. Not Monday. Not the first of the month. TODAY. Right now. Subscribe to The AI Dollar for more challenges that build REAL wealth.",
     ],
     "secret_strategy": [
-        "This {who} strategy is hiding in PLAIN SIGHT. Nobody talks about it because it's not exciting. But it quietly builds {result} dollars while you sleep.",
+        "You're about to learn something most people pay thousands for. This {who} strategy is hiding in PLAIN SIGHT. Nobody talks about it because it's not exciting. But it quietly builds {result} dollars while you sleep.",
         "The strategy is called {strategy_name}. It's used by the top {percent} percent of wealthy people. And most of them won't tell you about it.",
         "Why does nobody talk about it? Because {hidden_reason}. It's not sexy. It doesn't make for good social media content. But you know what it DOES make? MONEY.",
         "Here's how it works. Step one. {step_1}. This takes {time_1}. Simple. Nothing fancy. But this first step is where ninety percent of people quit.",
