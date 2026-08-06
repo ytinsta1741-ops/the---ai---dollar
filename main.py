@@ -551,17 +551,18 @@ def upload_to_tiktok(video_path, title, keywords=None):
 
 
 def schedule_jobs():
-    # LONG-FORM (1x daily — quality over quantity, maximizes watch time per video)
-    schedule.every().day.at("14:00").do(post_long_video)  # US afternoon = peak discovery
-
-    # SHORTS (3x daily — spaced at peak scroll hours, lets algorithm test each one)
-    schedule.every().day.at("07:00").do(post_video)   # Morning commute scroll
-    schedule.every().day.at("12:30").do(post_video)   # Lunch break peak
-    schedule.every().day.at("19:00").do(post_video)   # Evening prime time (biggest window)
+    # SHORTS ONLY — discovery engine for small channels
+    # Shorts get shown on the Shorts shelf to non-subscribers
+    # 5 per day, spaced across US peak hours (times in UTC)
+    schedule.every().day.at("06:00").do(post_video)   # US East 2am — early birds
+    schedule.every().day.at("11:00").do(post_video)   # US East 7am — morning commute
+    schedule.every().day.at("14:00").do(post_video)   # US East 10am — mid-morning scroll
+    schedule.every().day.at("18:00").do(post_video)   # US East 2pm — afternoon break
+    schedule.every().day.at("23:00").do(post_video)   # US East 7pm — prime time
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 1 Long-form + 3 Shorts = 4 posts/day")
-    print("[OK] Quality > quantity — algorithm rewards engagement, not volume")
+    print("[OK] Schedule: 5 Shorts/day — growth mode (no long-form until 500+ subs)")
+    print("[OK] Shorts = discovery engine for non-subscribers")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
 
@@ -576,15 +577,13 @@ def main():
 
     schedule_jobs()
 
-    print("\n[NOW] Posting first short + long-form on startup...\n")
+    print("\n[NOW] Posting first short on startup...\n")
     try:
         post_video()
-        time.sleep(30)
-        post_long_video()
     except Exception as e:
         print(f"[ERR] Startup post error: {e}")
 
-    print("\n[SCHED] Scheduler running (1 long + 3 shorts = 4 posts/day + self-ping every 10 min)...")
+    print("\n[SCHED] Scheduler running (5 shorts/day — growth mode + self-ping every 10 min)...")
     try:
         while True:
             schedule.run_pending()

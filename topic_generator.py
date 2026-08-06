@@ -199,246 +199,186 @@ SLIDE_FRAMEWORKS = {
     "person_story": [
         {"role": "hook", "template": "{person_name} was a {job}\n{story_detail}\nmaking ${low_salary}/year"},
         {"role": "struggle", "template": "Every month\nthe same cycle:\nearning → spending →\nNOTHING left\n${debt} in debt"},
+        {"role": "cta", "template": "FOLLOW for the\nfull strategy\nThis changed\nEVERYTHING"},
         {"role": "discovery", "template": "Then {pronoun} discovered\n{method_name}\nand everything\nchanged"},
         {"role": "action1", "template": "Step 1:\n{action_step_1}"},
-        {"role": "action2", "template": "Step 2:\n{action_step_2}"},
-        {"role": "action3", "template": "Step 3:\n{action_step_3}"},
-        {"role": "result_early", "template": "After {short_time}:\n${early_result}\nsaved and invested"},
-        {"role": "result_big", "template": "After {long_time}:\n${big_result}\nnet worth"},
-        {"role": "lesson", "template": "The lesson:\n{key_lesson}\nAnyone can do this"},
-        {"role": "cta", "template": "Start with ${min_start}\ntoday\nYour future self\nwill THANK you"},
+        {"role": "result_big", "template": "After {long_time}:\n${big_result}\nnet worth\nFrom a {job}'s salary"},
+        {"role": "loop", "template": "Want the next\nmoney story?\nWatch again or\nswipe to the next one"},
     ],
     "myth_buster": [
         {"role": "hook", "template": "Everything you\nknow about\n{topic} is WRONG"},
         {"role": "myth1", "template": "Myth 1:\n{myth_1}\nREALITY:\n{reality_1}"},
+        {"role": "cta", "template": "FOLLOW to stop\nbelieving money\nmyths that keep\nyou BROKE"},
         {"role": "myth2", "template": "Myth 2:\n{myth_2}\nREALITY:\n{reality_2}"},
-        {"role": "myth3", "template": "Myth 3:\n{myth_3}\nREALITY:\n{reality_3}"},
         {"role": "shocking_stat", "template": "SHOCKING FACT:\n{fact}\n{follow_up}"},
-        {"role": "what_rich_do", "template": "What rich people\nactually do:\n{rich_habit}"},
         {"role": "simple_fix", "template": "The simple fix:\n{fix_step_1}\n{fix_step_2}"},
-        {"role": "proof", "template": "Proof it works:\n${proof_amount}\nin {proof_time}\nfrom this alone"},
-        {"role": "mindset", "template": "The real difference:\n{mindset_shift}"},
-        {"role": "cta", "template": "Stop believing\nthe myths\nStart building\nwealth TODAY"},
+        {"role": "loop", "template": "Which myth did\nyou believe?\nComment below\nWatch again"},
     ],
     "money_math": [
         {"role": "hook", "template": "Your ${daily_cost}\n{expense}\nhabit is costing\nyou ${lifetime_cost}"},
         {"role": "daily_breakdown", "template": "${daily_cost} per day\n= ${monthly_cost}/month\n= ${yearly_cost}/year\nSeems small right?"},
+        {"role": "cta", "template": "FOLLOW for more\nmind-blowing\nmoney math\nthat saves you\nTHOUSANDS"},
         {"role": "compound_reveal", "template": "But invested at\n{percent}% per year\nfor {years} years\nthat becomes\n${compound_total}"},
-        {"role": "comparison", "template": "That's enough to:\n{comparison_1}\n{comparison_2}\n{comparison_3}"},
-        {"role": "not_just_one", "template": "And it's not\njust {expense}\nAdd {expense_2}\n+ {expense_3}\n= ${combined_yearly}/year WASTED"},
         {"role": "alternative", "template": "The swap:\nInstead of {old_habit}\ndo {new_habit}\nSave ${save_amount}/month"},
-        {"role": "invest_it", "template": "Put that ${save_amount}\ninto {investment}\nEvery single month\nAutomatically"},
         {"role": "future_result", "template": "In {years} years:\n${future_value}\nFrom ONE simple\nswap"},
-        {"role": "perspective", "template": "You're not\ngiving up {expense}\nYou're BUYING\nyour freedom"},
-        {"role": "cta", "template": "Make the swap\nTODAY\n${save_amount}/month\n= ${future_value} future"},
+        {"role": "loop", "template": "Your ${daily_cost}\nhabit is still\ncosting you\nWatch again\nand MAKE the swap"},
     ],
     "rules_list": [
         {"role": "hook", "template": "{count} Money Rules\nThat Separate\nRICH from POOR"},
         {"role": "rule1", "template": "Rule 1:\n{rule_1}\n{rule_1_explain}"},
         {"role": "rule2", "template": "Rule 2:\n{rule_2}\n{rule_2_explain}"},
+        {"role": "cta", "template": "FOLLOW for all\n{count} rules\nMost people miss\nrule #{count}"},
         {"role": "rule3", "template": "Rule 3:\n{rule_3}\n{rule_3_explain}"},
-        {"role": "rule4", "template": "Rule 4:\n{rule_4}\n{rule_4_explain}"},
-        {"role": "rule5", "template": "Rule 5:\n{rule_5}\n{rule_5_explain}"},
         {"role": "common_mistake", "template": "The #1 mistake:\n{big_mistake}\nThis alone keeps\npeople BROKE"},
-        {"role": "rich_vs_poor", "template": "Rich people:\n{rich_do}\nPoor people:\n{poor_do}"},
-        {"role": "start_today", "template": "Pick just ONE\nrule to follow\nthis week\nThat's all it takes"},
-        {"role": "cta", "template": "Follow for\nmore rules that\nbuild REAL wealth"},
+        {"role": "loop", "template": "How many rules\ndo YOU follow?\nWatch again and\nCOUNT them"},
     ],
     "famous_person": [
         {"role": "hook", "template": "{famous_name} said\nthis ONE thing\nabout money and\nit changed\nEVERYTHING"},
         {"role": "quote", "template": "The rule:\n\"{money_rule}\"\nSimple but\nMOST people\nignore it"},
+        {"role": "cta", "template": "FOLLOW for more\nbillionaire money\nrules that\nactually WORK"},
         {"role": "backstory", "template": "{famous_name} is worth\n${net_worth}\nBuilt from\n{origin_story}"},
-        {"role": "explain", "template": "What this means:\n{explanation_1}\n{explanation_2}"},
-        {"role": "example", "template": "Real example:\n{real_example}\nThis is how\nit works in\nreal life"},
-        {"role": "mistake", "template": "The mistake\nmost people make:\n{common_mistake}\nThis DESTROYS\nwealth"},
         {"role": "apply_it", "template": "How to apply\nthis TODAY:\n{apply_step_1}\n{apply_step_2}"},
         {"role": "result", "template": "If you follow\nthis rule:\n${potential_result}\nin {result_time}"},
-        {"role": "other_billionaires", "template": "Other billionaires\nwho follow this:\n{billionaire_2}\n{billionaire_3}"},
-        {"role": "cta", "template": "One rule\nOne change\nStart TODAY\nYour wallet\nwill thank you"},
+        {"role": "loop", "template": "{famous_name} said\nONE thing...\nDid you\ncatch it?"},
     ],
     "age_timeline": [
         {"role": "hook", "template": "At {age_start} you should\nhave ${amount_start}\nsaved\nDo you?"},
         {"role": "age_20", "template": "By age 20:\n${goal_20} saved\nHow: {how_20}"},
         {"role": "age_25", "template": "By age 25:\n${goal_25} saved\nHow: {how_25}"},
+        {"role": "cta", "template": "FOLLOW to see\nif YOU are\non track\nor behind"},
         {"role": "age_30", "template": "By age 30:\n${goal_30} saved\nHow: {how_30}"},
-        {"role": "age_40", "template": "By age 40:\n${goal_40} saved\nHow: {how_40}"},
         {"role": "behind", "template": "Behind?\nDON'T PANIC\nHere's how to\ncatch up FAST"},
-        {"role": "catch_up_1", "template": "Catch-up strategy 1:\n{catchup_1}"},
-        {"role": "catch_up_2", "template": "Catch-up strategy 2:\n{catchup_2}"},
-        {"role": "compound_power", "template": "Starting late?\n${late_start}/month\nat age {late_age}\nstill becomes\n${late_result} by 65"},
-        {"role": "cta", "template": "The best time\nto start was\n10 years ago\nThe second best\ntime is TODAY"},
+        {"role": "loop", "template": "At {age_start} you should\nhave ${amount_start}\nDo you?\nCheck again"},
     ],
     "side_hustle": [
         {"role": "hook", "template": "This side hustle\npays ${amount}/month\nand takes\n{time_required}\nto set up"},
         {"role": "what", "template": "It's called:\n{hustle_name}\nand ANYONE\ncan start it"},
-        {"role": "why_works", "template": "Why it works:\n{reason_1}\n{reason_2}\nZero experience needed"},
+        {"role": "cta", "template": "FOLLOW for a\nnew side hustle\nEVERY day\nAll FREE to start"},
         {"role": "step1", "template": "Step 1:\n{setup_step_1}\nThis takes\n{step1_time}"},
         {"role": "step2", "template": "Step 2:\n{setup_step_2}\nFREE tools\nonly"},
-        {"role": "step3", "template": "Step 3:\n{setup_step_3}\nThis is where\nmoney starts flowing"},
-        {"role": "week1", "template": "Week 1 earnings:\n${week1_amount}\nNot much but\nit PROVES it works"},
         {"role": "month3", "template": "Month 3:\n${month3_amount}/month\nConsistency\nis the secret"},
-        {"role": "scale", "template": "Scale it:\n{scale_strategy}\nTurn ${month3_amount}\ninto ${scaled_amount}/month"},
-        {"role": "cta", "template": "Start THIS WEEK\nnot next month\nSubscribe for more\nhustles that PAY"},
+        {"role": "loop", "template": "This pays\n${amount}/month\nDid you catch\nall the steps?\nWatch again"},
     ],
     "rich_vs_poor": [
         {"role": "hook", "template": "Rich people do\nTHIS every day\nBroke people\ndo the OPPOSITE"},
         {"role": "habit1_rich", "template": "Rich:\n{rich_habit_1}\nBroke:\n{poor_habit_1}"},
         {"role": "habit2_rich", "template": "Rich:\n{rich_habit_2}\nBroke:\n{poor_habit_2}"},
+        {"role": "cta", "template": "FOLLOW to learn\nwhat rich people\ndo differently\nEVERY day"},
         {"role": "habit3_rich", "template": "Rich:\n{rich_habit_3}\nBroke:\n{poor_habit_3}"},
-        {"role": "habit4_rich", "template": "Rich:\n{rich_habit_4}\nBroke:\n{poor_habit_4}"},
-        {"role": "habit5_rich", "template": "Rich:\n{rich_habit_5}\nBroke:\n{poor_habit_5}"},
         {"role": "why_matters", "template": "Same 24 hours\nDifferent CHOICES\nDifferent RESULTS"},
-        {"role": "the_switch", "template": "The switch:\nPick ONE rich habit\nReplace ONE broke habit\nDo it for 30 days"},
-        {"role": "proof", "template": "After 30 days:\nYou'll have ${proof_amount}\nmore saved\nand a NEW mindset"},
-        {"role": "cta", "template": "Which habit will\nyou switch FIRST?\nComment below\nSubscribe for daily tips"},
+        {"role": "loop", "template": "Rich do THIS\nBroke do\nthe OPPOSITE\nWhich one\nare YOU?"},
     ],
     "money_challenge": [
         {"role": "hook", "template": "Try this {duration}\nmoney challenge\nand save ${save_goal}\nGuaranteed."},
         {"role": "rules", "template": "The rules:\n{rule_1}\n{rule_2}\n{rule_3}\nThat's IT"},
+        {"role": "cta", "template": "FOLLOW for\nmore money\nchallenges that\nACTUALLY work"},
         {"role": "week1", "template": "Week 1:\n{week1_action}\nDifficulty: Easy\nSaved: ${week1_saved}"},
-        {"role": "week2", "template": "Week 2:\n{week2_action}\nGetting easier\nTotal saved: ${week2_total}"},
-        {"role": "week3", "template": "Week 3:\n{week3_action}\nIt's becoming\na HABIT now"},
-        {"role": "week4", "template": "Week 4:\n{week4_action}\nFinal push\nTotal: ${total_saved}"},
         {"role": "results", "template": "RESULTS:\n${total_saved} saved\nin just {duration}\nFrom ZERO effort"},
         {"role": "what_changed", "template": "But the REAL win:\n{mindset_change}\nThis changes\nEVERYTHING"},
-        {"role": "next_level", "template": "Next level:\nRepeat for {next_duration}\n= ${annual_amount}/year\nThat's life changing"},
-        {"role": "cta", "template": "Start TODAY\nnot Monday\nNot next month\nTODAY\nSubscribe for more"},
+        {"role": "loop", "template": "Save ${save_goal}\nin {duration}\nWatch again for\nthe EXACT rules"},
     ],
     "secret_strategy": [
         {"role": "hook", "template": "This {who} strategy\nis hidden in\nplain sight\nand it builds\n${result} quietly"},
         {"role": "what_is_it", "template": "The strategy:\n{strategy_name}\nUsed by the\ntop {percent}%"},
-        {"role": "why_hidden", "template": "Why nobody\ntalks about it:\n{hidden_reason}\nIt's not sexy\nbut it WORKS"},
+        {"role": "cta", "template": "FOLLOW for more\nhidden strategies\nthe wealthy use\nEVERY day"},
         {"role": "how_step1", "template": "How it works:\nStep 1: {step_1}\nTakes {time_1}"},
-        {"role": "how_step2", "template": "Step 2:\n{step_2}\nThis is the\nkey move"},
-        {"role": "how_step3", "template": "Step 3:\n{step_3}\nNow sit back\nand let it compound"},
         {"role": "real_numbers", "template": "Real numbers:\n${start_amount}/month\nfor {years} years\n= ${end_amount}"},
-        {"role": "who_uses", "template": "Who uses this:\n{user_1}\n{user_2}\n{user_3}\nAll quietly wealthy"},
         {"role": "start_now", "template": "You can start\nwith ${min_amount}\nRIGHT NOW\nNo excuses"},
-        {"role": "cta", "template": "The wealthy\ndon't have secrets\nThey have HABITS\nSubscribe to learn them"},
+        {"role": "loop", "template": "This builds\n${result} quietly\nDid you catch\nthe strategy?\nWatch again"},
     ],
 }
 
 # ── SPEECH TEMPLATES (matching slide frameworks) ──
 SPEECH_TEMPLATES = {
     "person_story": [
-        "Stop scrolling. {person_name} was a {job}, {story_detail}, making just {low_salary} thousand dollars a year. Nobody thought {pronoun} would ever build wealth. But what happened next will change how you think about money.",
-        "Every month it was the same cycle. Earn money. Spend money. Nothing left. {pronoun_cap} had {debt} thousand dollars in debt and zero savings.",
-        "Then {pronoun} discovered {method_name}. And EVERYTHING changed. Not overnight. But the shift started immediately.",
-        "Step one. {speech_action_1}. This alone changed the game.",
+        "Stop scrolling. {person_name} was a {job}, {story_detail}, making just {low_salary} thousand dollars a year. What happened next will blow your mind.",
+        "Every month it was the same cycle. Earn, spend, nothing left. {debt} thousand dollars in debt. Zero savings. Sound familiar?",
+        "Follow for the full strategy. This is the money move that changes EVERYTHING. Most people will never learn this.",
+        "Then {pronoun} discovered {method_name}. Not a get rich quick scheme. A REAL strategy. {speech_action_1}. This alone changed the game.",
         "Step two. {speech_action_2}. Most people skip this but it's the most important part.",
-        "Step three. {speech_action_3}. This is where the real magic happens.",
-        "After just {short_time}, {pronoun} had {early_result} dollars saved and invested. From NOTHING to {early_result} dollars. Let that sink in.",
-        "After {long_time}, {pronoun_possessive} net worth hit {big_result} dollars. A {job} with a {big_result} dollar net worth. Sounds impossible but the math doesn't lie.",
-        "The lesson is simple. {key_lesson}. Anyone can do this. Literally anyone. You don't need a degree. You don't need connections. You need discipline.",
-        "Start with just {min_start} dollars today. Set it up right now. Your future self will be a completely different person because of this moment. Subscribe to The AI Dollar for more stories like this every single day.",
+        "After {long_time}, {big_result} dollars net worth. A {job}. Let that sink in. The math doesn't lie.",
+        "Want the next money story? Watch this again. Share it. Follow The AI Dollar for a new one every single day.",
     ],
     "myth_buster": [
-        "Wait. Everything you KNOW about {topic} is completely WRONG. And I can prove it. These myths are keeping you BROKE and you don't even realize it.",
-        "Myth number one. {myth_1}. WRONG. The reality is {reality_1}. This myth alone keeps millions of people poor.",
-        "Myth number two. {myth_2}. Also WRONG. The reality is {reality_2}. Once you understand this, everything changes.",
-        "Myth number three. {myth_3}. Completely FALSE. The reality is {reality_3}. Your parents probably told you this one.",
-        "Here's a SHOCKING fact. {fact}. {follow_up}. Let that sink in for a moment.",
-        "What do rich people actually do? {rich_habit}. It's not complicated. It's not a secret. It's just DISCIPLINE.",
-        "The simple fix. First, {fix_step_1}. Second, {fix_step_2}. That's literally it. No magic required.",
-        "Proof it works. {proof_amount} dollars in {proof_time} from doing just this ONE thing. The numbers don't lie.",
-        "The REAL difference between rich and poor isn't money. It's {mindset_shift}. Change your mind and the money follows.",
-        "Stop believing the myths that keep you broke. Start building REAL wealth today. Subscribe to The AI Dollar for more money truths that actually work. Hit that bell so you never miss one.",
+        "Wait. Everything you KNOW about {topic} is completely WRONG. I can prove it in thirty seconds.",
+        "Myth number one. {myth_1}. WRONG. The reality? {reality_1}. This myth alone keeps millions broke.",
+        "Follow now because myth number two is even worse. Most people believe this their ENTIRE life and stay poor.",
+        "Myth number two. {myth_2}. Also WRONG. {reality_2}. Your parents probably told you this one.",
+        "SHOCKING fact. {fact}. {follow_up}. Let that sink in.",
+        "The fix is simple. {fix_step_1}. Then {fix_step_2}. That's it. No magic required.",
+        "Which myth did YOU believe? Comment below. Watch again and share this with someone who needs it.",
     ],
     "money_math": [
-        "Don't skip this. Your {daily_cost} dollar {expense} habit is secretly costing you {lifetime_cost} dollars over your lifetime. And I'm going to prove it with actual math right now.",
-        "{daily_cost} dollars per day. That's {monthly_cost} per month. {yearly_cost} per year. Seems small right? Watch what happens next.",
-        "If you invested that money at {percent} percent per year for {years} years, compound interest turns it into {compound_total} dollars. Read that number again.",
-        "That's enough to {comparison_1}. Or {comparison_2}. Or {comparison_3}. From just cutting ONE habit.",
-        "And it's not just {expense}. Add {expense_2} plus {expense_3} and you're wasting {combined_yearly} dollars per year. That money is just GONE.",
-        "The swap is easy. Instead of {old_habit}, do {new_habit}. You'll save {save_amount} dollars per month without feeling it.",
-        "Put that {save_amount} dollars into {investment}. Every single month. Automatically. Set it and forget it.",
-        "In {years} years that becomes {future_value} dollars. From ONE simple swap. Not a sacrifice. A SWAP.",
-        "You're not giving up {expense}. You're BUYING your freedom. You're trading a small pleasure today for total financial freedom tomorrow.",
-        "Make the swap today. {save_amount} dollars per month equals {future_value} dollars in your future. Subscribe and share this with someone who needs to hear it.",
+        "Don't skip this. Your {daily_cost} dollar {expense} habit costs you {lifetime_cost} dollars. I'll prove it with math right now.",
+        "{daily_cost} per day. {monthly_cost} per month. {yearly_cost} per year. Seems small? Watch what happens next.",
+        "Follow for more mind blowing money math. This next number will change how you spend money FOREVER.",
+        "Invested at {percent} percent for {years} years, compound interest turns it into {compound_total} dollars. From just one habit.",
+        "The swap. Instead of {old_habit}, do {new_habit}. Save {save_amount} dollars per month. Set it and forget it.",
+        "In {years} years, {future_value} dollars. You're not giving up {expense}. You're BUYING your freedom.",
+        "Your {daily_cost} dollar habit is STILL costing you. Watch this again. Make the swap TODAY.",
     ],
     "rules_list": [
-        "Listen carefully. {count} money rules that separate the RICH from the POOR. Rule number three alone changed everything for me. If you follow even THREE of these, your entire financial life will transform.",
-        "Rule one. {rule_1}. {rule_1_explain}. This is the foundation of ALL wealth building.",
-        "Rule two. {rule_2}. {rule_2_explain}. Most people do the exact opposite of this.",
-        "Rule three. {rule_3}. {rule_3_explain}. This one will save you THOUSANDS every year.",
-        "Rule four. {rule_4}. {rule_4_explain}. Wealthy people figured this out early. Now you know too.",
-        "Rule five. {rule_5}. {rule_5_explain}. Follow this and you're already ahead of ninety percent of people.",
-        "The number one mistake that keeps people broke is {big_mistake}. If you fix just THIS, everything else gets easier.",
-        "Rich people {rich_do}. Poor people {poor_do}. Same hours in a day. Different choices. Different results.",
-        "Pick just ONE rule to follow this week. Not all five. Just ONE. Master it. Then add another. Small steps build empires.",
-        "Follow The AI Dollar for more wealth building rules. We post new money lessons every single day. Subscribe and turn on ALL notifications so you never miss one.",
+        "Listen. {count} money rules that separate rich from poor. Rule three changed everything for me.",
+        "Rule one. {rule_1}. {rule_1_explain}. This is the foundation of ALL wealth.",
+        "Rule two. {rule_2}. {rule_2_explain}. Most people do the exact opposite.",
+        "Follow for all {count} rules. Most people miss the next one and stay broke forever.",
+        "Rule three. {rule_3}. {rule_3_explain}. This one saves you THOUSANDS every year.",
+        "The number one mistake? {big_mistake}. Fix THIS and everything else gets easier.",
+        "How many rules do YOU follow? Watch again. Count them. Follow for more every day.",
     ],
     "famous_person": [
-        "{famous_name} said ONE thing about money that changed EVERYTHING. And most people completely ignore it.",
-        "The rule is simple. {money_rule}. Four words that are worth BILLIONS. Yet most people hear it and do nothing.",
-        "{famous_name} is worth {net_worth} dollars. Built from {origin_story}. This isn't theory. This is PROVEN.",
-        "What this really means is {explanation_1}. And more importantly, {explanation_2}. Simple but powerful.",
-        "Real example. {real_example}. This is how this rule works in everyday life for normal people like us.",
-        "The mistake most people make is {common_mistake}. And this single mistake DESTROYS any chance of building wealth.",
-        "How to apply this TODAY. First, {apply_step_1}. Second, {apply_step_2}. Do these two things and you're already winning.",
-        "If you follow this one rule consistently, you could have {potential_result} dollars in {result_time}. The math is real.",
-        "Other billionaires who follow this exact same rule include {billionaire_2} and {billionaire_3}. It's not a coincidence.",
-        "One rule. One change. Start TODAY. Your wallet your bank account and your future self will ALL thank you.",
+        "{famous_name} said ONE thing about money that changed everything. Most people completely ignore it.",
+        "The rule. {money_rule}. Worth BILLIONS. Yet most people hear it and do nothing.",
+        "Follow for more billionaire money rules. The next one is even more powerful than this.",
+        "{famous_name} is worth {net_worth} dollars. Built from {origin_story}. This isn't theory. This is proven.",
+        "Apply it TODAY. First, {apply_step_1}. Second, {apply_step_2}. That's it. Start winning.",
+        "Follow this rule consistently. {potential_result} dollars in {result_time}. The math is real.",
+        "{famous_name} said ONE thing. Did you catch it? Watch again. Your wallet will thank you.",
     ],
     "age_timeline": [
-        "At age {age_start}, you should have {amount_start} dollars saved. Do you? If not, keep watching because I'm about to show you exactly what to do.",
-        "By age twenty, you should have {goal_20} dollars saved. How? {how_20}. This sets the foundation for everything.",
-        "By age twenty five, you should have {goal_25} dollars saved. How? {how_25}. This is where momentum kicks in.",
-        "By age thirty, the target is {goal_30} dollars. How? {how_30}. You should be investing consistently by now.",
-        "By age forty, you should have {goal_40} dollars saved. How? {how_40}. Compound interest is doing the heavy lifting.",
-        "If you're behind, DON'T PANIC. Seriously. Here's how to catch up FAST. It's not too late.",
-        "Catch up strategy one. {catchup_1}. This alone can add thousands per year to your savings.",
-        "Catch up strategy two. {catchup_2}. Combine both strategies and you'll be back on track within a year.",
-        "Starting late? {late_start} dollars per month at age {late_age} still becomes {late_result} dollars by age sixty five. The math works at ANY age.",
-        "The best time to start was ten years ago. The second best time is RIGHT NOW. Not tomorrow. Not next month. Today. Open that account. Start that transfer. DO IT.",
+        "At age {age_start}, you should have {amount_start} dollars saved. Do you? Keep watching.",
+        "By twenty, {goal_20} dollars. How? {how_20}. This sets the foundation for everything.",
+        "By twenty five, {goal_25} dollars. How? {how_25}. This is where momentum kicks in.",
+        "Follow to see if you're on track or behind. The next number might shock you.",
+        "By thirty, {goal_30} dollars. {how_30}. Behind? DON'T PANIC.",
+        "Behind? {catchup_1}. Starting at {late_age}? {late_start} per month still becomes {late_result} by sixty five.",
+        "At {age_start} you should have {amount_start}. Do you? Check again. Start TODAY not tomorrow.",
     ],
     "side_hustle": [
-        "This side hustle pays {amount} dollars per month. And it takes {time_required} to set up. No degree. No experience. No boss. Just you and your phone.",
-        "It's called {hustle_name}. And ANYONE can start it. I don't care if you're 18 or 58. This works if you work it.",
-        "Why does this work so well? {reason_1}. And {reason_2}. The barrier to entry is literally ZERO. That's what makes it beautiful.",
-        "Step one. {setup_step_1}. This takes {step1_time}. If you can follow instructions, you can do this step. Stop overthinking it.",
-        "Step two. {setup_step_2}. Use only FREE tools. Don't spend a SINGLE dollar until you've made your first dollar. That's the rule.",
-        "Step three. {setup_step_3}. This is where the magic happens. This is where money starts hitting your account. But here's the thing most people miss...",
-        "Week one earnings. {week1_amount} dollars. Not life changing. But it PROVES the concept. You just made money from nothing. Most people never get this far.",
-        "But watch what happens by month three. {month3_amount} dollars per month. CONSISTENTLY. Because consistency is the REAL secret. Not some hack. Not some trick. Just showing up.",
-        "Now scale it. {scale_strategy}. Turn {month3_amount} into {scaled_amount} dollars per month. Now you have a REAL business. Not a hobby. A business.",
-        "Start THIS WEEK. Not next month. Not when you feel ready. THIS WEEK. Subscribe to The AI Dollar for more hustles that actually PAY. We drop these daily.",
+        "This side hustle pays {amount} dollars per month. Takes {time_required} to set up. No degree needed.",
+        "It's called {hustle_name}. ANYONE can start it. Zero experience needed. Here's how.",
+        "Follow for a new side hustle EVERY day. All free to start. The next one pays even more.",
+        "Step one. {setup_step_1}. Takes {step1_time}. Step two. {setup_step_2}. Free tools only.",
+        "Step three. {setup_step_3}. This is where money starts flowing into your account.",
+        "Month three. {month3_amount} per month consistently. Because consistency is the real secret.",
+        "This pays {amount} per month. Did you catch all the steps? Watch again. Start this week.",
     ],
     "rich_vs_poor": [
-        "I need you to hear this. Rich people do THIS every single day. And broke people do the EXACT opposite. Same twenty four hours. Completely different results. Habit number five is the one that will blow your mind.",
-        "Habit one. Rich people {rich_habit_1}. Broke people? {poor_habit_1}. This ONE difference compounds over years into MILLIONS.",
-        "Habit two. Rich people {rich_habit_2}. Broke people {poor_habit_2}. And here's the part nobody tells you...",
-        "Habit three. Rich people {rich_habit_3}. Broke people {poor_habit_3}. This is the habit that separates the top one percent.",
-        "Habit four. Rich people {rich_habit_4}. Broke people {poor_habit_4}. If you're still watching, you're already different from 90 percent of people.",
-        "Habit five. Rich people {rich_habit_5}. Broke people {poor_habit_5}. This last one is the BIGGEST game changer.",
-        "Same twenty four hours in a day. Same access to information. Different CHOICES lead to completely different RESULTS. It's not about money. It's about DECISIONS.",
-        "The switch is simple. Pick ONE rich habit from this list. Replace ONE broke habit. Do it for thirty days straight. That's it. That's the entire plan.",
-        "After just thirty days of this, you'll have {proof_amount} dollars more saved. But more importantly, you'll have a completely NEW mindset. And THAT is priceless.",
-        "Which habit will you switch FIRST? Comment below and let me know. And subscribe to The AI Dollar because we post money lessons like this EVERY single day.",
+        "Rich people do THIS every day. Broke people do the EXACT opposite. Same twenty four hours. Watch closely.",
+        "Rich people {rich_habit_1}. Broke people? {poor_habit_1}. This ONE difference compounds into millions.",
+        "Rich people {rich_habit_2}. Broke people {poor_habit_2}. And here's what nobody tells you...",
+        "Follow to learn what rich people do differently EVERY single day. Habit three separates the top one percent.",
+        "Rich people {rich_habit_3}. Broke people {poor_habit_3}. Same hours. Different choices. Different results.",
+        "The switch. Pick ONE rich habit. Replace ONE broke habit. Do it thirty days. That's the entire plan.",
+        "Rich do THIS. Broke do the opposite. Which one are YOU? Watch again. Comment below.",
     ],
     "money_challenge": [
-        "Try this {duration} money challenge and save {save_goal} dollars. GUARANTEED. If you follow the rules, the money appears. It's simple math.",
-        "Here are the rules. {rule_1}. {rule_2}. {rule_3}. That's IT. No complicated spreadsheets. No budgeting apps. Just three simple rules for {duration}.",
-        "Week one. {week1_action}. Difficulty level easy. You'll save {week1_saved} dollars. This is the warm up. Don't skip it.",
-        "Week two. {week2_action}. It's getting easier now. Your brain is rewiring. Total saved so far {week2_total} dollars. You can already FEEL the difference.",
-        "Week three. {week3_action}. Something magical happens in week three. It becomes a HABIT. You stop THINKING about it and just DO it.",
-        "Week four. {week4_action}. Final push. You're almost there. Total saved {total_saved} dollars. But hold on because what comes NEXT is the real game changer.",
-        "RESULTS. {total_saved} dollars saved in just {duration}. From basically ZERO effort. No suffering. No deprivation. Just simple smart choices.",
-        "But the REAL win isn't the money. It's this. {mindset_change}. Your relationship with money has completely CHANGED. And THAT is worth more than any amount.",
-        "Want to go next level? Repeat this for {next_duration}. That turns into {annual_amount} dollars per year. Every single year. That is literally life changing money.",
-        "Start TODAY. Not Monday. Not the first of the month. TODAY. Right now. Subscribe to The AI Dollar for more challenges that build REAL wealth.",
+        "Try this {duration} challenge and save {save_goal} dollars. GUARANTEED. Follow the rules. The money appears.",
+        "The rules. {rule_1}. {rule_2}. {rule_3}. That's IT. No apps. No spreadsheets. Just three rules.",
+        "Follow for more money challenges that actually work. This next part is the real game changer.",
+        "Week one. {week1_action}. Easy. Saved {week1_saved} dollars. Your brain starts rewiring immediately.",
+        "Results. {total_saved} dollars saved in {duration}. Zero effort. Zero suffering. Just smart choices.",
+        "But the REAL win. {mindset_change}. Your relationship with money completely changes. THAT is priceless.",
+        "Save {save_goal} in {duration}. Watch again for the exact rules. Start TODAY not Monday.",
     ],
     "secret_strategy": [
-        "You're about to learn something most people pay thousands for. This {who} strategy is hiding in PLAIN SIGHT. Nobody talks about it because it's not exciting. But it quietly builds {result} dollars while you sleep.",
-        "The strategy is called {strategy_name}. It's used by the top {percent} percent of wealthy people. And most of them won't tell you about it.",
-        "Why does nobody talk about it? Because {hidden_reason}. It's not sexy. It doesn't make for good social media content. But you know what it DOES make? MONEY.",
-        "Here's how it works. Step one. {step_1}. This takes {time_1}. Simple. Nothing fancy. But this first step is where ninety percent of people quit.",
-        "Step two. {step_2}. THIS is the key move. This is what separates the people who talk about wealth from the people who actually BUILD it.",
-        "Step three. {step_3}. Now you sit back and let compound interest do what it does best. Time becomes your best friend. Not your enemy.",
-        "Let me show you real numbers. {start_amount} dollars per month for {years} years equals {end_amount} dollars. Read that number again. That's not a typo.",
-        "Who uses this exact strategy? {user_1}. {user_2}. {user_3}. All quietly wealthy. No Lamborghini posts. No flexing. Just real money in real accounts.",
-        "And you can start with just {min_amount} dollars. Right now. TODAY. No minimum really. Just START. The hardest part is the first step.",
-        "The wealthy don't have secrets. They have HABITS. And now you know one of them. Subscribe to The AI Dollar to learn a new one every day.",
+        "This {who} strategy hides in plain sight. Nobody talks about it. But it builds {result} dollars while you sleep.",
+        "The strategy. {strategy_name}. Used by the top {percent} percent. Most won't tell you about it.",
+        "Follow for more hidden strategies the wealthy use every day. The next one is even more powerful.",
+        "Step one. {step_1}. Takes {time_1}. This is where ninety percent of people quit. Don't be them.",
+        "Real numbers. {start_amount} per month for {years} years equals {end_amount} dollars. Not a typo.",
+        "Start with just {min_amount} dollars. RIGHT NOW. No excuses. The hardest part is step one.",
+        "This builds {result} quietly. Did you catch the strategy? Watch again. Follow for more every day.",
     ],
 }
 
@@ -763,6 +703,57 @@ def _get_img(role):
     return random.choice(prompts)
 
 
+LOOP_SPEECHES = [
+    "Did you catch everything? Watch again. Follow The AI Dollar for more every single day.",
+    "Watch this again. Share it with someone who needs it. Follow for daily money tips.",
+    "That's it. The whole strategy. Watch again to make sure you got it. Follow for more.",
+    "Comment which tip helped you most. Watch again. Follow The AI Dollar for daily lessons.",
+]
+
+LOOP_TEXTS = [
+    "Did you catch\neverything?\nWatch again\nFollow for more",
+    "Share this with\nsomeone who\nneeds it\nFollow for daily tips",
+    "Comment your\n#1 takeaway\nWatch again\nFollow for more",
+]
+
+CTA_SPEECHES = [
+    "Follow right now. The next video is even more powerful. Don't miss it.",
+    "Follow for daily money tips that actually work. The next one could change your life.",
+    "Hit follow right now. We drop money lessons like this every single day.",
+]
+
+CTA_TEXTS = [
+    "FOLLOW NOW\nfor daily\nmoney tips\nthat WORK",
+    "FOLLOW\nfor the next\nmoney lesson\nDon't miss it",
+    "Hit FOLLOW\nNew money tips\nEVERY day",
+]
+
+
+def _to_7_slides(slides):
+    """Trim any 10-slide set to 7: hook + 2 content + early CTA + 2 content + loop ending."""
+    if len(slides) <= 7:
+        return slides
+    cta_slide = {
+        "text": random.choice(CTA_TEXTS),
+        "speech": random.choice(CTA_SPEECHES),
+        "img": _get_img("cta"),
+    }
+    loop_slide = {
+        "text": random.choice(LOOP_TEXTS),
+        "speech": random.choice(LOOP_SPEECHES),
+        "img": _get_img("cta"),
+    }
+    return [
+        slides[0],
+        slides[1],
+        cta_slide,
+        slides[2],
+        slides[3],
+        slides[4],
+        loop_slide,
+    ]
+
+
 def _build_person_story():
     persona = random.choice(PERSONAS)
     method = random.choice(METHODS)
@@ -804,34 +795,25 @@ def _build_person_story():
 
     slides = [
         {"text": f"{persona['name']} was a {persona['job']}\n{persona['story']}\nmaking ${low_salary}K/year",
-         "speech": SPEECH_TEMPLATES["person_story"][0].format(person_name=persona['name'], job=persona['job'], story_detail=persona['story'], low_salary=low_salary, pronoun=pronoun),
+         "speech": SPEECH_TEMPLATES["person_story"][0].format(person_name=persona['name'], job=persona['job'], story_detail=persona['story'], low_salary=low_salary),
          "img": _get_img("hook")},
         {"text": f"Every month\nthe same cycle:\nearn → spend →\nNOTHING left\n${debt}K in debt",
-         "speech": SPEECH_TEMPLATES["person_story"][1].format(pronoun=pronoun, pronoun_cap=pronoun_cap, debt=debt),
+         "speech": SPEECH_TEMPLATES["person_story"][1].format(debt=debt),
          "img": _get_img("struggle")},
-        {"text": f"Then {pronoun} discovered\n{method['name']}\nand everything\nchanged",
-         "speech": SPEECH_TEMPLATES["person_story"][2].format(pronoun=pronoun, method_name=method['name']),
+        {"text": f"FOLLOW for the\nfull strategy\nThis changed\nEVERYTHING",
+         "speech": SPEECH_TEMPLATES["person_story"][2],
+         "img": _get_img("cta")},
+        {"text": f"Then {pronoun} discovered\n{method['name']}\n{action_steps[0][0]}",
+         "speech": SPEECH_TEMPLATES["person_story"][3].format(pronoun=pronoun, method_name=method['name'], speech_action_1=action_steps[0][1]),
          "img": _get_img("discovery")},
-        {"text": f"Step 1:\n{action_steps[0][0]}",
-         "speech": f"Step one. {action_steps[0][1]}. This alone changed the game.",
-         "img": _get_img("action1")},
         {"text": f"Step 2:\n{action_steps[1][0]}",
-         "speech": f"Step two. {action_steps[1][1]}. Most people skip this but it's the most important part.",
-         "img": _get_img("action2")},
-        {"text": f"Step 3:\n{action_steps[2][0]}",
-         "speech": f"Step three. {action_steps[2][1]}. This is where the real magic happens.",
-         "img": _get_img("action3")},
-        {"text": f"After {short_time}:\n${early_result:,}\nsaved and invested\nFrom NOTHING",
-         "speech": f"After just {short_time}, {pronoun} had {early_result:,} dollars saved and invested. From NOTHING to {early_result:,} dollars. Let that sink in.",
-         "img": _get_img("result_early")},
+         "speech": SPEECH_TEMPLATES["person_story"][4].format(speech_action_2=action_steps[1][1]),
+         "img": _get_img("action1")},
         {"text": f"After {long_time}:\n${big_result:,}\nnet worth\nAs a {persona['job']}",
-         "speech": f"After {long_time}, {pronoun_poss} net worth hit {big_result:,} dollars. A {persona['job']} with a {big_result:,} dollar net worth. The math doesn't lie.",
+         "speech": SPEECH_TEMPLATES["person_story"][5].format(long_time=long_time, big_result=f"{big_result:,}", job=persona['job']),
          "img": _get_img("result_big")},
-        {"text": f"The lesson:\n{method['name'].upper()}\n+ CONSISTENCY\n= WEALTH\nAnyone can do this",
-         "speech": f"The lesson is simple. {method['name']} plus consistency equals wealth. Anyone can do this. You don't need a degree. You need discipline.",
-         "img": _get_img("lesson")},
-        {"text": f"Start with ${min_start}\ntoday\nYour future self\nwill THANK you",
-         "speech": f"Start with just {min_start} dollars today. Set it up right now. Your future self will be a completely different person because of this moment.",
+        {"text": f"Want the next\nmoney story?\nWatch again\nFollow The AI Dollar",
+         "speech": SPEECH_TEMPLATES["person_story"][6],
          "img": _get_img("cta")},
     ]
 
@@ -876,34 +858,25 @@ def _build_myth_buster():
 
     slides = [
         {"text": f"Everything you\nknow about\n{myth_set['topic']}\nis WRONG",
-         "speech": f"Everything you KNOW about {myth_set['topic']} is completely WRONG. And these myths are keeping you BROKE.",
+         "speech": SPEECH_TEMPLATES["myth_buster"][0].format(topic=myth_set['topic']),
          "img": _get_img("hook")},
         {"text": f"Myth 1:\n{myths[0]['myth']}\nREALITY:\n{myths[0]['reality'][:50]}",
-         "speech": f"Myth number one. {myths[0]['myth']}. WRONG. The reality is {myths[0]['reality']}.",
+         "speech": SPEECH_TEMPLATES["myth_buster"][1].format(myth_1=myths[0]['myth'], reality_1=myths[0]['reality']),
          "img": _get_img("myth1")},
+        {"text": f"FOLLOW to stop\nbelieving money\nmyths that keep\nyou BROKE",
+         "speech": SPEECH_TEMPLATES["myth_buster"][2],
+         "img": _get_img("cta")},
         {"text": f"Myth 2:\n{myths[1]['myth']}\nREALITY:\n{myths[1]['reality'][:50]}",
-         "speech": f"Myth number two. {myths[1]['myth']}. Also WRONG. The reality is {myths[1]['reality']}.",
+         "speech": SPEECH_TEMPLATES["myth_buster"][3].format(myth_2=myths[1]['myth'], reality_2=myths[1]['reality']),
          "img": _get_img("myth2")},
-        {"text": f"Myth 3:\n{myths[2]['myth']}\nREALITY:\n{myths[2]['reality'][:50]}",
-         "speech": f"Myth number three. {myths[2]['myth']}. Completely FALSE. The reality is {myths[2]['reality']}.",
-         "img": _get_img("myth3")},
         {"text": f"SHOCKING FACT:\n{fact_data['fact'][:60]}",
-         "speech": f"Here's a SHOCKING fact. {fact_data['fact']}. {fact_data['follow_up']}.",
+         "speech": SPEECH_TEMPLATES["myth_buster"][4].format(fact=fact_data['fact'], follow_up=fact_data['follow_up']),
          "img": _get_img("shocking_stat")},
-        {"text": f"What rich people\nactually do:\n{random.choice(rich_habits)[:60]}",
-         "speech": f"What do rich people actually do? {random.choice(rich_habits)}",
-         "img": _get_img("what_rich_do")},
         {"text": f"The fix:\n1. {fix[0][:40]}\n2. {fix[1][:40]}",
-         "speech": f"The simple fix. First, {fix[0]}. Second, {fix[1]}. That's literally it.",
+         "speech": SPEECH_TEMPLATES["myth_buster"][5].format(fix_step_1=fix[0], fix_step_2=fix[1]),
          "img": _get_img("simple_fix")},
-        {"text": f"Proof:\n${proof_amount:,}\nin {proof_time}\nfrom this alone",
-         "speech": f"Proof it works. {proof_amount:,} dollars in {proof_time} from doing just this ONE thing.",
-         "img": _get_img("proof")},
-        {"text": f"The real difference:\n{random.choice(mindset_shifts)}",
-         "speech": f"The REAL difference between rich and poor isn't money. It's this: {random.choice(mindset_shifts)}.",
-         "img": _get_img("mindset")},
-        {"text": f"Stop believing\nthe myths\nStart building\nwealth TODAY",
-         "speech": "Stop believing the myths that keep you broke. Start building REAL wealth today. Subscribe for more money truths that actually work.",
+        {"text": f"Which myth did\nyou believe?\nComment below\nWatch again",
+         "speech": SPEECH_TEMPLATES["myth_buster"][6],
          "img": _get_img("cta")},
     ]
 
@@ -964,7 +937,7 @@ def _build_money_math():
          "img": _get_img("cta")},
     ]
 
-    return {"title": title, "slides": slides, "keywords": [data["expense"].title(), "Compound Interest", "Saving Money"]}
+    return {"title": title, "slides": _to_7_slides(slides), "keywords": [data["expense"].title(), "Compound Interest", "Saving Money"]}
 
 
 def _build_rules_list():
@@ -1031,7 +1004,7 @@ def _build_rules_list():
          "img": _get_img("cta")},
     ]
 
-    return {"title": title, "slides": slides, "keywords": ["Money Rules", "Rich vs Poor", "Wealth Building"]}
+    return {"title": title, "slides": _to_7_slides(slides), "keywords": ["Money Rules", "Rich vs Poor", "Wealth Building"]}
 
 
 def _build_famous_person():
@@ -1110,7 +1083,7 @@ def _build_famous_person():
          "img": _get_img("cta")},
     ]
 
-    return {"title": title, "slides": slides, "keywords": [person["name"], "Money Rules", "Investing"]}
+    return {"title": title, "slides": _to_7_slides(slides), "keywords": [person["name"], "Money Rules", "Investing"]}
 
 
 def _build_age_timeline():
@@ -1156,7 +1129,7 @@ def _build_age_timeline():
          "img": _get_img("cta")},
     ]
 
-    return {"title": title, "slides": slides, "keywords": ["Savings Goals", "Age Milestones", "Retirement"]}
+    return {"title": title, "slides": _to_7_slides(slides), "keywords": ["Savings Goals", "Age Milestones", "Retirement"]}
 
 
 def _build_side_hustle():
@@ -1191,13 +1164,13 @@ def _build_side_hustle():
          "speech": SPEECH_TEMPLATES["side_hustle"][6].format(week1_amount=hustle['week1']),
          "img": _get_img("week1")},
         {"text": f"Month 3:\n${hustle['month3']:,}/month\nConsistency\nis the secret",
-         "speech": SPEECH_TEMPLATES["side_hustle"][7].format(month3_amount=f"{hustle['month3']:,}"),
+         "speech": f"Month three. {hustle['month3']:,} dollars per month consistently. Consistency is the real secret.",
          "img": _get_img("month3")},
         {"text": f"Scale it:\n{hustle['scale'][:50]}\n${hustle['month3']:,} → ${hustle['scaled']}/month",
-         "speech": SPEECH_TEMPLATES["side_hustle"][8].format(scale_strategy=hustle['scale'], month3_amount=f"{hustle['month3']:,}", scaled_amount=hustle['scaled']),
+         "speech": f"Scale it. {hustle['scale']}. Turn {hustle['month3']:,} into {hustle['scaled']} per month.",
          "img": _get_img("scale")},
-        {"text": f"Start THIS WEEK\nnot next month\nSubscribe for more\nhustles that PAY",
-         "speech": SPEECH_TEMPLATES["side_hustle"][9],
+        {"text": f"Start THIS WEEK\nnot next month\nFollow for more\nhustles that PAY",
+         "speech": f"Start this week. Follow The AI Dollar for more hustles that actually pay.",
          "img": _get_img("cta")},
     ]
     return {"title": title, "slides": slides, "keywords": [hustle["name"].title(), "Side Hustle", "Make Money"]}
@@ -1237,16 +1210,16 @@ def _build_rich_vs_poor():
          "speech": SPEECH_TEMPLATES["rich_vs_poor"][6],
          "img": _get_img("why_matters")},
         {"text": "The switch:\nPick ONE rich habit\nReplace ONE broke habit\nDo it for 30 days",
-         "speech": SPEECH_TEMPLATES["rich_vs_poor"][7],
+         "speech": "Pick ONE rich habit. Replace ONE broke habit. Do it thirty days. That's the entire plan.",
          "img": _get_img("the_switch")},
         {"text": f"After 30 days:\n${proof:,} more saved\nand a NEW mindset",
-         "speech": SPEECH_TEMPLATES["rich_vs_poor"][8].format(proof_amount=f"{proof:,}"),
+         "speech": f"After thirty days, {proof:,} dollars more saved. And a completely new mindset. That is priceless.",
          "img": _get_img("proof")},
-        {"text": "Which habit will\nyou switch FIRST?\nComment below\nSubscribe for daily tips",
-         "speech": SPEECH_TEMPLATES["rich_vs_poor"][9],
+        {"text": "Which one are YOU?\nRich or broke habits?\nComment below\nFollow for daily tips",
+         "speech": "Which one are you? Rich habits or broke habits? Comment below. Follow for more every day.",
          "img": _get_img("cta")},
     ]
-    return {"title": title, "slides": slides, "keywords": ["Rich vs Poor", "Money Habits", "Millionaire Mindset"]}
+    return {"title": title, "slides": _to_7_slides(slides), "keywords": ["Rich vs Poor", "Money Habits", "Millionaire Mindset"]}
 
 
 def _build_money_challenge():
@@ -1275,25 +1248,22 @@ def _build_money_challenge():
          "speech": SPEECH_TEMPLATES["money_challenge"][3].format(week2_action=w[1]['action'], week2_total=running_total_2),
          "img": _get_img("week2")},
         {"text": f"Week 3:\n{w[2]['action'][:40]}\nIt's becoming\na HABIT now",
-         "speech": SPEECH_TEMPLATES["money_challenge"][4].format(week3_action=w[2]['action']),
+         "speech": f"Week three. {w[2]['action']}. Something magical happens. It becomes a habit.",
          "img": _get_img("week3")},
         {"text": f"Week 4:\n{w[3]['action'][:40]}\nTotal: ${total:,}",
-         "speech": SPEECH_TEMPLATES["money_challenge"][5].format(week4_action=w[3]['action'], total_saved=f"{total:,}"),
+         "speech": f"Week four. {w[3]['action']}. Final push. Total saved {total:,} dollars.",
          "img": _get_img("week4")},
         {"text": f"RESULTS:\n${total:,} saved\nin just {challenge['duration']}\nFrom ZERO effort",
-         "speech": SPEECH_TEMPLATES["money_challenge"][6].format(total_saved=f"{total:,}", duration=challenge['duration']),
+         "speech": SPEECH_TEMPLATES["money_challenge"][4].format(total_saved=f"{total:,}", duration=challenge['duration']),
          "img": _get_img("results")},
         {"text": f"The REAL win:\n{challenge['mindset'][:50]}",
-         "speech": SPEECH_TEMPLATES["money_challenge"][7].format(mindset_change=challenge['mindset']),
+         "speech": SPEECH_TEMPLATES["money_challenge"][5].format(mindset_change=challenge['mindset']),
          "img": _get_img("what_changed")},
-        {"text": f"Next level:\nRepeat for {challenge['next_duration']}\n= ${challenge['annual']:,}/year",
-         "speech": SPEECH_TEMPLATES["money_challenge"][8].format(next_duration=challenge['next_duration'], annual_amount=f"{challenge['annual']:,}"),
-         "img": _get_img("next_level")},
-        {"text": "Start TODAY\nnot Monday\nNot next month\nTODAY\nSubscribe for more",
-         "speech": SPEECH_TEMPLATES["money_challenge"][9],
+        {"text": f"Save ${challenge['goal']:,}\nin {challenge['duration']}\nWatch again\nStart TODAY",
+         "speech": SPEECH_TEMPLATES["money_challenge"][6],
          "img": _get_img("cta")},
     ]
-    return {"title": title, "slides": slides, "keywords": [challenge["name"], "Money Challenge", "Saving Money"]}
+    return {"title": title, "slides": _to_7_slides(slides), "keywords": [challenge["name"], "Money Challenge", "Saving Money"]}
 
 
 def _build_secret_strategy():
@@ -1320,25 +1290,22 @@ def _build_secret_strategy():
          "speech": SPEECH_TEMPLATES["secret_strategy"][3].format(step_1=strategy['steps'][0], time_1="about 30 minutes"),
          "img": _get_img("how_step1")},
         {"text": f"Step 2:\n{strategy['steps'][1][:55]}",
-         "speech": SPEECH_TEMPLATES["secret_strategy"][4].format(step_2=strategy['steps'][1]),
+         "speech": f"Step two. {strategy['steps'][1]}. This is the key move.",
          "img": _get_img("how_step2")},
         {"text": f"Step 3:\n{strategy['steps'][2][:55]}",
-         "speech": SPEECH_TEMPLATES["secret_strategy"][5].format(step_3=strategy['steps'][2]),
+         "speech": f"Step three. {strategy['steps'][2]}. Now sit back and let compound interest work.",
          "img": _get_img("how_step3")},
         {"text": f"Real numbers:\n${n['start']}/month\nfor {n['years']} years\n= ${n['end']}",
-         "speech": SPEECH_TEMPLATES["secret_strategy"][6].format(start_amount=n['start'], years=n['years'], end_amount=n['end']),
+         "speech": SPEECH_TEMPLATES["secret_strategy"][4].format(start_amount=n['start'], years=n['years'], end_amount=n['end']),
          "img": _get_img("real_numbers")},
-        {"text": f"Who uses this:\n{strategy['users'][0][:35]}\n{strategy['users'][1][:35]}\n{strategy['users'][2][:35]}",
-         "speech": SPEECH_TEMPLATES["secret_strategy"][7].format(user_1=strategy['users'][0], user_2=strategy['users'][1], user_3=strategy['users'][2]),
-         "img": _get_img("who_uses")},
         {"text": f"Start with\n${strategy['min']}\nRIGHT NOW\nNo excuses",
-         "speech": SPEECH_TEMPLATES["secret_strategy"][8].format(min_amount=strategy['min']),
+         "speech": SPEECH_TEMPLATES["secret_strategy"][5].format(min_amount=strategy['min']),
          "img": _get_img("start_now")},
-        {"text": "The wealthy\ndon't have secrets\nThey have HABITS\nSubscribe to\nlearn them ALL",
-         "speech": SPEECH_TEMPLATES["secret_strategy"][9],
+        {"text": f"This builds\n${strategy['result']} quietly\nDid you catch it?\nFollow for more",
+         "speech": SPEECH_TEMPLATES["secret_strategy"][6].format(result=strategy['result']),
          "img": _get_img("cta")},
     ]
-    return {"title": title, "slides": slides, "keywords": [strategy["name"].title(), "Wealth Strategy", "Investing"]}
+    return {"title": title, "slides": _to_7_slides(slides), "keywords": [strategy["name"].title(), "Wealth Strategy", "Investing"]}
 
 
 def _build_long_topic():
