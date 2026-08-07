@@ -1067,7 +1067,7 @@ def enhance_image(img_path, landscape=False):
 
 
 def _extract_search_keywords(desc, text=""):
-    """Pull 2-4 search-friendly keywords from img + text context."""
+    """Pull search keywords from slide TEXT first, then img desc as fallback."""
     stop = {'a', 'an', 'the', 'of', 'on', 'in', 'at', 'to', 'and', 'or',
             'with', 'its', 'from', 'into', 'for', 'by', 'is', 'are', 'was',
             'being', 'their', 'that', 'this', 'no', 'not', 'showing',
@@ -1076,13 +1076,18 @@ def _extract_search_keywords(desc, text=""):
             'behind', 'beside', 'above', 'below', 'under', 'over',
             'dark', 'bright', 'single', 'each', 'every', 'slowly',
             'against', 'through', 'between', 'along', 'across', 'displayed',
-            'floating', 'shooting', 'being', 'showing'}
+            'floating', 'shooting', 'person', 'moment', 'reaction',
+            'watch', 'follow', 'comment', 'subscribe', 'share',
+            'ever', 'never', 'just', 'your', 'you', 'did', 'don',
+            'why', 'how', 'what', 'when', 'who', 'which', 'step',
+            'rule', 'tip', 'try', 'hit', 'now', 'today', 'right',
+            'still', 'til', 'end', 'new', 'daily', 'tips', 'more'}
 
-    # Extract nouns from both desc and text
-    words = (desc + ' ' + text.lower()).replace(',', ' ').split()
+    combined = (text + ' ' + desc).lower().replace('\n', ' ').replace(',', ' ')
+    combined = combined.replace('$', '').replace('#', '').replace('%', ' percent ')
+    words = combined.split()
     good = [w for w in words if w not in stop and len(w) > 2 and w.isalpha()]
 
-    # Deduplicate while preserving order
     seen = set()
     result = []
     for w in good:
@@ -1090,7 +1095,8 @@ def _extract_search_keywords(desc, text=""):
             seen.add(w)
             result.append(w)
 
-    return ' '.join(result[:3]) if result else 'finance money'
+    kw = ' '.join(result[:4]) if result else ''
+    return f"business finance {kw}".strip() if kw else 'business finance money professional'
 
 
 def fetch_hd_images(slides, save_dir, landscape=False):
@@ -1335,14 +1341,14 @@ def prep_slides(images, slides, durations, work_dir, landscape=False):
     PAD = 50
     MAX_TW = W - PAD * 2
 
-    font_brand = get_font(32)
+    font_brand = get_font(28)
     font_cta = get_font(44)
-    font_sub = get_font(26)
-    font_counter = get_font(24)
+    font_sub = get_font(24)
+    font_counter = get_font(22)
 
-    GOLD = (255, 200, 50)
     WHITE = (255, 255, 255)
     LIGHT_GRAY = (200, 200, 210)
+    ACCENT = (220, 220, 230)
 
     def wrap_line(text_line, font, draw_ctx, max_w):
         words = text_line.split()
@@ -1409,25 +1415,15 @@ def prep_slides(images, slides, durations, work_dir, landscape=False):
 
         draw = ImageDraw.Draw(bg)
 
-        # Top accent bar
-        draw.rectangle([0, 0, W, 5], fill=GOLD)
-
-        # Brand name — top left
+        # Brand name — top left, subtle white
         brand = "THE AI DOLLAR"
-        draw_text_shadow(draw, (PAD, 24), brand, font_brand, GOLD)
+        draw_text_shadow(draw, (PAD, 28), brand, font_brand, LIGHT_GRAY)
 
         # Slide counter — top right
         counter = f"{idx + 1}/{total_slides}"
         cb = draw.textbbox((0, 0), counter, font=font_counter)
         cw = cb[2] - cb[0]
-        draw_text_shadow(draw, (W - cw - PAD, 28), counter, font_counter, LIGHT_GRAY)
-
-        # Progress bar below brand area
-        bar_y = 65
-        bar_h = 3
-        progress = (idx + 1) / total_slides
-        draw.rectangle([PAD, bar_y, W - PAD, bar_y + bar_h], fill=(60, 60, 80))
-        draw.rectangle([PAD, bar_y, PAD + int((W - PAD * 2) * progress), bar_y + bar_h], fill=GOLD)
+        draw_text_shadow(draw, (W - cw - PAD, 30), counter, font_counter, LIGHT_GRAY)
 
         # Text rendering with auto-wrap and auto-scale
         text = slide['text'].upper()
@@ -1453,16 +1449,8 @@ def prep_slides(images, slides, durations, work_dir, landscape=False):
             tw = bbox[2] - bbox[0]
             x = max((W - tw) // 2, PAD)
             y = start_y + li * line_h
-            color = WHITE if is_title else GOLD
+            color = WHITE if is_title else ACCENT
             draw_text_shadow(draw, (x, y), line, font, color)
-
-        # Gold accent line under title block
-        accent_y = start_y - 12
-        accent_w = min(280, W - PAD * 2)
-        draw.rectangle(
-            [(W - accent_w) // 2, accent_y, (W + accent_w) // 2, accent_y + 3],
-            fill=GOLD
-        )
 
         is_first = (idx == 0)
         is_last = (idx == len(slides) - 1)
@@ -1503,12 +1491,9 @@ def prep_slides(images, slides, durations, work_dir, landscape=False):
                 [cx2 - 16, cy2 - 6, cx2 + cw2 + 16, cy2 + 28],
                 radius=10, fill=(30, 30, 60, 200)
             )
-            draw.text((cx2, cy2), cta2, font=font_sub, fill=GOLD)
+            draw.text((cx2, cy2), cta2, font=font_sub, fill=WHITE)
 
-        # Bottom brand bar
-        draw.rectangle([0, H - 6, W, H], fill=GOLD)
-
-        bg.save(out, "JPEG", quality=95)
+        bg.save(out, "JPEG", quality=98)
         del draw, bg
         gc.collect()
         print(f"  slide {idx+1}/{len(slides)} ready")
@@ -1547,8 +1532,8 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file, land
             '-filter_complex',
             f'[0:v]scale={res},fps=30[v];[2:a]volume=0.10[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
             '-map', '[v]', '-map', '[aout]',
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
-            '-c:a', 'aac', '-b:a', '128k',
+            '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
+            '-c:a', 'aac', '-b:a', '192k',
             '-pix_fmt', 'yuv420p',
             '-shortest',
             output_file
@@ -1559,8 +1544,8 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file, land
             '-f', 'concat', '-safe', '0', '-i', concat_file,
             '-i', audio_file,
             '-vf', f'scale={res},fps=30',
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
-            '-c:a', 'aac', '-b:a', '128k',
+            '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
+            '-c:a', 'aac', '-b:a', '192k',
             '-pix_fmt', 'yuv420p',
             '-shortest',
             output_file
@@ -1588,8 +1573,8 @@ def create_video_simple(slides, audio_file, durations, output_file, landscape=Fa
         FFMPEG, '-y',
         '-f', 'lavfi', '-i', f'color=c=0x0C0C28:size={size}:rate=30:d={total_dur:.2f}',
         '-i', audio_file,
-        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
-        '-c:a', 'aac', '-b:a', '128k',
+        '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
+        '-c:a', 'aac', '-b:a', '192k',
         '-pix_fmt', 'yuv420p',
         '-shortest',
         output_file
