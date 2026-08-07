@@ -103,15 +103,16 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
         ]
         yt_tags = topic_tags + [t for t in base_tags if t.lower() not in [k.lower() for k in topic_tags]]
         import re
-        yt_tags = [re.sub(r'[<>]', '', t).strip() for t in yt_tags if t.strip()]
-        yt_tags = [t[:100] for t in yt_tags if t]
+        yt_tags = [re.sub(r'[<>",]', '', t).strip() for t in yt_tags if t.strip()]
+        yt_tags = [t[:30] for t in yt_tags if t]
         total = 0
         trimmed = []
         for t in yt_tags:
-            if total + len(t) > 480:
+            added = len(t) + (1 if trimmed else 0)
+            if total + added > 450:
                 break
             trimmed.append(t)
-            total += len(t)
+            total += added
         yt_tags = trimmed
 
         kw_line = ", ".join(topic_tags[:5]) if topic_tags else "money tips, finance, investing"
