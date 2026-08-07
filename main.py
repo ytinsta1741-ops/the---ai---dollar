@@ -384,8 +384,7 @@ def upload_to_facebook(video_path, title, keywords=None):
 
 
 def post_video(is_series_part=False, series_name="", part_num=0):
-    """Generate and post video to YouTube + Instagram + Facebook
-    is_series_part: True adds series info to title for binge-watching"""
+    """Generate and post video to YouTube + TikTok"""
     print(f"\n{'='*50}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] POSTING VIDEO{' [SERIES PART]' if is_series_part else ''}")
     print(f"{'='*50}\n")
@@ -407,13 +406,7 @@ def post_video(is_series_part=False, series_name="", part_num=0):
         print(f"\n[STEP 2] Uploading to YouTube...")
         youtube_success = upload_to_youtube(video_path, title, script, is_short=True, keywords=keywords)
 
-        print(f"\n[STEP 3] Uploading to Instagram...")
-        instagram_success = upload_to_instagram(video_path, title, keywords=keywords)
-
-        print(f"\n[STEP 4] Uploading to Facebook...")
-        facebook_success = upload_to_facebook(video_path, title, keywords=keywords)
-
-        print(f"\n[STEP 5] Uploading to TikTok...")
+        print(f"\n[STEP 3] Uploading to TikTok...")
         tiktok_success = upload_to_tiktok(video_path, title, keywords=keywords)
 
         with open("last_post_time.txt", "w") as f:
@@ -421,10 +414,8 @@ def post_video(is_series_part=False, series_name="", part_num=0):
 
         print(f"\n{'='*50}")
         print(f"[DONE] POSTING COMPLETE")
-        print(f"   YouTube:   {'posted' if youtube_success else 'skipped'}")
-        print(f"   Instagram: {'posted' if instagram_success else 'skipped'}")
-        print(f"   Facebook:  {'posted' if facebook_success else 'skipped'}")
-        print(f"   TikTok:    {'posted' if tiktok_success else 'skipped'}")
+        print(f"   YouTube:   {'posted' if youtube_success else 'FAILED'}")
+        print(f"   TikTok:    {'posted' if tiktok_success else 'FAILED'}")
         print(f"{'='*50}\n")
 
     except Exception as e:
@@ -434,7 +425,7 @@ def post_video(is_series_part=False, series_name="", part_num=0):
 
 
 def post_long_video():
-    """Generate and post a 2-3 minute long-form video to YouTube + Instagram + Facebook"""
+    """Generate and post a long-form video to YouTube + TikTok"""
     print(f"\n{'='*50}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] POSTING LONG-FORM VIDEO")
     print(f"{'='*50}\n")
@@ -457,13 +448,7 @@ def post_long_video():
         print(f"\n[STEP 2] Uploading to YouTube (long-form)...")
         youtube_success = upload_to_youtube(video_path, title, script, is_short=False, keywords=keywords, thumbnail_path=thumb)
 
-        print(f"\n[STEP 3] Uploading to Instagram...")
-        instagram_success = upload_to_instagram(video_path, title, keywords=keywords)
-
-        print(f"\n[STEP 4] Uploading to Facebook...")
-        facebook_success = upload_to_facebook(video_path, title, keywords=keywords)
-
-        print(f"\n[STEP 5] Uploading to TikTok...")
+        print(f"\n[STEP 3] Uploading to TikTok...")
         tiktok_success = upload_to_tiktok(video_path, title, keywords=keywords)
 
         with open("last_post_time.txt", "w") as f:
@@ -471,10 +456,8 @@ def post_long_video():
 
         print(f"\n{'='*50}")
         print(f"[DONE] LONG-FORM POSTING COMPLETE")
-        print(f"   YouTube:   {'posted' if youtube_success else 'skipped'}")
-        print(f"   Instagram: {'posted' if instagram_success else 'skipped'}")
-        print(f"   Facebook:  {'posted' if facebook_success else 'skipped'}")
-        print(f"   TikTok:    {'posted' if tiktok_success else 'skipped'}")
+        print(f"   YouTube:   {'posted' if youtube_success else 'FAILED'}")
+        print(f"   TikTok:    {'posted' if tiktok_success else 'FAILED'}")
         print(f"{'='*50}\n")
 
     except Exception as e:
