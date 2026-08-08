@@ -1532,8 +1532,8 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file, land
             '-filter_complex',
             f'[0:v]scale={res},fps=30[v];[2:a]volume=0.10[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
             '-map', '[v]', '-map', '[aout]',
-            '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
-            '-c:a', 'aac', '-b:a', '192k',
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+            '-c:a', 'aac', '-b:a', '128k',
             '-pix_fmt', 'yuv420p',
             '-shortest',
             output_file
@@ -1544,8 +1544,8 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file, land
             '-f', 'concat', '-safe', '0', '-i', concat_file,
             '-i', audio_file,
             '-vf', f'scale={res},fps=30',
-            '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
-            '-c:a', 'aac', '-b:a', '192k',
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+            '-c:a', 'aac', '-b:a', '128k',
             '-pix_fmt', 'yuv420p',
             '-shortest',
             output_file
@@ -1573,8 +1573,8 @@ def create_video_simple(slides, audio_file, durations, output_file, landscape=Fa
         FFMPEG, '-y',
         '-f', 'lavfi', '-i', f'color=c=0x0C0C28:size={size}:rate=30:d={total_dur:.2f}',
         '-i', audio_file,
-        '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
-        '-c:a', 'aac', '-b:a', '192k',
+        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+        '-c:a', 'aac', '-b:a', '128k',
         '-pix_fmt', 'yuv420p',
         '-shortest',
         output_file
