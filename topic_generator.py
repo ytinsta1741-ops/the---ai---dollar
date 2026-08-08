@@ -4,6 +4,8 @@ import json
 import os
 from datetime import datetime
 
+from ai_topic_generator import generate_ai_topic
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # THE AI DOLLAR — INFINITE VIRAL TOPIC GENERATOR
 # Never repeats. Every video is unique. CTR-optimized titles.
@@ -638,6 +640,7 @@ SECRET_STRATEGIES = [
 # Persisted to disk so it survives process restarts/crashes (in-memory
 # alone would forget every posted title whenever Render restarts the app).
 _HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "posted_titles.json")
+_HISTORY_TITLES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "posted_titles_text.json")
 
 
 def _load_title_hashes():
@@ -665,9 +668,51 @@ def _hash_title(title):
     return hashlib.md5(title.encode()).hexdigest()[:12]
 
 
+def _recent_titles_hint(limit=15):
+    """Sample a few recent titles as plain text so the AI avoids near-duplicates."""
+    try:
+        if os.path.exists(_HISTORY_TITLES_FILE):
+            with open(_HISTORY_TITLES_FILE, "r") as f:
+                titles = json.load(f)
+            return "; ".join(titles[-limit:])
+    except Exception:
+        pass
+    return ""
+
+
+def _remember_title(title):
+    try:
+        titles = []
+        if os.path.exists(_HISTORY_TITLES_FILE):
+            with open(_HISTORY_TITLES_FILE, "r") as f:
+                titles = json.load(f)
+        titles.append(title)
+        titles = titles[-200:]
+        with open(_HISTORY_TITLES_FILE, "w") as f:
+            json.dump(titles, f)
+    except Exception as e:
+        print(f"[WARN] Could not save recent title text: {e}")
+
+
 def generate_short_topic():
-    """Generate a unique short-form topic that has never been generated before."""
+    """Generate a unique short-form topic that has never been generated before.
+
+    Tries AI-written scripts first (Gemini) for more natural, analogy-rich
+    content; falls back to the template system if the API key is missing
+    or the request fails, so posting never stops because of an AI outage.
+    """
     global _generated_title_hashes
+
+    for attempt in range(3):
+        topic = generate_ai_topic(existing_titles_hint=_recent_titles_hint())
+        if topic:
+            title_hash = _hash_title(topic["title"])
+            if title_hash not in _generated_title_hashes:
+                _generated_title_hashes.add(title_hash)
+                _save_title_hash(title_hash)
+                _remember_title(topic["title"])
+                print(f"[GEN-AI] Generated unique AI topic: {topic['title'][:60]}")
+                return topic
 
     for attempt in range(200):
         framework_name = random.choice(list(SLIDE_FRAMEWORKS.keys()))
