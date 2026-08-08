@@ -1,5 +1,7 @@
 import random
 import hashlib
+import json
+import os
 from datetime import datetime
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -629,7 +631,30 @@ SECRET_STRATEGIES = [
 ]
 
 # ── USED TITLE HASHES (never repeat tracker) ──
-_generated_title_hashes = set()
+# Persisted to disk so it survives process restarts/crashes (in-memory
+# alone would forget every posted title whenever Render restarts the app).
+_HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "posted_titles.json")
+
+
+def _load_title_hashes():
+    try:
+        if os.path.exists(_HISTORY_FILE):
+            with open(_HISTORY_FILE, "r") as f:
+                return set(json.load(f))
+    except Exception as e:
+        print(f"[WARN] Could not load posted title history: {e}")
+    return set()
+
+
+def _save_title_hash(title_hash):
+    try:
+        with open(_HISTORY_FILE, "w") as f:
+            json.dump(list(_generated_title_hashes), f)
+    except Exception as e:
+        print(f"[WARN] Could not save posted title history: {e}")
+
+
+_generated_title_hashes = _load_title_hashes()
 
 
 def _hash_title(title):
@@ -647,6 +672,7 @@ def generate_short_topic():
             title_hash = _hash_title(topic["title"])
             if title_hash not in _generated_title_hashes:
                 _generated_title_hashes.add(title_hash)
+                _save_title_hash(title_hash)
                 print(f"[GEN] Generated unique topic: {topic['title'][:60]}")
                 return topic
 
@@ -664,6 +690,7 @@ def generate_long_topic():
             title_hash = _hash_title(topic["title"])
             if title_hash not in _generated_title_hashes:
                 _generated_title_hashes.add(title_hash)
+                _save_title_hash(title_hash)
                 print(f"[GEN] Generated unique long topic: {topic['title'][:60]}")
                 return topic
 

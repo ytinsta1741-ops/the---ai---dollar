@@ -537,15 +537,16 @@ def upload_to_tiktok(video_path, title, keywords=None):
 def schedule_jobs():
     # SHORTS ONLY — discovery engine for small channels
     # Shorts get shown on the Shorts shelf to non-subscribers
-    # 5 per day, spaced across US peak hours (times in UTC)
+    # 6 per day, spaced across US peak hours (times in UTC)
     schedule.every().day.at("06:00").do(post_video)   # US East 2am — early birds
-    schedule.every().day.at("11:00").do(post_video)   # US East 7am — morning commute
-    schedule.every().day.at("14:00").do(post_video)   # US East 10am — mid-morning scroll
-    schedule.every().day.at("18:00").do(post_video)   # US East 2pm — afternoon break
-    schedule.every().day.at("23:00").do(post_video)   # US East 7pm — prime time
+    schedule.every().day.at("10:00").do(post_video)   # US East 6am — early commute
+    schedule.every().day.at("13:00").do(post_video)   # US East 9am — mid-morning scroll
+    schedule.every().day.at("16:00").do(post_video)   # US East 12pm — lunch break
+    schedule.every().day.at("20:00").do(post_video)   # US East 4pm — afternoon break
+    schedule.every().day.at("23:30").do(post_video)   # US East 7:30pm — prime time
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 5 Shorts/day — growth mode (no long-form until 500+ subs)")
+    print("[OK] Schedule: 6 Shorts/day — growth mode (no long-form until 500+ subs)")
     print("[OK] Shorts = discovery engine for non-subscribers")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
