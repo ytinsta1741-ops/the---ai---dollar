@@ -11,7 +11,7 @@ import random
 import requests
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 FINANCE_TERMS = [
@@ -82,6 +82,7 @@ def _validate_topic(data):
 def generate_ai_topic(existing_titles_hint=""):
     """Ask Gemini for one complete 7-slide short-form topic. Returns None on any failure."""
     if not GEMINI_API_KEY:
+        print("[WARN] GEMINI_API_KEY not set, skipping AI generation")
         return None
 
     term = random.choice(FINANCE_TERMS)
