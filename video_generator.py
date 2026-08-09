@@ -1499,6 +1499,313 @@ def prep_slides(images, slides, durations, work_dir, landscape=False):
         print(f"  slide {idx+1}/{len(slides)} ready")
 
 
+def prep_kenburns_backgrounds(images, work_dir, landscape=False):
+    """Crop/grade each source image to full frame (same look as prep_slides)
+    but WITHOUT burning text on it — text is animated separately so it can
+    stay fixed while only the photo moves underneath it."""
+    os.makedirs(work_dir, exist_ok=True)
+    from PIL import Image, ImageDraw
+
+    W, H = (1920, 1080) if landscape else (1080, 1920)
+    paths = []
+
+    for idx, img_src in enumerate(images):
+        out = os.path.join(work_dir, f"bg_{idx}.jpg")
+
+        if img_src and os.path.exists(img_src):
+            bg = Image.open(img_src).convert("RGB")
+            iw, ih = bg.size
+            ratio = max(W / iw, H / ih)
+            bg = bg.resize((int(iw * ratio), int(ih * ratio)), Image.LANCZOS)
+            left = (bg.width - W) // 2
+            top = (bg.height - H) // 2
+            bg = bg.crop((left, top, left + W, top + H))
+        else:
+            bg = Image.new("RGB", (W, H), (12, 12, 40))
+
+        overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ov_draw = ImageDraw.Draw(overlay)
+        for gy in range(0, int(H * 0.12)):
+            a = int(60 * (1 - gy / (H * 0.12)))
+            ov_draw.rectangle([0, gy, W, gy + 1], fill=(0, 0, 0, a))
+        grad_start = int(H * 0.38)
+        for gy in range(grad_start, H):
+            frac = (gy - grad_start) / (H - grad_start)
+            a = int(220 * (frac ** 1.3))
+            ov_draw.rectangle([0, gy, W, gy + 1], fill=(0, 0, 0, min(a, 220)))
+        bg = Image.alpha_composite(bg.convert("RGBA"), overlay).convert("RGB")
+
+        bg.save(out, "JPEG", quality=95)
+        paths.append(out)
+        del bg, overlay
+        gc.collect()
+
+    return paths
+
+
+def prep_text_overlays(slides, work_dir, landscape=False):
+    """Render brand/counter/text/CTA onto a transparent PNG so it can sit,
+    perfectly still, on top of the moving Ken Burns background."""
+    os.makedirs(work_dir, exist_ok=True)
+    from PIL import Image, ImageDraw, ImageFont
+
+    def get_font(size):
+        font_search = [
+            "C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf",
+        ]
+        for path in font_search:
+            try:
+                return ImageFont.truetype(path, size)
+            except Exception:
+                continue
+        return ImageFont.load_default()
+
+    def wrap_line(text_line, font, draw_ctx, max_w):
+        words = text_line.split()
+        if not words:
+            return [text_line]
+        out = []
+        cur = words[0]
+        for word in words[1:]:
+            test = cur + " " + word
+            bb = draw_ctx.textbbox((0, 0), test, font=font)
+            if (bb[2] - bb[0]) <= max_w:
+                cur = test
+            else:
+                out.append(cur)
+                cur = word
+        out.append(cur)
+        return out
+
+    def draw_text_shadow(draw_ctx, pos, text, font, fill):
+        x, y = pos
+        draw_ctx.text((x + 3, y + 3), text, font=font, fill=(0, 0, 0))
+        draw_ctx.text((x + 2, y + 2), text, font=font, fill=(0, 0, 0))
+        for ox in range(-2, 3):
+            for oy in range(-2, 3):
+                if ox * ox + oy * oy <= 4:
+                    draw_ctx.text((x + ox, y + oy), text, font=font, fill=(0, 0, 0))
+        draw_ctx.text((x, y), text, font=font, fill=fill)
+
+    W, H = (1920, 1080) if landscape else (1080, 1920)
+    PAD = 50
+    MAX_TW = W - PAD * 2
+
+    font_brand = get_font(28)
+    font_cta = get_font(44)
+    font_sub = get_font(24)
+    font_counter = get_font(22)
+
+    WHITE = (255, 255, 255)
+    LIGHT_GRAY = (200, 200, 210)
+    ACCENT = (220, 220, 230)
+
+    total_slides = len(slides)
+    paths = []
+
+    for idx, slide in enumerate(slides):
+        out = os.path.join(work_dir, f"ov_{idx}.png")
+        canvas = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(canvas)
+
+        brand = "THE AI DOLLAR"
+        draw_text_shadow(draw, (PAD, 28), brand, font_brand, LIGHT_GRAY)
+
+        counter = f"{idx + 1}/{total_slides}"
+        cb = draw.textbbox((0, 0), counter, font=font_counter)
+        cw = cb[2] - cb[0]
+        draw_text_shadow(draw, (W - cw - PAD, 30), counter, font_counter, LIGHT_GRAY)
+
+        text = slide['text'].upper()
+        raw_lines = text.split('\n')
+
+        wrapped, total_h, ft_title, ft_body, line_h = [], 0, None, None, 0
+        for font_size in [62, 54, 48, 42, 36, 30]:
+            ft_title = get_font(font_size)
+            ft_body = get_font(max(font_size - 10, 24))
+            wrapped = []
+            for li, raw in enumerate(raw_lines):
+                f = ft_title if li == 0 else ft_body
+                wrapped.extend([(w, li == 0) for w in wrap_line(raw, f, draw, MAX_TW)])
+            line_h = font_size + 30
+            total_h = len(wrapped) * line_h
+            if total_h < (H * 0.50):
+                break
+
+        start_y = H - total_h - 130
+        for li, (line, is_title) in enumerate(wrapped):
+            font = ft_title if is_title else ft_body
+            bbox = draw.textbbox((0, 0), line, font=font)
+            tw = bbox[2] - bbox[0]
+            x = max((W - tw) // 2, PAD)
+            y = start_y + li * line_h
+            color = WHITE if is_title else ACCENT
+            draw_text_shadow(draw, (x, y), line, font, color)
+
+        is_first = (idx == 0)
+        is_last = (idx == len(slides) - 1)
+
+        if is_first:
+            hook = "WATCH TIL THE END"
+            hb = draw.textbbox((0, 0), hook, font=font_sub)
+            hw = hb[2] - hb[0]
+            hx = (W - hw) // 2
+            hy = H - 80
+            draw.rounded_rectangle([hx - 20, hy - 8, hx + hw + 20, hy + 30], radius=12, fill=(220, 40, 40))
+            draw.text((hx, hy), hook, font=font_sub, fill=WHITE)
+
+        if is_last:
+            cta = "SUBSCRIBE"
+            cb = draw.textbbox((0, 0), cta, font=font_cta)
+            cw_btn = cb[2] - cb[0]
+            ch_btn = cb[3] - cb[1]
+            cx = (W - cw_btn) // 2
+            cy = 100
+            draw.rounded_rectangle([cx - 30, cy - 14, cx + cw_btn + 30, cy + ch_btn + 14], radius=14, fill=(220, 20, 20))
+            draw.text((cx, cy), cta, font=font_cta, fill=WHITE)
+
+            cta2 = "COMMENT YOUR #1 MONEY GOAL"
+            cb2 = draw.textbbox((0, 0), cta2, font=font_sub)
+            cw2 = cb2[2] - cb2[0]
+            cx2 = (W - cw2) // 2
+            cy2 = H - 75
+            draw.rounded_rectangle([cx2 - 16, cy2 - 6, cx2 + cw2 + 16, cy2 + 28], radius=10, fill=(30, 30, 60, 200))
+            draw.text((cx2, cy2), cta2, font=font_sub, fill=WHITE)
+
+        canvas.save(out, "PNG")
+        paths.append(out)
+        del draw, canvas
+        gc.collect()
+        print(f"  overlay {idx+1}/{len(slides)} ready")
+
+    return paths
+
+
+def _build_kenburns_segment(bg_path, overlay_path, duration, output_path, landscape, effect):
+    """Animate a still background with a slow zoom/pan (Ken Burns), then
+    burn the fixed text overlay on top so only the photo moves."""
+    W, H = (1920, 1080) if landscape else (1080, 1920)
+    frames = max(2, round(duration * 30))
+
+    if effect == 0:
+        z_expr = "min(zoom+0.0015,1.15)"
+        x_expr = "iw/2-(iw/zoom/2)"
+        y_expr = "ih/2-(ih/zoom/2)"
+    elif effect == 1:
+        z_expr = "1.12"
+        x_expr = f"(iw-iw/zoom)*(on/{frames})"
+        y_expr = "ih/2-(ih/zoom/2)"
+    else:
+        z_expr = "1.12"
+        x_expr = f"(iw-iw/zoom)*(1-on/{frames})"
+        y_expr = "ih/2-(ih/zoom/2)"
+
+    zoompan = f"zoompan=z='{z_expr}':d={frames}:x='{x_expr}':y='{y_expr}':s={W}x{H}:fps=30"
+    filter_complex = f"[0:v]{zoompan}[zoomed];[zoomed][1:v]overlay=0:0[v]"
+
+    cmd = [
+        FFMPEG, '-y',
+        '-framerate', '30', '-loop', '1', '-i', bg_path,
+        '-i', overlay_path,
+        '-filter_complex', filter_complex,
+        '-map', '[v]',
+        '-t', f'{duration:.2f}',
+        '-an',
+        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26',
+        '-pix_fmt', 'yuv420p',
+        output_path,
+    ]
+    proc = subprocess.run(cmd, capture_output=True, timeout=120)
+    return proc.returncode == 0 and os.path.exists(output_path)
+
+
+def create_video_kenburns(slides, images, audio_file, durations, output_file, landscape=False):
+    """Build the video with slow zoom/pan motion on each image instead of
+    static slides — free forever, ffmpeg-only, no external APIs."""
+    work_dir = output_file + "_kbwork"
+    os.makedirs(work_dir, exist_ok=True)
+
+    print("[BUILD] Preparing Ken Burns backgrounds...")
+    backgrounds = prep_kenburns_backgrounds(images, work_dir, landscape=landscape)
+
+    print("[BUILD] Preparing text overlays...")
+    overlays = prep_text_overlays(slides, work_dir, landscape=landscape)
+
+    print("[BUILD] Rendering per-slide motion segments...")
+    segments = []
+    for idx in range(len(slides)):
+        seg_path = os.path.join(work_dir, f"seg_{idx}.mp4")
+        effect = idx % 3
+        ok = _build_kenburns_segment(backgrounds[idx], overlays[idx], durations[idx], seg_path, landscape, effect)
+        if ok:
+            segments.append(seg_path)
+        gc.collect()
+        print(f"  segment {idx+1}/{len(slides)} ready")
+
+    if len(segments) != len(slides):
+        import shutil
+        shutil.rmtree(work_dir, ignore_errors=True)
+        return False
+
+    concat_file = os.path.join(work_dir, "concat.txt")
+    with open(concat_file, 'w') as f:
+        for seg in segments:
+            f.write(f"file '{os.path.basename(seg)}'\n")
+    concat_video = os.path.join(work_dir, "concat_video.mp4")
+    proc = subprocess.run(
+        [FFMPEG, '-y', '-f', 'concat', '-safe', '0', '-i', concat_file, '-c', 'copy', concat_video],
+        capture_output=True, timeout=120,
+    )
+    if proc.returncode != 0 or not os.path.exists(concat_video):
+        import shutil
+        shutil.rmtree(work_dir, ignore_errors=True)
+        return False
+
+    print("[BUILD] Muxing narration + music...")
+    audio_duration = get_audio_duration(audio_file)
+    bg_music_path = os.path.join(work_dir, "bgmusic.m4a")
+    has_music = generate_bg_music(bg_music_path, audio_duration + 2)
+
+    if has_music:
+        cmd = [
+            FFMPEG, '-y',
+            '-i', concat_video,
+            '-i', audio_file,
+            '-i', bg_music_path,
+            '-filter_complex', '[2:a]volume=0.10[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
+            '-map', '0:v', '-map', '[aout]',
+            '-c:v', 'copy',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-shortest',
+            output_file,
+        ]
+    else:
+        cmd = [
+            FFMPEG, '-y',
+            '-i', concat_video,
+            '-i', audio_file,
+            '-map', '0:v', '-map', '1:a',
+            '-c:v', 'copy',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-shortest',
+            output_file,
+        ]
+
+    proc = subprocess.run(cmd, capture_output=True, timeout=180)
+    import shutil
+    shutil.rmtree(work_dir, ignore_errors=True)
+
+    if proc.returncode != 0:
+        stderr = proc.stderr.decode('utf-8', errors='replace')[-500:]
+        print(f"[WARN] Ken Burns mux failed: {stderr}")
+        return False
+
+    print("[OK] Video created (Ken Burns motion)!")
+    return True
+
+
 def create_video_ffmpeg(slides, images, audio_file, durations, output_file, landscape=False):
     valid_images = [img for img in images if img is not None]
     if not valid_images:
@@ -1620,8 +1927,16 @@ def generate_daily_video():
         images = fetch_hd_images(slides, img_dir)
         print(f"[OK] Got {sum(1 for i in images if i)} images")
 
-        print("[VIDEO] Creating animated video...")
-        ok = create_video_ffmpeg(slides, images, audio_file, durations, output_file)
+        ok = False
+        if os.getenv("USE_KEN_BURNS", "true").lower() != "false":
+            print("[VIDEO] Creating video with Ken Burns motion...")
+            ok = create_video_kenburns(slides, images, audio_file, durations, output_file)
+            if not ok:
+                print("[WARN] Ken Burns build failed, falling back to static slides...")
+
+        if not ok:
+            print("[VIDEO] Creating animated video...")
+            ok = create_video_ffmpeg(slides, images, audio_file, durations, output_file)
 
         if not ok:
             return {"status": "error", "message": "Video creation failed"}
