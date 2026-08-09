@@ -100,6 +100,25 @@ class HealthHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(TIKTOK_VERIFICATION_CONTENT)
 
+        elif path.startswith("/tiktok-callback"):
+            import urllib.parse as _up
+            query = _up.urlparse(path).query
+            params = _up.parse_qs(query)
+            code = params.get("code", [""])[0]
+            error = params.get("error", [""])[0]
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+            if code:
+                body = (
+                    f"<h1>Success</h1><p>Copy this code and paste it back into "
+                    f"get_tiktok_token.py:</p><pre style='font-size:18px;background:#eee;"
+                    f"padding:12px'>{code}</pre>"
+                ).encode()
+            else:
+                body = f"<h1>Error</h1><p>{error or 'No code received'}</p>".encode()
+            self.wfile.write(body)
+
         elif path == "/privacy":
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
