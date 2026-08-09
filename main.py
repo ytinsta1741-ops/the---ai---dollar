@@ -54,6 +54,37 @@ production.</p>
 channel, The AI Dollar.</p>
 </body></html>"""
 
+TERMS_OF_SERVICE_HTML = b"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Terms of Service - The AI Dollar</title>
+<style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;padding:0 20px;line-height:1.6;color:#222}
+h1{font-size:24px}h2{font-size:18px;margin-top:28px}</style></head>
+<body>
+<h1>Terms of Service - The AI Dollar</h1>
+<p><em>Last updated: 2026</em></p>
+
+<p>The AI Dollar is an automated content system that we, its owner and operator, use
+to generate and publish short educational finance videos to our own accounts on
+platforms including YouTube and TikTok.</p>
+
+<h2>Purpose</h2>
+<p>This system is used solely to publish content to accounts we own and control.
+It does not offer any service to the public, does not accept sign-ups, and does not
+act on behalf of any third party.</p>
+
+<h2>Content</h2>
+<p>All videos are generated for general educational and entertainment purposes about
+personal finance topics. They do not constitute financial, investment, tax, or legal
+advice.</p>
+
+<h2>API usage</h2>
+<p>Where this system connects to third-party platform APIs (such as YouTube's or
+TikTok's), it does so only to publish content to accounts we personally own and have
+authorized, in compliance with each platform's developer terms.</p>
+
+<h2>Contact</h2>
+<p>Questions can be sent via the contact details on our YouTube channel, The AI Dollar.</p>
+</body></html>"""
+
 
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -64,6 +95,12 @@ class HealthHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html")
             self.end_headers()
             self.wfile.write(PRIVACY_POLICY_HTML)
+
+        elif path == "/terms":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+            self.wfile.write(TERMS_OF_SERVICE_HTML)
 
         elif path == "/test-instagram":
             print("\n[TEST] Manual Instagram test triggered!")

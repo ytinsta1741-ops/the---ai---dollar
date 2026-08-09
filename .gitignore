@@ -1,4 +1,5 @@
 get_youtube_token.py
+get_tiktok_token.py
 .env
 *.json
 videos/
