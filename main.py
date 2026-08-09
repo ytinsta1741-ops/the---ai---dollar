@@ -568,7 +568,7 @@ def main():
     except Exception as e:
         print(f"[ERR] Startup post error: {e}")
 
-    print("\n[SCHED] Scheduler running (5 shorts/day — growth mode + self-ping every 10 min)...")
+    print("\n[SCHED] Scheduler running (6 shorts/day — growth mode + self-ping every 10 min)...")
     try:
         while True:
             schedule.run_pending()
