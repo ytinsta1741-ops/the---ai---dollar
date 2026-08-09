@@ -69,6 +69,7 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
         from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
         from googleapiclient.http import MediaFileUpload
+        from googleapiclient.errors import HttpError
 
         CLIENT_ID     = os.getenv("YOUTUBE_CLIENT_ID", "")
         CLIENT_SECRET = os.getenv("YOUTUBE_CLIENT_SECRET", "")
@@ -211,27 +212,43 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
                 f"#MoneyMindset #WealthSecrets"
             )
 
-        body = {
-            "snippet": {
-                "title": yt_title,
-                "description": yt_desc,
-                "tags": yt_tags,
-                "categoryId": "22",
-            },
-            "status": {
-                "privacyStatus": "public",
-                "selfDeclaredMadeForKids": False,
-            },
-        }
+        print(f"[TAGS] {len(yt_tags)} tags, {len(','.join(yt_tags))} chars: {yt_tags}")
 
-        media = MediaFileUpload(video_path, chunksize=-1, resumable=True)
-        request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
+        def _upload(tags):
+            body = {
+                "snippet": {
+                    "title": yt_title,
+                    "description": yt_desc,
+                    "tags": tags,
+                    "categoryId": "22",
+                },
+                "status": {
+                    "privacyStatus": "public",
+                    "selfDeclaredMadeForKids": False,
+                },
+            }
+            media = MediaFileUpload(video_path, chunksize=-1, resumable=True)
+            request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
+            response = None
+            while response is None:
+                status, response = request.next_chunk()
+                if status:
+                    print(f"[UPLOAD] YouTube: {int(status.progress() * 100)}% uploaded")
+            return response
 
-        response = None
-        while response is None:
-            status, response = request.next_chunk()
-            if status:
-                print(f"[UPLOAD] YouTube: {int(status.progress() * 100)}% uploaded")
+        try:
+            response = _upload(yt_tags)
+        except HttpError as e:
+            if "invalidTags" in str(e) or "invalid video keywords" in str(e):
+                print(f"[WARN] Tags rejected ({e}), retrying with minimal safe tags...")
+                safe_tags = ["personal finance", "money tips", "investing", "financial education", "TheAIDollar"]
+                try:
+                    response = _upload(safe_tags)
+                except HttpError as e2:
+                    print(f"[WARN] Minimal tags also rejected ({e2}), retrying with no tags...")
+                    response = _upload([])
+            else:
+                raise
 
         video_id = response.get("id", "")
         print(f"[OK] YouTube uploaded! https://youtube.com/watch?v={video_id}")
