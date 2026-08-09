@@ -11,7 +11,7 @@ import random
 import requests
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 FINANCE_TERMS = [
@@ -94,7 +94,7 @@ def generate_ai_topic(existing_titles_hint=""):
         "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
         "generationConfig": {
             "temperature": 1.1,
-            "maxOutputTokens": 1500,
+            "maxOutputTokens": 3000,
             "responseMimeType": "application/json",
         },
     }
