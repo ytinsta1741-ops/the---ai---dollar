@@ -86,11 +86,21 @@ authorized, in compliance with each platform's developer terms.</p>
 </body></html>"""
 
 
+TIKTOK_VERIFICATION_FILE = "tiktokUrBsJz5EaK3QYIqFxKyGmmK9p74vdEhf.txt"
+TIKTOK_VERIFICATION_CONTENT = b"tiktok-developers-site-verification=UrBsJz5EaK3QYIqFxKyGmmK9p74vdEhf"
+
+
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = self.path
 
-        if path == "/privacy":
+        if path == f"/{TIKTOK_VERIFICATION_FILE}":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(TIKTOK_VERIFICATION_CONTENT)
+
+        elif path == "/privacy":
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
             self.end_headers()
