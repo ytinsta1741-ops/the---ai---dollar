@@ -600,13 +600,17 @@ def keep_alive():
 
 def upload_to_tiktok(video_path, title, keywords=None):
     """Upload video to TikTok using the official Content Posting API."""
-    client_key = os.getenv("TIKTOK_CLIENT_KEY", "")
-    client_secret = os.getenv("TIKTOK_CLIENT_SECRET", "")
-    refresh_token = os.getenv("TIKTOK_REFRESH_TOKEN", "")
+    client_key = os.getenv("TIKTOK_CLIENT_KEY", "").strip()
+    client_secret = os.getenv("TIKTOK_CLIENT_SECRET", "").strip()
+    refresh_token = os.getenv("TIKTOK_REFRESH_TOKEN", "").strip()
 
     if not client_key or not client_secret or not refresh_token:
         print("[SKIP] TikTok: TIKTOK_CLIENT_KEY/CLIENT_SECRET/REFRESH_TOKEN not fully set")
         return False
+
+    print(f"[TikTok] client_key len={len(client_key)} repr={client_key[:4]!r}...{client_key[-4:]!r}")
+    print(f"[TikTok] client_secret len={len(client_secret)}")
+    print(f"[TikTok] refresh_token len={len(refresh_token)} repr={refresh_token[:8]!r}...{refresh_token[-8:]!r}")
 
     try:
         import requests as req
