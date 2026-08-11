@@ -599,10 +599,13 @@ def keep_alive():
 
 
 def upload_to_tiktok(video_path, title, keywords=None):
-    """Upload video to TikTok using direct API with session cookie"""
-    tiktok_session = os.getenv("TIKTOK_SESSION_ID", "")
-    if not tiktok_session:
-        print("[SKIP] TikTok: TIKTOK_SESSION_ID not set")
+    """Upload video to TikTok using the official Content Posting API."""
+    client_key = os.getenv("TIKTOK_CLIENT_KEY", "")
+    client_secret = os.getenv("TIKTOK_CLIENT_SECRET", "")
+    refresh_token = os.getenv("TIKTOK_REFRESH_TOKEN", "")
+
+    if not client_key or not client_secret or not refresh_token:
+        print("[SKIP] TikTok: TIKTOK_CLIENT_KEY/CLIENT_SECRET/REFRESH_TOKEN not fully set")
         return False
 
     try:
@@ -616,41 +619,112 @@ def upload_to_tiktok(video_path, title, keywords=None):
             f"#learnontiktok #fyp #viral {kw_tags}"
         )[:150]
 
-        cookies = {"sessionid": tiktok_session}
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        print("[TikTok] Refreshing access token...")
+        token_resp = req.post(
+            "https://open.tiktokapis.com/v2/oauth/token/",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data={
+                "client_key": client_key,
+                "client_secret": client_secret,
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token,
+            },
+            timeout=20,
+        )
+        token_data = token_resp.json()
+        access_token = token_data.get("access_token")
+        if not access_token:
+            print(f"[ERR] TikTok token refresh failed: {token_data}")
+            return False
 
-        # Step 1: Get upload URL
-        print("[TikTok] Getting upload URL...")
-        init_url = "https://www.tiktok.com/api/v1/video/upload/auth/"
-        sess = req.Session()
-        sess.cookies.update(cookies)
-        sess.headers.update(headers)
+        auth_headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json; charset=UTF-8",
+        }
 
-        # Use creator center upload endpoint
-        upload_page = sess.get("https://www.tiktok.com/creator#/upload", timeout=30)
-        print(f"[TikTok] Creator page status: {upload_page.status_code}")
+        print("[TikTok] Querying creator info...")
+        creator_resp = req.post(
+            "https://open.tiktokapis.com/v2/post/publish/creator_info/query/",
+            headers=auth_headers,
+            timeout=20,
+        )
+        creator_data = creator_resp.json().get("data", {})
+        privacy_options = creator_data.get("privacy_level_options", ["SELF_ONLY"])
+        privacy_level = "PUBLIC_TO_EVERYONE" if "PUBLIC_TO_EVERYONE" in privacy_options else privacy_options[0]
+        print(f"[TikTok] Privacy level: {privacy_level}")
 
-        # Direct video publish via internal API
         file_size = os.path.getsize(video_path)
         print(f"[TikTok] Video size: {file_size / 1024 / 1024:.1f}MB")
 
+        print("[TikTok] Initializing post...")
+        init_resp = req.post(
+            "https://open.tiktokapis.com/v2/post/publish/video/init/",
+            headers=auth_headers,
+            json={
+                "post_info": {
+                    "title": caption,
+                    "privacy_level": privacy_level,
+                    "disable_duet": False,
+                    "disable_comment": False,
+                    "disable_stitch": False,
+                    "video_cover_timestamp_ms": 1000,
+                },
+                "source_info": {
+                    "source": "FILE_UPLOAD",
+                    "video_size": file_size,
+                    "chunk_size": file_size,
+                    "total_chunk_count": 1,
+                },
+            },
+            timeout=20,
+        )
+        init_data = init_resp.json()
+        if "data" not in init_data or "publish_id" not in init_data["data"]:
+            print(f"[ERR] TikTok init failed: {init_data}")
+            return False
+
+        publish_id = init_data["data"]["publish_id"]
+        upload_url = init_data["data"]["upload_url"]
+
+        print("[TikTok] Uploading video...")
         with open(video_path, 'rb') as f:
             video_data = f.read()
 
-        # Upload video chunk
-        upload_url = "https://www.tiktok.com/upload/video/"
-        files = {"video": (os.path.basename(video_path), video_data, "video/mp4")}
-        data = {"caption": caption}
-
-        resp = sess.post(upload_url, files=files, data=data, timeout=120)
-        print(f"[TikTok] Upload response: {resp.status_code}")
-
-        if resp.status_code == 200:
-            print(f"[OK] TikTok posted! Title: {title[:50]}")
-            return True
-        else:
-            print(f"[ERR] TikTok upload failed: {resp.status_code} - {resp.text[:200]}")
+        upload_resp = req.put(
+            upload_url,
+            headers={
+                "Content-Type": "video/mp4",
+                "Content-Range": f"bytes 0-{file_size - 1}/{file_size}",
+            },
+            data=video_data,
+            timeout=120,
+        )
+        print(f"[TikTok] Upload response: {upload_resp.status_code}")
+        if upload_resp.status_code not in (200, 201):
+            print(f"[ERR] TikTok upload failed: {upload_resp.status_code} - {upload_resp.text[:200]}")
             return False
+
+        print("[TikTok] Checking publish status...")
+        for _ in range(6):
+            time.sleep(5)
+            status_resp = req.post(
+                "https://open.tiktokapis.com/v2/post/publish/status/fetch/",
+                headers=auth_headers,
+                json={"publish_id": publish_id},
+                timeout=20,
+            )
+            status_data = status_resp.json().get("data", {})
+            status = status_data.get("status")
+            print(f"[TikTok] Status: {status}")
+            if status == "PUBLISH_COMPLETE":
+                print(f"[OK] TikTok posted! Title: {title[:50]}")
+                return True
+            if status == "FAILED":
+                print(f"[ERR] TikTok publish failed: {status_data}")
+                return False
+
+        print("[WARN] TikTok publish status unknown after polling, treating as posted")
+        return True
 
     except Exception as e:
         print(f"[ERR] TikTok error: {e}")
