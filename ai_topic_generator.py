@@ -47,11 +47,19 @@ FRAME IT AS A TENSION OR COMPARISON, not a flat definition. Real audience data o
 - If the term doesn't have an obvious counterpart, frame it as friend-vs-enemy tension instead (e.g. "Compound Interest: is it working FOR you or AGAINST you?", "Is your amortization schedule secretly costing you thousands?") — never just "What is [term]".
 - The title must promise a winner, a surprise, or a choice — not just a definition.
 
+VOICE: Talk like you're excitedly explaining this to a friend who just asked "wait what does that even mean" — not like you're reading a dictionary entry. Concretely:
+- Short sentences. Never more than ~12 words per sentence. Break long ideas into two punchy sentences instead of one dense one.
+- Use "you" constantly — make it about the viewer's own money, not abstract theory.
+- Contractions always (it's, you're, don't) — never formal/stiff phrasing.
+- Vary sentence length and rhythm — a punchy 3-word sentence, then a slightly longer one. Reading it out loud should sound like a person talking, not a textbook.
+- Every slide should feel like it's building toward something, not just delivering a flat fact. End slides on a hook into the next one where possible ("But here's the part nobody tells you...").
+- Zero filler, zero throat-clearing ("So basically...", "Let's dive in..."). Start every sentence already saying something.
+
 Rules:
 - Output ONLY valid JSON, no markdown fences, no commentary.
 - Exactly 7 slides.
 - Every slide has "text", "speech", and "img":
-  - "speech" is what the narrator says out loud, 1-3 natural spoken sentences, energetic tone.
+  - "speech" is what the narrator says out loud, 1-3 short punchy spoken sentences (see VOICE above), energetic and conversational, never lecture-toned.
   - "text" is the on-screen caption — it MUST be a short, verbatim excerpt taken directly from that same slide's "speech" (the single most important phrase or sentence, trimmed to fit, 3-5 short lines separated by \\n, max ~40 characters per line, ALL CAPS words for emphasis are fine). NEVER write different wording on screen than what is spoken — no separate paraphrase, no new phrasing that doesn't appear in "speech".
   - "img" is a short, concrete visual search phrase for a stock photo site. It must ALWAYS depict a real finance/business/office scene (e.g. stock charts, cash, calculators, laptops with spreadsheets, bank buildings, people reviewing documents, coins, piggy banks) — NEVER depict the analogy literally (no kids, pizza, gardens, games, toys, animals). The image should relate to what's being discussed, expressed through finance/business imagery, not abstract ideas like "financial freedom".
 - The analogy must appear by slide 2 or 3, stated in one simple sentence a 10 year old would get instantly, BEFORE using the formal finance term. The analogy lives in the spoken words and captions — never in the imagery.

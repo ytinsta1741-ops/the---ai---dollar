@@ -1690,7 +1690,7 @@ def _build_kenburns_segment(bg_path, overlay_path, duration, output_path, landsc
     frames = max(2, round(duration * 30))
 
     if effect == 0:
-        z_expr = "min(zoom+0.0015,1.15)"
+        z_expr = "min(zoom+0.0010,1.15)"
         x_expr = "iw/2-(iw/zoom/2)"
         y_expr = "ih/2-(ih/zoom/2)"
     elif effect == 1:
@@ -1702,8 +1702,11 @@ def _build_kenburns_segment(bg_path, overlay_path, duration, output_path, landsc
         x_expr = f"(iw-iw/zoom)*(1-on/{frames})"
         y_expr = "ih/2-(ih/zoom/2)"
 
+    # Supersample before zoompan — cropping from a same-size source leaves too
+    # little pixel data per frame, which reads as visible shaking/stepping.
+    presc = f"scale={W*2}:{H*2}:flags=lanczos"
     zoompan = f"zoompan=z='{z_expr}':d={frames}:x='{x_expr}':y='{y_expr}':s={W}x{H}:fps=30"
-    filter_complex = f"[0:v]{zoompan}[zoomed];[zoomed][1:v]overlay=0:0[v]"
+    filter_complex = f"[0:v]{presc},{zoompan}[zoomed];[zoomed][1:v]overlay=0:0[v]"
 
     cmd = [
         FFMPEG, '-y',
