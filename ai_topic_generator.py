@@ -42,6 +42,11 @@ Do NOT make generic "money rules", "money tips", or "habits of the rich" listicl
 3. A concrete real-number example showing it in action.
 4. Why it actually matters to the viewer's own money.
 
+FRAME IT AS A TENSION OR COMPARISON, not a flat definition. Real audience data on this channel shows comparison-framed videos ("Stocks vs Bonds") get 3x the retention of plain "What is X" definition videos. So:
+- If the term naturally has a counterpart (Bull vs Bear, APR vs APY, Assets vs Liabilities, Roth vs Traditional, Stocks vs Bonds), frame the whole video as that head-to-head comparison — title, hook, and structure should all lean into the "vs".
+- If the term doesn't have an obvious counterpart, frame it as friend-vs-enemy tension instead (e.g. "Compound Interest: is it working FOR you or AGAINST you?", "Is your amortization schedule secretly costing you thousands?") — never just "What is [term]".
+- The title must promise a winner, a surprise, or a choice — not just a definition.
+
 Rules:
 - Output ONLY valid JSON, no markdown fences, no commentary.
 - Exactly 7 slides.
