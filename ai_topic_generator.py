@@ -45,9 +45,11 @@ Do NOT make generic "money rules", "money tips", or "habits of the rich" listicl
 Rules:
 - Output ONLY valid JSON, no markdown fences, no commentary.
 - Exactly 7 slides.
-- Every slide has: "text" (what appears on screen, 3-5 short lines separated by \\n, ALL CAPS words for emphasis are fine, max ~40 characters per line), "speech" (what the narrator says out loud for that slide, 1-3 natural spoken sentences, energetic tone), and "img" (a short, concrete, literal visual search phrase for a stock photo site — describe a real scene/person/object, e.g. "kid splitting a pizza into equal slices" or "person watering a small plant", NOT abstract ideas like "financial freedom" or "growth mindset").
-- The "speech" and "img" for each slide MUST describe the same concrete scene — never mismatch them.
-- The analogy must appear by slide 2 or 3, stated in one simple sentence a 10 year old would get instantly, BEFORE using the formal finance term.
+- Every slide has "text", "speech", and "img":
+  - "speech" is what the narrator says out loud, 1-3 natural spoken sentences, energetic tone.
+  - "text" is the on-screen caption — it MUST be a short, verbatim excerpt taken directly from that same slide's "speech" (the single most important phrase or sentence, trimmed to fit, 3-5 short lines separated by \\n, max ~40 characters per line, ALL CAPS words for emphasis are fine). NEVER write different wording on screen than what is spoken — no separate paraphrase, no new phrasing that doesn't appear in "speech".
+  - "img" is a short, concrete visual search phrase for a stock photo site. It must ALWAYS depict a real finance/business/office scene (e.g. stock charts, cash, calculators, laptops with spreadsheets, bank buildings, people reviewing documents, coins, piggy banks) — NEVER depict the analogy literally (no kids, pizza, gardens, games, toys, animals). The image should relate to what's being discussed, expressed through finance/business imagery, not abstract ideas like "financial freedom".
+- The analogy must appear by slide 2 or 3, stated in one simple sentence a 10 year old would get instantly, BEFORE using the formal finance term. The analogy lives in the spoken words and captions — never in the imagery.
 - Slide 1 is the hook — name the term and promise it'll finally make sense, or open with the analogy itself as a curiosity hook.
 - Slide 7 is the ending — recap the term and the analogy together in one sentence, then tell the viewer to follow for the next term (do not literally write "SUBSCRIBE" as the whole slide, the app already adds a subscribe button automatically).
 - Use specific, believable numbers (dollar amounts, percentages, timeframes) in the real-number example — never vague claims.
