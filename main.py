@@ -738,13 +738,14 @@ def upload_to_tiktok(video_path, title, keywords=None):
 def schedule_jobs():
     # SHORTS ONLY — discovery engine for small channels
     # Shorts get shown on the Shorts shelf to non-subscribers
-    # 6 per day, spaced across US peak hours (times in UTC)
-    schedule.every().day.at("06:00").do(post_video)   # US East 2am — early birds
-    schedule.every().day.at("10:00").do(post_video)   # US East 6am — early commute
-    schedule.every().day.at("13:00").do(post_video)   # US East 9am — mid-morning scroll
-    schedule.every().day.at("16:00").do(post_video)   # US East 12pm — lunch break
-    schedule.every().day.at("20:00").do(post_video)   # US East 4pm — afternoon break
+    # 6 per day, spaced across US peak SCROLLING windows (times in UTC, EDT = UTC-4)
+    # Replaced the old 2am EDT slot (dead time) with a second prime-time slot.
+    schedule.every().day.at("11:00").do(post_video)   # US East 7am — wake up / commute scroll
+    schedule.every().day.at("15:30").do(post_video)   # US East 11:30am — lunch break
+    schedule.every().day.at("18:00").do(post_video)   # US East 2pm — afternoon slump scroll
+    schedule.every().day.at("21:00").do(post_video)   # US East 5pm — evening commute
     schedule.every().day.at("23:30").do(post_video)   # US East 7:30pm — prime time
+    schedule.every().day.at("01:30").do(post_video)   # US East 9:30pm — late-night scroll (peak Shorts engagement)
 
     schedule.every(10).minutes.do(keep_alive)
     print("[OK] Schedule: 6 Shorts/day — growth mode (no long-form until 500+ subs)")
