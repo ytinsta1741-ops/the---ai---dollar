@@ -654,7 +654,15 @@ def upload_to_tiktok(video_path, title, keywords=None):
         )
         creator_data = creator_resp.json().get("data", {})
         privacy_options = creator_data.get("privacy_level_options", ["SELF_ONLY"])
-        privacy_level = "PUBLIC_TO_EVERYONE" if "PUBLIC_TO_EVERYONE" in privacy_options else privacy_options[0]
+
+        # Unaudited apps can ONLY post as SELF_ONLY, even if PUBLIC_TO_EVERYONE
+        # is listed as an option — TikTok's posting endpoint enforces this
+        # separately from what creator_info reports. Flip TIKTOK_AUDITED=true
+        # on Render once the app passes review to allow public posting.
+        if os.getenv("TIKTOK_AUDITED", "false").lower() == "true" and "PUBLIC_TO_EVERYONE" in privacy_options:
+            privacy_level = "PUBLIC_TO_EVERYONE"
+        else:
+            privacy_level = "SELF_ONLY"
         print(f"[TikTok] Privacy level: {privacy_level}")
 
         file_size = os.path.getsize(video_path)
