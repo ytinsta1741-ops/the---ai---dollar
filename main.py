@@ -131,6 +131,24 @@ class HealthHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(TERMS_OF_SERVICE_HTML)
 
+        elif path == "/test-tiktok":
+            print("\n[TEST] Manual TikTok test triggered!")
+            try:
+                import glob
+                videos = sorted(glob.glob("./videos/*.mp4"), key=os.path.getmtime, reverse=True)
+                if not videos:
+                    msg = b"[ERR] No video files found in ./videos yet"
+                else:
+                    video_path = videos[0]
+                    print(f"[TEST] Using existing video: {video_path}")
+                    success = upload_to_tiktok(video_path, "The AI Dollar — Personal Finance Made Simple")
+                    msg = b"[OK] TikTok test posted!" if success else b"[ERR] TikTok test failed"
+            except Exception as e:
+                msg = f"[ERR] {str(e)}".encode()
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(msg)
+
         elif path == "/test-instagram":
             print("\n[TEST] Manual Instagram test triggered!")
             try:
