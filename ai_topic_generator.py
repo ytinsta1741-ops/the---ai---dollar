@@ -121,7 +121,7 @@ def generate_ai_topic(existing_titles_hint=""):
             GEMINI_URL,
             params={"key": GEMINI_API_KEY},
             json=payload,
-            timeout=30,
+            timeout=45,
         )
         if resp.status_code != 200:
             print(f"[WARN] Gemini API error {resp.status_code}: {resp.text[:200]}")

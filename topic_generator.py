@@ -668,6 +668,77 @@ def _hash_title(title):
     return hashlib.md5(title.encode()).hexdigest()[:12]
 
 
+def _prime_hashes_from_youtube():
+    """Rebuild the never-repeat list from the channel's actual upload
+    history on YouTube. This is the permanent source of truth — unlike
+    posted_titles.json, it survives every Render redeploy, which wipes
+    the local disk on every code push."""
+    global _generated_title_hashes
+
+    refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "")
+    client_id = os.getenv("YOUTUBE_CLIENT_ID", "")
+    client_secret = os.getenv("YOUTUBE_CLIENT_SECRET", "")
+    if not refresh_token or not client_id or not client_secret:
+        print("[WARN] YouTube credentials not set, skipping title history sync")
+        return
+
+    try:
+        from google.oauth2.credentials import Credentials
+        from googleapiclient.discovery import build
+
+        creds = Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=client_id,
+            client_secret=client_secret,
+            scopes=["https://www.googleapis.com/auth/youtube.readonly"],
+        )
+        youtube = build("youtube", "v3", credentials=creds)
+
+        channels_resp = youtube.channels().list(part="contentDetails", mine=True).execute()
+        items = channels_resp.get("items", [])
+        if not items:
+            print("[WARN] Could not resolve channel uploads playlist")
+            return
+        uploads_playlist_id = items[0]["contentDetails"]["relatedPlaylists"]["uploads"]
+
+        titles = []
+        page_token = None
+        while True:
+            resp = youtube.playlistItems().list(
+                part="snippet",
+                playlistId=uploads_playlist_id,
+                maxResults=50,
+                pageToken=page_token,
+            ).execute()
+            titles.extend(item["snippet"]["title"] for item in resp.get("items", []))
+            page_token = resp.get("nextPageToken")
+            if not page_token:
+                break
+
+        added = 0
+        for title in titles:
+            h = _hash_title(title)
+            if h not in _generated_title_hashes:
+                _generated_title_hashes.add(h)
+                added += 1
+
+        try:
+            with open(_HISTORY_FILE, "w") as f:
+                json.dump(list(_generated_title_hashes), f)
+        except Exception as e:
+            print(f"[WARN] Could not persist synced title history: {e}")
+
+        print(f"[OK] Synced {len(titles)} titles from YouTube, {added} new to dedup list")
+
+    except Exception as e:
+        print(f"[WARN] Could not sync title history from YouTube: {e}")
+
+
+_prime_hashes_from_youtube()
+
+
 def _recent_titles_hint(limit=15):
     """Sample a few recent titles as plain text so the AI avoids near-duplicates."""
     try:
@@ -702,8 +773,11 @@ def generate_short_topic():
     or the request fails, so posting never stops because of an AI outage.
     """
     global _generated_title_hashes
+    import time as _time
 
-    for attempt in range(3):
+    for attempt in range(6):
+        if attempt > 0:
+            _time.sleep(3)
         topic = generate_ai_topic(existing_titles_hint=_recent_titles_hint())
         if topic:
             title_hash = _hash_title(topic["title"])
