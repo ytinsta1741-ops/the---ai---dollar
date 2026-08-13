@@ -42,10 +42,11 @@ Do NOT make generic "money rules", "money tips", or "habits of the rich" listicl
 3. A concrete real-number example showing it in action.
 4. Why it actually matters to the viewer's own money.
 
-FRAME IT AS A TENSION OR COMPARISON, not a flat definition. Real audience data on this channel shows comparison-framed videos ("Stocks vs Bonds") get 3x the retention of plain "What is X" definition videos. So:
-- If the term naturally has a counterpart (Bull vs Bear, APR vs APY, Assets vs Liabilities, Roth vs Traditional, Stocks vs Bonds), frame the whole video as that head-to-head comparison — title, hook, and structure should all lean into the "vs".
-- If the term doesn't have an obvious counterpart, frame it as friend-vs-enemy tension instead (e.g. "Compound Interest: is it working FOR you or AGAINST you?", "Is your amortization schedule secretly costing you thousands?") — never just "What is [term]".
-- The title must promise a winner, a surprise, or a choice — not just a definition.
+FRAME IT AS A TENSION, COMPARISON, OR PERSONAL-STAKES QUESTION — never a flat definition. Real audience data on this channel confirms two hook styles clearly outperform plain "What is X" videos:
+- COMPARISON: if the term naturally has a counterpart (Bull vs Bear, APR vs APY, Assets vs Liabilities, Roth vs Traditional, Stocks vs Bonds), frame the whole video as that head-to-head comparison — title, hook, and structure should all lean into the "vs".
+- PERSONAL-STAKES QUESTION: frame the title as a direct question aimed at the viewer's own situation, not an abstract topic label (e.g. "Are You Behind On This?", "Is This Secretly Costing You Money?", "Do You Actually Know What's In Your Own Contract?"). This style has been the single best-performing hook on this channel so far — it makes the viewer wonder about themselves, not just learn a fact.
+- If neither comparison nor personal-stakes framing fits naturally, fall back to friend-vs-enemy tension (e.g. "Compound Interest: is it working FOR you or AGAINST you?") — never just "What is [term]".
+- Alternate between these styles across videos for variety. The title must always promise a winner, a surprise, or make the viewer wonder about their own situation — never just a definition.
 
 VOICE: Talk like you're excitedly explaining this to a friend who just asked "wait what does that even mean" — not like you're reading a dictionary entry. Concretely:
 - Short sentences. Never more than ~12 words per sentence. Break long ideas into two punchy sentences instead of one dense one.
