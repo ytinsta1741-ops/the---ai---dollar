@@ -1164,6 +1164,44 @@ def fetch_hd_images(slides, save_dir, landscape=False):
     return images
 
 
+GOOGLE_TTS_API_KEY = os.getenv("GOOGLE_TTS_API_KEY", "")
+GOOGLE_TTS_VOICE = os.getenv("GOOGLE_TTS_VOICE", "en-US-Neural2-D")
+
+
+def _run_google_tts(text, output_path, speaking_rate=1.05, pitch=-1.0):
+    """Synthesize speech with Google Cloud TTS Neural2 (free up to 1M chars/mo).
+    Falls back to edge-tts automatically if this fails or no key is set."""
+    if not GOOGLE_TTS_API_KEY:
+        return False
+    import base64
+    try:
+        resp = requests.post(
+            f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_TTS_API_KEY}",
+            json={
+                "input": {"text": text},
+                "voice": {"languageCode": "en-US", "name": GOOGLE_TTS_VOICE},
+                "audioConfig": {
+                    "audioEncoding": "MP3",
+                    "speakingRate": speaking_rate,
+                    "pitch": pitch,
+                },
+            },
+            timeout=20,
+        )
+        if resp.status_code != 200:
+            print(f"  [WARN] Google TTS error {resp.status_code}: {resp.text[:200]}")
+            return False
+        audio_b64 = resp.json().get("audioContent")
+        if not audio_b64:
+            return False
+        with open(output_path, "wb") as f:
+            f.write(base64.b64decode(audio_b64))
+        return os.path.exists(output_path) and os.path.getsize(output_path) > 500
+    except Exception as e:
+        print(f"  [WARN] Google TTS failed: {e}")
+        return False
+
+
 def _run_edge_tts(text, output_path, voice, rate, pitch):
     """Run edge-tts in a clean asyncio context with retry"""
     import edge_tts
@@ -1197,35 +1235,56 @@ def create_slide_audios(slides, work_dir):
     """Generate audio for each slide's speech separately, measure exact duration per slide"""
     os.makedirs(work_dir, exist_ok=True)
 
-    try:
-        import edge_tts
-    except ImportError:
-        print("[ERR] edge-tts not installed")
-        return None
-
-    working_voice = None
-    for voice, rate, pitch in VOICE_LIST:
+    use_google = False
+    if GOOGLE_TTS_API_KEY:
         test_path = os.path.join(work_dir, "test_voice.mp3")
-        if _run_edge_tts("Testing voice.", test_path, voice, rate, pitch):
-            working_voice = (voice, rate, pitch)
+        if _run_google_tts("Testing voice.", test_path):
+            use_google = True
             try:
                 os.remove(test_path)
             except Exception:
                 pass
-            print(f"[OK] Using voice: {voice}")
-            break
+            print(f"[OK] Using Google Cloud TTS voice: {GOOGLE_TTS_VOICE}")
+        else:
+            print("[WARN] Google TTS test failed, falling back to edge-tts")
 
-    if not working_voice:
-        print("[ERR] All edge-tts voices failed in create_slide_audios")
-        return None
+    working_voice = None
+    if not use_google:
+        try:
+            import edge_tts
+        except ImportError:
+            print("[ERR] edge-tts not installed")
+            return None
+
+        for voice, rate, pitch in VOICE_LIST:
+            test_path = os.path.join(work_dir, "test_voice.mp3")
+            if _run_edge_tts("Testing voice.", test_path, voice, rate, pitch):
+                working_voice = (voice, rate, pitch)
+                try:
+                    os.remove(test_path)
+                except Exception:
+                    pass
+                print(f"[OK] Using voice: {voice}")
+                break
+
+        if not working_voice:
+            print("[ERR] All edge-tts voices failed in create_slide_audios")
+            return None
 
     audio_paths = []
     durations = []
 
     for idx, slide in enumerate(slides):
         audio_path = os.path.join(work_dir, f"speech_{idx}.mp3")
-        voice, rate, pitch = working_voice
-        if not _run_edge_tts(slide['speech'], audio_path, voice, rate, pitch):
+        ok = False
+        if use_google:
+            ok = _run_google_tts(slide['speech'], audio_path)
+            if not ok:
+                print(f"  [WARN] Google TTS failed for slide {idx}, trying edge-tts fallback")
+        if not ok:
+            voice, rate, pitch = working_voice or VOICE_LIST[0]
+            ok = _run_edge_tts(slide['speech'], audio_path, voice, rate, pitch)
+        if not ok:
             print(f"  [WARN] TTS failed for slide {idx}, using silence")
             silence_cmd = [FFMPEG, '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '3', '-c:a', 'aac', audio_path]
             subprocess.run(silence_cmd, capture_output=True, timeout=10)
