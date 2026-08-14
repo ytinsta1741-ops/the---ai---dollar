@@ -11,8 +11,23 @@ import random
 import requests
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+
+# Google keeps retiring/restricting Gemini models to billing-only tiers
+# (2.0-flash retired, 2.5-flash "no longer available to new users",
+# 3.6-flash requires billing on this key). Rather than hardcode one model
+# and keep breaking, try several known free-tier-eligible models in order.
+GEMINI_MODEL_CANDIDATES = [
+    os.getenv("GEMINI_MODEL"),  # optional manual override, tried first if set
+    "gemini-3.5-flash-lite",
+    "gemini-3-flash-preview",
+    "gemini-2.5-flash-lite",
+    "gemini-flash-lite-latest",
+]
+GEMINI_MODEL_CANDIDATES = [m for m in GEMINI_MODEL_CANDIDATES if m]
+
+
+def _gemini_url(model):
+    return f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 FINANCE_TERMS = [
     # Personal finance
@@ -116,27 +131,30 @@ def generate_ai_topic(existing_titles_hint=""):
         },
     }
 
-    try:
-        resp = requests.post(
-            GEMINI_URL,
-            params={"key": GEMINI_API_KEY},
-            json=payload,
-            timeout=45,
-        )
-        if resp.status_code != 200:
-            print(f"[WARN] Gemini API error {resp.status_code}: {resp.text[:200]}")
-            return None
+    for model in GEMINI_MODEL_CANDIDATES:
+        try:
+            resp = requests.post(
+                _gemini_url(model),
+                params={"key": GEMINI_API_KEY},
+                json=payload,
+                timeout=45,
+            )
+            if resp.status_code != 200:
+                print(f"[WARN] Gemini API error {resp.status_code} on {model}: {resp.text[:200]}")
+                continue
 
-        data = resp.json()
-        raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
-        topic = _extract_json(raw_text)
+            data = resp.json()
+            raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
+            topic = _extract_json(raw_text)
 
-        if not _validate_topic(topic):
-            print("[WARN] Gemini returned malformed topic, falling back to templates")
-            return None
+            if not _validate_topic(topic):
+                print(f"[WARN] Gemini ({model}) returned malformed topic")
+                continue
 
-        return topic
+            return topic
 
-    except Exception as e:
-        print(f"[WARN] Gemini generation failed: {e}")
-        return None
+        except Exception as e:
+            print(f"[WARN] Gemini generation failed on {model}: {e}")
+            continue
+
+    return None
