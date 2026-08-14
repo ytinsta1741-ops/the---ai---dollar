@@ -1946,6 +1946,268 @@ def create_video_kenburns(slides, images, audio_file, durations, output_file, la
     return True
 
 
+def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True):
+    """An original simple line-art stick-figure host character — hand-drawn
+    with primitives, not traced from any existing meme/character."""
+    s = scale
+    head_r = int(48 * s)
+    head_cy = top_y + head_r
+    lw = max(2, int(6 * s))
+
+    # Head
+    draw.ellipse(
+        [cx - head_r, head_cy - head_r, cx + head_r, head_cy + head_r],
+        outline=color, width=lw
+    )
+    # Eyes
+    eye_dx, eye_dy, eye_r = int(16 * s), int(6 * s), int(4 * s)
+    for ex in (cx - eye_dx, cx + eye_dx):
+        draw.ellipse([ex - eye_r, head_cy - eye_dy - eye_r, ex + eye_r, head_cy - eye_dy + eye_r], fill=color)
+    # Smile
+    sm_r = int(20 * s)
+    draw.arc(
+        [cx - sm_r, head_cy - int(4 * s), cx + sm_r, head_cy + sm_r],
+        start=20, end=160, fill=color, width=lw
+    )
+
+    neck_y = head_cy + head_r
+    torso_len = int(90 * s)
+    hip_y = neck_y + torso_len
+    draw.line([cx, neck_y, cx, hip_y], fill=color, width=lw)
+
+    leg_len = int(70 * s)
+    foot_y = hip_y + leg_len
+    draw.line([cx, hip_y, cx - int(30 * s), foot_y], fill=color, width=lw)
+    draw.line([cx, hip_y, cx + int(30 * s), foot_y], fill=color, width=lw)
+
+    arm_y = neck_y + int(25 * s)
+    if pointing:
+        draw.line([cx, arm_y, cx - int(55 * s), arm_y - int(45 * s)], fill=color, width=lw)
+        draw.line([cx, arm_y, cx + int(45 * s), arm_y + int(15 * s)], fill=color, width=lw)
+    else:
+        draw.line([cx, arm_y, cx - int(45 * s), arm_y + int(35 * s)], fill=color, width=lw)
+        draw.line([cx, arm_y, cx + int(45 * s), arm_y + int(35 * s)], fill=color, width=lw)
+
+    return (cx - int(55 * s), top_y, cx + int(55 * s), foot_y)
+
+
+def prep_infographic_slides(images, slides, work_dir, landscape=False):
+    """Clean white-background infographic style: bold headline, a boxed
+    photo card, and a recurring original mascot character for brand
+    identity — inspired by high-performing comparison-style Shorts."""
+    os.makedirs(work_dir, exist_ok=True)
+    from PIL import Image, ImageDraw, ImageFont
+
+    def get_font(size, bold=True):
+        names = (
+            ["C:/Windows/Fonts/arialbd.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "DejaVuSans-Bold.ttf"]
+            if bold else
+            ["C:/Windows/Fonts/arial.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "DejaVuSans.ttf"]
+        )
+        for path in names:
+            try:
+                return ImageFont.truetype(path, size)
+            except Exception:
+                continue
+        return ImageFont.load_default()
+
+    def wrap_line(text_line, font, draw_ctx, max_w):
+        words = text_line.split()
+        if not words:
+            return [text_line]
+        out, cur = [], words[0]
+        for word in words[1:]:
+            test = cur + " " + word
+            bb = draw_ctx.textbbox((0, 0), test, font=font)
+            if (bb[2] - bb[0]) <= max_w:
+                cur = test
+            else:
+                out.append(cur)
+                cur = word
+        out.append(cur)
+        return out
+
+    W, H = (1920, 1080) if landscape else (1080, 1920)
+    PAD = 60
+    MAX_TW = W - PAD * 2
+
+    BG = (250, 249, 246)
+    INK = (20, 20, 24)
+    MUTED = (110, 110, 118)
+    ACCENT = (21, 87, 61)  # deep money-green
+    CARD_BORDER = (225, 223, 216)
+
+    font_brand = get_font(34)
+    font_counter = get_font(24, bold=False)
+    font_headline = get_font(58)
+    font_sub = get_font(30, bold=False)
+    font_cta = get_font(42)
+
+    total_slides = len(slides)
+    paths = []
+
+    for idx, slide in enumerate(slides):
+        out = os.path.join(work_dir, f"info_{idx}.jpg")
+        bg = Image.new("RGB", (W, H), BG)
+        draw = ImageDraw.Draw(bg)
+
+        # Brand header
+        brand = "THE AI DOLLAR"
+        bb = draw.textbbox((0, 0), brand, font=font_brand)
+        draw.text(((W - (bb[2] - bb[0])) // 2, 50), brand, font=font_brand, fill=INK)
+
+        counter = f"{idx + 1}/{total_slides}"
+        cb = draw.textbbox((0, 0), counter, font=font_counter)
+        draw.text((W - (cb[2] - cb[0]) - PAD, 58), counter, font=font_counter, fill=MUTED)
+
+        # Progress bar
+        bar_y = 105
+        progress = (idx + 1) / total_slides
+        draw.rectangle([PAD, bar_y, W - PAD, bar_y + 4], fill=(230, 228, 222))
+        draw.rectangle([PAD, bar_y, PAD + int((W - PAD * 2) * progress), bar_y + 4], fill=ACCENT)
+
+        # Headline
+        text = slide['text'].upper()
+        raw_lines = text.split('\n')
+        for size in [58, 50, 44, 38, 32]:
+            f = get_font(size)
+            wrapped = []
+            for raw in raw_lines:
+                wrapped.extend(wrap_line(raw, f, draw, MAX_TW))
+            line_h = size + 20
+            total_h = len(wrapped) * line_h
+            if total_h < H * 0.28:
+                break
+
+        y = 160
+        for line in wrapped:
+            bb = draw.textbbox((0, 0), line, font=f)
+            x = (W - (bb[2] - bb[0])) // 2
+            draw.text((x, y), line, font=f, fill=INK)
+            y += line_h
+
+        # Photo card
+        img_src = images[idx] if idx < len(images) else None
+        card_top = y + 30
+        card_h = int(H * 0.34)
+        card_w = int(W * 0.78)
+        card_x = (W - card_w) // 2
+
+        if img_src and os.path.exists(img_src):
+            photo = Image.open(img_src).convert("RGB")
+            iw, ih = photo.size
+            ratio = max(card_w / iw, card_h / ih)
+            photo = photo.resize((int(iw * ratio), int(ih * ratio)), Image.LANCZOS)
+            left = (photo.width - card_w) // 2
+            top = (photo.height - card_h) // 2
+            photo = photo.crop((left, top, left + card_w, top + card_h))
+            draw.rectangle(
+                [card_x - 4, card_top - 4, card_x + card_w + 4, card_top + card_h + 4],
+                outline=CARD_BORDER, width=2
+            )
+            bg.paste(photo, (card_x, card_top))
+        else:
+            draw.rounded_rectangle(
+                [card_x, card_top, card_x + card_w, card_top + card_h],
+                radius=16, outline=CARD_BORDER, width=2, fill=(240, 239, 234)
+            )
+
+        # Mascot
+        mascot_y = card_top + card_h + 50
+        is_last = (idx == len(slides) - 1)
+        if mascot_y + 220 < H - 80:
+            _draw_mascot(draw, W // 2, mascot_y, scale=1.3, color=INK, pointing=not is_last)
+
+        is_first = (idx == 0)
+        if is_first:
+            hook = "WATCH TIL THE END"
+            hb = draw.textbbox((0, 0), hook, font=font_sub)
+            hw = hb[2] - hb[0]
+            hx = (W - hw) // 2
+            hy = H - 90
+            draw.rounded_rectangle([hx - 24, hy - 10, hx + hw + 24, hy + 36], radius=14, fill=ACCENT)
+            draw.text((hx, hy), hook, font=font_sub, fill=(255, 255, 255))
+
+        if is_last:
+            cta = "FOLLOW FOR MORE"
+            cb2 = draw.textbbox((0, 0), cta, font=font_cta)
+            cw = cb2[2] - cb2[0]
+            cx2 = (W - cw) // 2
+            cy2 = H - 100
+            draw.rounded_rectangle([cx2 - 30, cy2 - 16, cx2 + cw + 30, cy2 + 46], radius=16, fill=ACCENT)
+            draw.text((cx2, cy2), cta, font=font_cta, fill=(255, 255, 255))
+
+        bg.save(out, "JPEG", quality=95)
+        paths.append(out)
+        del draw, bg
+        gc.collect()
+        print(f"  infographic slide {idx+1}/{len(slides)} ready")
+
+    return paths
+
+
+def create_video_infographic(slides, images, audio_file, durations, output_file, landscape=False):
+    """Single-pass build (lightweight, matches the original static-slide
+    pipeline's memory profile) using the new white-background layout."""
+    work_dir = output_file + "_infowork"
+    print("[BUILD] Preparing infographic slides...")
+    slide_paths = prep_infographic_slides(images, slides, work_dir, landscape=landscape)
+
+    n = len(slides)
+    audio_duration = get_audio_duration(audio_file)
+    res = "1920:1080" if landscape else "1080:1920"
+
+    concat_file = os.path.join(work_dir, "concat.txt")
+    with open(concat_file, 'w') as f:
+        for idx in range(n):
+            f.write(f"file '{os.path.basename(slide_paths[idx])}'\n")
+            f.write(f"duration {durations[idx]:.2f}\n")
+        f.write(f"file '{os.path.basename(slide_paths[n-1])}'\n")
+
+    bg_music_path = os.path.join(work_dir, "bgmusic.m4a")
+    has_music = generate_bg_music(bg_music_path, audio_duration + 2)
+
+    if has_music:
+        cmd = [
+            FFMPEG, '-y',
+            '-f', 'concat', '-safe', '0', '-i', concat_file,
+            '-i', audio_file,
+            '-i', bg_music_path,
+            '-filter_complex',
+            f'[0:v]scale={res},fps=30[v];[2:a]volume=0.10[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
+            '-map', '[v]', '-map', '[aout]',
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-pix_fmt', 'yuv420p',
+            '-shortest',
+            output_file
+        ]
+    else:
+        cmd = [
+            FFMPEG, '-y',
+            '-f', 'concat', '-safe', '0', '-i', concat_file,
+            '-i', audio_file,
+            '-vf', f'scale={res},fps=30',
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-pix_fmt', 'yuv420p',
+            '-shortest',
+            output_file
+        ]
+
+    proc = subprocess.run(cmd, capture_output=True, timeout=600)
+    import shutil
+    shutil.rmtree(work_dir, ignore_errors=True)
+
+    if proc.returncode != 0:
+        stderr = proc.stderr.decode('utf-8', errors='replace')[-500:]
+        print(f"[WARN] Infographic build failed: {stderr}")
+        return False
+
+    print("[OK] Video created (infographic style)!")
+    return True
+
+
 def create_video_ffmpeg(slides, images, audio_file, durations, output_file, landscape=False):
     valid_images = [img for img in images if img is not None]
     if not valid_images:
@@ -2068,7 +2330,13 @@ def generate_daily_video():
         print(f"[OK] Got {sum(1 for i in images if i)} images")
 
         ok = False
-        if os.getenv("USE_KEN_BURNS", "true").lower() != "false":
+        if os.getenv("USE_INFOGRAPHIC_STYLE", "true").lower() != "false":
+            print("[VIDEO] Creating video with infographic style...")
+            ok = create_video_infographic(slides, images, audio_file, durations, output_file)
+            if not ok:
+                print("[WARN] Infographic build failed, falling back to Ken Burns...")
+
+        if not ok and os.getenv("USE_KEN_BURNS", "true").lower() != "false":
             print("[VIDEO] Creating video with Ken Burns motion...")
             ok = create_video_kenburns(slides, images, audio_file, durations, output_file)
             if not ok:
