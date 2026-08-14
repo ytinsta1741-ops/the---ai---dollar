@@ -5,6 +5,7 @@ test_tiktok_refresh.py
 .env
 *.json
 videos/
+piper_models/
 __pycache__/
 *.pyc
 last_post_time.txt

@@ -1164,6 +1164,68 @@ def fetch_hd_images(slides, save_dir, landscape=False):
     return images
 
 
+PIPER_VOICE_NAME = os.getenv("PIPER_VOICE_NAME", "en_US-ryan-medium")
+PIPER_MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "piper_models")
+PIPER_VOICE_BASE_URL = "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/medium"
+_piper_voice = None
+
+
+def _get_piper_voice():
+    """Lazily download (once) and load the Piper TTS voice model.
+    Fully open-source, runs locally — no API key, no billing, ever."""
+    global _piper_voice
+    if _piper_voice is not None:
+        return _piper_voice
+
+    os.makedirs(PIPER_MODEL_DIR, exist_ok=True)
+    onnx_path = os.path.join(PIPER_MODEL_DIR, f"{PIPER_VOICE_NAME}.onnx")
+    json_path = os.path.join(PIPER_MODEL_DIR, f"{PIPER_VOICE_NAME}.onnx.json")
+
+    try:
+        if not os.path.exists(onnx_path):
+            print(f"[Piper] Downloading voice model {PIPER_VOICE_NAME}...")
+            r = requests.get(f"{PIPER_VOICE_BASE_URL}/{PIPER_VOICE_NAME}.onnx", timeout=120)
+            r.raise_for_status()
+            with open(onnx_path, "wb") as f:
+                f.write(r.content)
+        if not os.path.exists(json_path):
+            r = requests.get(f"{PIPER_VOICE_BASE_URL}/{PIPER_VOICE_NAME}.onnx.json", timeout=30)
+            r.raise_for_status()
+            with open(json_path, "wb") as f:
+                f.write(r.content)
+
+        from piper import PiperVoice
+        _piper_voice = PiperVoice.load(onnx_path, config_path=json_path)
+        print(f"[OK] Piper voice loaded: {PIPER_VOICE_NAME}")
+        return _piper_voice
+    except Exception as e:
+        print(f"[WARN] Could not load Piper voice: {e}")
+        return None
+
+
+def _run_piper_tts(text, output_path):
+    """Synthesize speech with Piper (open-source, local, free forever)."""
+    voice = _get_piper_voice()
+    if voice is None:
+        return False
+    try:
+        import wave
+        wav_path = output_path.rsplit(".", 1)[0] + "_piper.wav"
+        with wave.open(wav_path, "wb") as wav_file:
+            voice.synthesize_wav(text, wav_file)
+
+        cmd = [FFMPEG, '-y', '-i', wav_path, '-c:a', 'libmp3lame', '-b:a', '128k', output_path]
+        proc = subprocess.run(cmd, capture_output=True, timeout=30)
+        try:
+            os.remove(wav_path)
+        except Exception:
+            pass
+        return proc.returncode == 0 and os.path.exists(output_path) and os.path.getsize(output_path) > 500
+    except Exception as e:
+        print(f"  [WARN] Piper TTS failed: {e}")
+        return False
+
+
 GOOGLE_TTS_API_KEY = os.getenv("GOOGLE_TTS_API_KEY", "")
 GOOGLE_TTS_VOICE = os.getenv("GOOGLE_TTS_VOICE", "en-US-Neural2-D")
 
@@ -1232,12 +1294,25 @@ VOICE_LIST = [
 
 
 def create_slide_audios(slides, work_dir):
-    """Generate audio for each slide's speech separately, measure exact duration per slide"""
+    """Generate audio for each slide's speech separately, measure exact duration per slide.
+    Priority: Piper (open-source, local, free forever, no billing) -> Google Cloud TTS
+    (if a key is configured) -> edge-tts (free, no billing)."""
     os.makedirs(work_dir, exist_ok=True)
 
+    use_piper = False
+    test_path = os.path.join(work_dir, "test_voice.mp3")
+    if _run_piper_tts("Testing voice.", test_path):
+        use_piper = True
+        try:
+            os.remove(test_path)
+        except Exception:
+            pass
+        print(f"[OK] Using Piper voice: {PIPER_VOICE_NAME}")
+    else:
+        print("[WARN] Piper unavailable, trying Google TTS / edge-tts")
+
     use_google = False
-    if GOOGLE_TTS_API_KEY:
-        test_path = os.path.join(work_dir, "test_voice.mp3")
+    if not use_piper and GOOGLE_TTS_API_KEY:
         if _run_google_tts("Testing voice.", test_path):
             use_google = True
             try:
@@ -1249,7 +1324,7 @@ def create_slide_audios(slides, work_dir):
             print("[WARN] Google TTS test failed, falling back to edge-tts")
 
     working_voice = None
-    if not use_google:
+    if not use_piper and not use_google:
         try:
             import edge_tts
         except ImportError:
@@ -1257,7 +1332,6 @@ def create_slide_audios(slides, work_dir):
             return None
 
         for voice, rate, pitch in VOICE_LIST:
-            test_path = os.path.join(work_dir, "test_voice.mp3")
             if _run_edge_tts("Testing voice.", test_path, voice, rate, pitch):
                 working_voice = (voice, rate, pitch)
                 try:
@@ -1277,11 +1351,15 @@ def create_slide_audios(slides, work_dir):
     for idx, slide in enumerate(slides):
         audio_path = os.path.join(work_dir, f"speech_{idx}.mp3")
         ok = False
-        if use_google:
+        if use_piper:
+            ok = _run_piper_tts(slide['speech'], audio_path)
+            if not ok:
+                print(f"  [WARN] Piper failed for slide {idx}, trying fallback")
+        if not ok and use_google:
             ok = _run_google_tts(slide['speech'], audio_path)
             if not ok:
                 print(f"  [WARN] Google TTS failed for slide {idx}, trying edge-tts fallback")
-        if not ok:
+        if not ok and (working_voice or (not use_piper and not use_google)):
             voice, rate, pitch = working_voice or VOICE_LIST[0]
             ok = _run_edge_tts(slide['speech'], audio_path, voice, rate, pitch)
         if not ok:
