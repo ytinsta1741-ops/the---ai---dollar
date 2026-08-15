@@ -61,6 +61,8 @@ STRUCTURE — every video follows this arc across the 7 slides:
 
 IMAGES MUST DIFFERENTIATE THE TWO TERMS. Slides about Term A need a DIFFERENT image concept than slides about Term B — e.g. if comparing "loan" vs "debenture", a loan slide might show a bank loan officer or a person signing paperwork at a bank, while a debenture slide shows a bond certificate or investment document — visually distinct so the viewer's eye associates a different picture with each term. Never reuse the same visual concept for both terms.
 
+When a slide's example or analogy naturally involves a well-known finance/business figure (e.g. explaining equity/investing with Warren Buffett, the Federal Reserve with Jerome Powell, entrepreneurship with Elon Musk or Jeff Bezos), you may set "img" to just that person's exact full name instead of a scene description — the app will fetch an appropriately licensed photo. Only use figures from this safe list: Warren Buffett, Jerome Powell, Elon Musk, Jeff Bezos, Bill Gates, Mark Cuban, Janet Yellen, Ray Dalio, Charlie Munger. Do not invent other names.
+
 FRAME THE TITLE around the confusion itself, not a flat definition. Real audience data on this channel confirms two hook styles clearly outperform plain "What is X" videos:
 - CONFUSION-CALLOUT: "You've Been Mixing Up [A] and [B] — Here's The Difference", "[A] vs [B]: The Difference Nobody Explains"
 - PERSONAL-STAKES QUESTION: "Do You Actually Know The Difference Between [A] and [B]?", "Is Confusing These Two Costing You Money?" — this style has been the single best-performing hook on this channel so far.
@@ -155,6 +157,8 @@ def generate_ai_topic(existing_titles_hint=""):
                 print(f"[WARN] Gemini ({model}) returned malformed topic")
                 continue
 
+            topic["term_a"] = term_a
+            topic["term_b"] = term_b
             return topic
 
         except Exception as e:

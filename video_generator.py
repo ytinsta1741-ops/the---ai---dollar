@@ -1099,8 +1099,73 @@ def _extract_search_keywords(desc, text=""):
     return f"business finance {kw}".strip() if kw else 'business finance money professional'
 
 
+# Well-known finance/business figures the AI is allowed to reference by
+# name. Fetched from Wikipedia, which only hosts openly-licensed
+# (public domain / Creative Commons) images — much lower legal risk than
+# pulling a random photo of a real person from general web search.
+WELL_KNOWN_FIGURES = {
+    "warren buffett", "jerome powell", "elon musk", "jeff bezos",
+    "bill gates", "mark cuban", "janet yellen", "ray dalio", "charlie munger",
+}
+
+
+def _fetch_wikipedia_thumbnail(name, img_path):
+    """Fetch an openly-licensed photo of a known public figure via
+    Wikipedia's REST summary API. Returns True on success."""
+    try:
+        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(name)}"
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "TheAIDollar/1.0"})
+        if resp.status_code != 200:
+            return False
+        data = resp.json()
+        img_url = (data.get("originalimage") or data.get("thumbnail") or {}).get("source")
+        if not img_url:
+            return False
+        img_resp = requests.get(img_url, timeout=20)
+        if img_resp.status_code == 200 and len(img_resp.content) > 10000:
+            with open(img_path, 'wb') as f:
+                f.write(img_resp.content)
+            return True
+    except Exception as e:
+        print(f"  [WARN] Wikipedia fetch failed for {name}: {e}")
+    return False
+
+
+def fetch_term_hero_images(term_a, term_b, save_dir):
+    """Fetch one clean representative photo per confusable term, used for
+    the side-by-side comparison slides. Returns (path_a, path_b), either
+    may be None on failure."""
+    os.makedirs(save_dir, exist_ok=True)
+    headers = {"Authorization": PEXELS_API_KEY} if PEXELS_API_KEY else {}
+    results = []
+    for idx, term in enumerate((term_a, term_b)):
+        img_path = os.path.join(save_dir, f"hero_{idx}.jpg")
+        got = False
+        if term.strip().lower() in WELL_KNOWN_FIGURES:
+            got = _fetch_wikipedia_thumbnail(term.strip(), img_path)
+        if not got and PEXELS_API_KEY:
+            try:
+                query = f"business finance {term}"
+                purl = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&orientation=portrait&per_page=10"
+                resp = requests.get(purl, headers=headers, timeout=15)
+                if resp.status_code == 200:
+                    photos = resp.json().get("photos", [])
+                    if photos:
+                        img_url = photos[0]["src"].get("large2x") or photos[0]["src"]["large"]
+                        img_resp = requests.get(img_url, timeout=20)
+                        if img_resp.status_code == 200 and len(img_resp.content) > 20000:
+                            with open(img_path, 'wb') as f:
+                                f.write(img_resp.content)
+                            got = True
+            except Exception as e:
+                print(f"  [WARN] Hero image fetch failed for {term}: {e}")
+        results.append(img_path if got else None)
+    return tuple(results)
+
+
 def fetch_hd_images(slides, save_dir, landscape=False):
-    """Fetch sharp HD images from Pexels (primary) with Pollinations fallback."""
+    """Fetch sharp HD images: Wikipedia for named public figures, Pexels
+    for everything else, Pollinations AI as final fallback."""
     os.makedirs(save_dir, exist_ok=True)
     images = []
     headers = {"Authorization": PEXELS_API_KEY} if PEXELS_API_KEY else {}
@@ -1119,7 +1184,13 @@ def fetch_hd_images(slides, save_dir, landscape=False):
         query = _extract_search_keywords(desc, text)
         got = False
 
-        if PEXELS_API_KEY:
+        if desc.strip().lower() in WELL_KNOWN_FIGURES:
+            if _fetch_wikipedia_thumbnail(desc.strip(), img_path):
+                images.append(img_path)
+                print(f"  [WIKI] Slide {i+1}: {desc.strip()}")
+                got = True
+
+        if not got and PEXELS_API_KEY:
             try:
                 purl = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&orientation={orientation}&per_page=15"
                 resp = requests.get(purl, headers=headers, timeout=15)
@@ -1288,11 +1359,11 @@ def _run_edge_tts(text, output_path, voice, rate, pitch):
 
 
 VOICE_LIST = [
-    ("en-US-ChristopherNeural", "-12%", "-2Hz"),
-    ("en-US-AndrewMultilingualNeural", "-12%", "-2Hz"),
-    ("en-US-GuyNeural", "-10%", "-4Hz"),
-    ("en-GB-RyanNeural", "-10%", "-4Hz"),
-    ("en-US-DavisNeural", "-12%", "-3Hz"),
+    ("en-US-GuyNeural", "-6%", "+0Hz"),
+    ("en-US-ChristopherNeural", "-6%", "+0Hz"),
+    ("en-US-AndrewMultilingualNeural", "-6%", "+0Hz"),
+    ("en-GB-RyanNeural", "-6%", "+0Hz"),
+    ("en-US-DavisNeural", "-6%", "+0Hz"),
 ]
 
 
@@ -1950,7 +2021,7 @@ def create_video_kenburns(slides, images, audio_file, durations, output_file, la
     return True
 
 
-def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, point_left=True):
+def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, point_left=True, confused=False):
     """An original simple line-art stick-figure host character — hand-drawn
     with primitives, not traced from any existing meme/character."""
     s = scale
@@ -1967,12 +2038,16 @@ def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, 
     eye_dx, eye_dy, eye_r = int(16 * s), int(6 * s), int(4 * s)
     for ex in (cx - eye_dx, cx + eye_dx):
         draw.ellipse([ex - eye_r, head_cy - eye_dy - eye_r, ex + eye_r, head_cy - eye_dy + eye_r], fill=color)
-    # Smile
-    sm_r = int(20 * s)
-    draw.arc(
-        [cx - sm_r, head_cy - int(4 * s), cx + sm_r, head_cy + sm_r],
-        start=20, end=160, fill=color, width=lw
-    )
+    # Mouth — small "o" if confused, smile otherwise
+    if confused:
+        mo_r = int(8 * s)
+        draw.ellipse([cx - mo_r, head_cy + int(6 * s) - mo_r, cx + mo_r, head_cy + int(6 * s) + mo_r], outline=color, width=max(2, int(4 * s)))
+    else:
+        sm_r = int(20 * s)
+        draw.arc(
+            [cx - sm_r, head_cy - int(4 * s), cx + sm_r, head_cy + sm_r],
+            start=20, end=160, fill=color, width=lw
+        )
 
     neck_y = head_cy + head_r
     torso_len = int(90 * s)
@@ -1985,7 +2060,21 @@ def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, 
     draw.line([cx, hip_y, cx + int(30 * s), foot_y], fill=color, width=lw)
 
     arm_y = neck_y + int(15 * s)
-    if pointing:
+    point_dx, point_dy = 0, 0
+    top_bound = top_y
+
+    if confused:
+        # Both arms raised in a shrug, plus a hand-drawn "?" above the head.
+        for side in (-1, 1):
+            draw.line([cx, arm_y, cx + side * int(50 * s), arm_y - int(50 * s)], fill=color, width=lw)
+        q_cx = cx
+        q_top = top_y - int(70 * s)
+        q_r = int(16 * s)
+        draw.arc([q_cx - q_r, q_top, q_cx + q_r, q_top + int(28 * s)], start=200, end=430, fill=color, width=max(2, int(5 * s)))
+        draw.line([q_cx, q_top + int(24 * s), q_cx, q_top + int(36 * s)], fill=color, width=max(2, int(5 * s)))
+        draw.ellipse([q_cx - int(3 * s), q_top + int(42 * s), q_cx + int(3 * s), q_top + int(48 * s)], fill=color)
+        top_bound = q_top
+    elif pointing:
         # Raised arm reaches ABOVE the head, clearly pointing up at whatever
         # sits above the mascot (the photo card). Alternates side for variety.
         point_dx = -int(70 * s) if point_left else int(70 * s)
@@ -1998,17 +2087,18 @@ def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, 
         # Other arm rests on hip
         other_dx = int(45 * s) if point_left else -int(45 * s)
         draw.line([cx, arm_y, cx + other_dx, arm_y + int(35 * s)], fill=color, width=lw)
+        top_bound = min(top_y, top_y + point_dy)
     else:
         draw.line([cx, arm_y, cx - int(45 * s), arm_y + int(35 * s)], fill=color, width=lw)
         draw.line([cx, arm_y, cx + int(45 * s), arm_y + int(35 * s)], fill=color, width=lw)
 
     left_bound = min(cx - int(55 * s), cx + point_dx if pointing else cx)
     right_bound = max(cx + int(55 * s), cx + point_dx if pointing else cx)
-    top_bound = min(top_y, (top_y + point_dy) if pointing else top_y)
     return (left_bound, top_bound, right_bound, foot_y)
 
 
-def prep_infographic_slides(images, slides, work_dir, landscape=False):
+def prep_infographic_slides(images, slides, work_dir, landscape=False,
+                             term_a=None, term_b=None, hero_images=(None, None)):
     """Clean white-background infographic style: bold headline, a boxed
     photo card, and a recurring original mascot character for brand
     identity — inspired by high-performing comparison-style Shorts."""
@@ -2059,9 +2149,18 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False):
     font_headline = get_font(58)
     font_sub = get_font(30, bold=False)
     font_cta = get_font(42)
+    font_label = get_font(30)
 
     total_slides = len(slides)
     paths = []
+
+    # Hook (0) and the differentiation slide (3, per the SYSTEM_PROMPT's
+    # 7-slide arc) show both terms side by side with individual labels,
+    # like the reference channel's comparison style — only when we
+    # actually have both hero images to show.
+    have_heroes = bool(term_a and term_b and hero_images[0] and hero_images[1])
+    dual_indices = {0, 3} if have_heroes else set()
+    dual_indices = {i for i in dual_indices if i < total_slides}
 
     for idx, slide in enumerate(slides):
         out = os.path.join(work_dir, f"info_{idx}.jpg")
@@ -2083,39 +2182,56 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False):
         draw.rectangle([PAD, bar_y, W - PAD, bar_y + 4], fill=(230, 228, 222))
         draw.rectangle([PAD, bar_y, PAD + int((W - PAD * 2) * progress), bar_y + 4], fill=ACCENT)
 
-        # Photo card — sits right under the header, mascot points up at it
-        img_src = images[idx] if idx < len(images) else None
-        card_top = 150
-        card_h = int(H * 0.34)
-        card_w = int(W * 0.78)
-        card_x = (W - card_w) // 2
+        is_dual = idx in dual_indices
+        is_diff_slide = (idx == 3 and is_dual)
 
-        if img_src and os.path.exists(img_src):
-            photo = Image.open(img_src).convert("RGB")
-            iw, ih = photo.size
-            ratio = max(card_w / iw, card_h / ih)
-            photo = photo.resize((int(iw * ratio), int(ih * ratio)), Image.LANCZOS)
-            left = (photo.width - card_w) // 2
-            top = (photo.height - card_h) // 2
-            photo = photo.crop((left, top, left + card_w, top + card_h))
-            draw.rectangle(
-                [card_x - 4, card_top - 4, card_x + card_w + 4, card_top + card_h + 4],
-                outline=CARD_BORDER, width=2
-            )
-            bg.paste(photo, (card_x, card_top))
+        def _paste_card(cx0, ctop, cw, ch, src):
+            if src and os.path.exists(src):
+                photo = Image.open(src).convert("RGB")
+                iw, ih = photo.size
+                ratio = max(cw / iw, ch / ih)
+                photo = photo.resize((int(iw * ratio), int(ih * ratio)), Image.LANCZOS)
+                left = (photo.width - cw) // 2
+                top = (photo.height - ch) // 2
+                photo = photo.crop((left, top, left + cw, top + ch))
+                draw.rectangle([cx0 - 4, ctop - 4, cx0 + cw + 4, ctop + ch + 4], outline=CARD_BORDER, width=2)
+                bg.paste(photo, (cx0, ctop))
+            else:
+                draw.rounded_rectangle([cx0, ctop, cx0 + cw, ctop + ch], radius=16, outline=CARD_BORDER, width=2, fill=(240, 239, 234))
+
+        if is_dual:
+            label_h = 46
+            card_top = 150 + label_h
+            card_h = int(H * 0.30)
+            gap = 24
+            card_w = (int(W * 0.82) - gap) // 2
+            left_x = (W - (card_w * 2 + gap)) // 2
+            right_x = left_x + card_w + gap
+
+            for label, cx0 in ((term_a, left_x), (term_b, right_x)):
+                lb = draw.textbbox((0, 0), label.upper(), font=font_label)
+                lw_ = lb[2] - lb[0]
+                draw.text((cx0 + (card_w - lw_) // 2, 150), label.upper(), font=font_label, fill=INK)
+
+            _paste_card(left_x, card_top, card_w, card_h, hero_images[0])
+            _paste_card(right_x, card_top, card_w, card_h, hero_images[1])
         else:
-            draw.rounded_rectangle(
-                [card_x, card_top, card_x + card_w, card_top + card_h],
-                radius=16, outline=CARD_BORDER, width=2, fill=(240, 239, 234)
-            )
+            img_src = images[idx] if idx < len(images) else None
+            card_top = 150
+            card_h = int(H * 0.34)
+            card_w = int(W * 0.78)
+            card_x = (W - card_w) // 2
+            _paste_card(card_x, card_top, card_w, card_h, img_src)
 
-        # Mascot — right below the card, arm raised to clearly point at it.
-        # Alternates which side it points from for a livelier, less static feel.
+        # Mascot — right below the card(s). Points up normally; on the
+        # differentiation slide it shrugs with a "?" instead, echoing the
+        # "wait, what's the difference?" beat.
         mascot_top = card_top + card_h + 70
         is_last = (idx == len(slides) - 1)
         is_first = (idx == 0)
         mascot_box = _draw_mascot(
             draw, W // 2, mascot_top, scale=1.3, color=INK,
+            confused=is_diff_slide,
             pointing=not is_last, point_left=(idx % 2 == 0),
         )
         mascot_bottom = mascot_box[3]
@@ -2169,12 +2285,16 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False):
     return paths
 
 
-def create_video_infographic(slides, images, audio_file, durations, output_file, landscape=False):
+def create_video_infographic(slides, images, audio_file, durations, output_file, landscape=False,
+                              term_a=None, term_b=None, hero_images=(None, None)):
     """Single-pass build (lightweight, matches the original static-slide
     pipeline's memory profile) using the new white-background layout."""
     work_dir = output_file + "_infowork"
     print("[BUILD] Preparing infographic slides...")
-    slide_paths = prep_infographic_slides(images, slides, work_dir, landscape=landscape)
+    slide_paths = prep_infographic_slides(
+        images, slides, work_dir, landscape=landscape,
+        term_a=term_a, term_b=term_b, hero_images=hero_images,
+    )
 
     n = len(slides)
     audio_duration = get_audio_duration(audio_file)
@@ -2190,6 +2310,11 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
     bg_music_path = os.path.join(work_dir, "bgmusic.m4a")
     has_music = generate_bg_music(bg_music_path, audio_duration + 2)
 
+    # loudnorm brings the narration up to a clear, consistent broadcast
+    # loudness (YouTube/TikTok target ~-14 LUFS) instead of whatever raw
+    # level the TTS engine happened to output.
+    loudnorm = "loudnorm=I=-14:LRA=11:TP=-1.5"
+
     if has_music:
         cmd = [
             FFMPEG, '-y',
@@ -2197,7 +2322,7 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
             '-i', audio_file,
             '-i', bg_music_path,
             '-filter_complex',
-            f'[0:v]scale={res},fps=30[v];[2:a]volume=0.10[bg];[1:a][bg]amix=inputs=2:duration=first[aout]',
+            f'[0:v]scale={res},fps=30[v];[1:a]{loudnorm}[narr];[2:a]volume=0.08[bg];[narr][bg]amix=inputs=2:duration=first[aout]',
             '-map', '[v]', '-map', '[aout]',
             '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
             '-c:a', 'aac', '-b:a', '128k',
@@ -2210,7 +2335,8 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
             FFMPEG, '-y',
             '-f', 'concat', '-safe', '0', '-i', concat_file,
             '-i', audio_file,
-            '-vf', f'scale={res},fps=30',
+            '-filter_complex', f'[0:v]scale={res},fps=30[v];[1:a]{loudnorm}[aout]',
+            '-map', '[v]', '-map', '[aout]',
             '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
             '-c:a', 'aac', '-b:a', '128k',
             '-pix_fmt', 'yuv420p',
@@ -2352,10 +2478,20 @@ def generate_daily_video():
         images = fetch_hd_images(slides, img_dir)
         print(f"[OK] Got {sum(1 for i in images if i)} images")
 
+        term_a = topic.get('term_a')
+        term_b = topic.get('term_b')
+        hero_images = (None, None)
+        if term_a and term_b:
+            hero_images = fetch_term_hero_images(term_a, term_b, img_dir)
+            print(f"[OK] Hero images: {term_a}={'yes' if hero_images[0] else 'no'}, {term_b}={'yes' if hero_images[1] else 'no'}")
+
         ok = False
         if os.getenv("USE_INFOGRAPHIC_STYLE", "true").lower() != "false":
             print("[VIDEO] Creating video with infographic style...")
-            ok = create_video_infographic(slides, images, audio_file, durations, output_file)
+            ok = create_video_infographic(
+                slides, images, audio_file, durations, output_file,
+                term_a=term_a, term_b=term_b, hero_images=hero_images,
+            )
             if not ok:
                 print("[WARN] Infographic build failed, falling back to Ken Burns...")
 
