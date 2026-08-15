@@ -2024,6 +2024,7 @@ def create_video_kenburns(slides, images, audio_file, durations, output_file, la
 def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, point_left=True, confused=False):
     """An original simple line-art stick-figure host character — hand-drawn
     with primitives, not traced from any existing meme/character."""
+    import math
     s = scale
     head_r = int(48 * s)
     head_cy = top_y + head_r
@@ -2075,19 +2076,23 @@ def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, 
         draw.ellipse([q_cx - int(3 * s), q_top + int(42 * s), q_cx + int(3 * s), q_top + int(48 * s)], fill=color)
         top_bound = q_top
     elif pointing:
-        # Raised arm reaches ABOVE the head, clearly pointing up at whatever
-        # sits above the mascot (the photo card). Alternates side for variety.
-        point_dx = -int(70 * s) if point_left else int(70 * s)
-        point_dy = -(head_r + int(55 * s))
-        draw.line([cx, arm_y, cx + point_dx, top_y + point_dy], fill=color, width=lw)
+        # Raised arm at a realistic length (comparable to the torso, not a
+        # gangly overreach) and a natural ~65deg angle, aimed up toward
+        # whatever sits above the mascot (the photo card). Alternates side.
+        arm_len = int(75 * s)
+        angle = math.radians(65)
+        direction = -1 if point_left else 1
+        point_dx = int(direction * arm_len * math.cos(angle))
+        point_dy = -int(arm_len * math.sin(angle))
+        draw.line([cx, arm_y, cx + point_dx, arm_y + point_dy], fill=color, width=lw)
         # Small arrowhead at the pointing hand for extra clarity
-        hand_x, hand_y = cx + point_dx, top_y + point_dy
-        draw.line([hand_x, hand_y, hand_x + int(10 * s), hand_y + int(16 * s)], fill=color, width=max(2, int(4 * s)))
-        draw.line([hand_x, hand_y, hand_x - int(10 * s), hand_y + int(16 * s)], fill=color, width=max(2, int(4 * s)))
-        # Other arm rests on hip
-        other_dx = int(45 * s) if point_left else -int(45 * s)
-        draw.line([cx, arm_y, cx + other_dx, arm_y + int(35 * s)], fill=color, width=lw)
-        top_bound = min(top_y, top_y + point_dy)
+        hand_x, hand_y = cx + point_dx, arm_y + point_dy
+        draw.line([hand_x, hand_y, hand_x + int(9 * s), hand_y + int(14 * s)], fill=color, width=max(2, int(4 * s)))
+        draw.line([hand_x, hand_y, hand_x - int(9 * s), hand_y + int(14 * s)], fill=color, width=max(2, int(4 * s)))
+        # Other arm rests on hip, realistic length
+        other_dx = int(38 * s) if point_left else -int(38 * s)
+        draw.line([cx, arm_y, cx + other_dx, arm_y + int(32 * s)], fill=color, width=lw)
+        top_bound = min(top_y, arm_y + point_dy)
     else:
         draw.line([cx, arm_y, cx - int(45 * s), arm_y + int(35 * s)], fill=color, width=lw)
         draw.line([cx, arm_y, cx + int(45 * s), arm_y + int(35 * s)], fill=color, width=lw)
