@@ -68,14 +68,14 @@ FRAME THE TITLE around the confusion itself, not a flat definition. Real audienc
 - PERSONAL-STAKES QUESTION: "Do You Actually Know The Difference Between [A] and [B]?", "Is Confusing These Two Costing You Money?" — this style has been the single best-performing hook on this channel so far.
 - The title must always promise clarity on a real confusion — never a plain definition.
 
-VOICE: Talk like you're excitedly explaining this to a friend who just asked "wait, aren't those the same thing?" — not like you're reading a dictionary entry. Concretely:
-- Short sentences. Never more than ~12 words per sentence. Break long ideas into two punchy sentences instead of one dense one.
+VOICE: Explain it like you're talking to a smart 10 year old who's never heard either word before — not like you're reading a dictionary entry. Be VERY compact. Concretely:
+- Max 2 short sentences per slide. Never more than ~10 words per sentence. If an idea needs more than that, cut it down or move it to the next slide — do not cram.
+- One idea per slide, always. The differentiation slide (4) states the ONE core difference in a single sentence — not a list of several differences, just the one thing that matters most.
 - Use "you" constantly — make it about the viewer's own money, not abstract theory.
 - Contractions always (it's, you're, don't) — never formal/stiff phrasing.
-- Speak SLOWLY and clearly in your phrasing — favor short, simple, unhurried sentences over long dense ones, since this will be read aloud at a measured pace, not rushed.
-- Vary sentence length and rhythm — a punchy 3-word sentence, then a slightly longer one. Reading it out loud should sound like a person talking, not a textbook.
-- Every slide should feel like it's building toward something, not just delivering a flat fact. End slides on a hook into the next one where possible ("But here's the part nobody tells you...").
+- Speak SLOWLY and simply — short words over long ones, simple structure over clever structure.
 - Zero filler, zero throat-clearing ("So basically...", "Let's dive in..."). Start every sentence already saying something.
+- If you'd have to explain a word you just used, you used the wrong word — replace it with a simpler one.
 
 Rules:
 - Output ONLY valid JSON, no markdown fences, no commentary.

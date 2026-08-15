@@ -1134,10 +1134,13 @@ def _fetch_wikipedia_thumbnail(name, img_path):
 def fetch_term_hero_images(term_a, term_b, save_dir):
     """Fetch one clean representative photo per confusable term, used for
     the side-by-side comparison slides. Returns (path_a, path_b), either
-    may be None on failure."""
+    may be None on failure. Never returns the same photo for both terms —
+    similar-sounding terms (e.g. "markup"/"margin") can otherwise return
+    identical top Pexels results."""
     os.makedirs(save_dir, exist_ok=True)
     headers = {"Authorization": PEXELS_API_KEY} if PEXELS_API_KEY else {}
     results = []
+    used_photo_ids = set()
     for idx, term in enumerate((term_a, term_b)):
         img_path = os.path.join(save_dir, f"hero_{idx}.jpg")
         got = False
@@ -1146,16 +1149,18 @@ def fetch_term_hero_images(term_a, term_b, save_dir):
         if not got and PEXELS_API_KEY:
             try:
                 query = f"business finance {term}"
-                purl = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&orientation=portrait&per_page=10"
+                purl = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&orientation=portrait&per_page=15"
                 resp = requests.get(purl, headers=headers, timeout=15)
                 if resp.status_code == 200:
                     photos = resp.json().get("photos", [])
-                    if photos:
-                        img_url = photos[0]["src"].get("large2x") or photos[0]["src"]["large"]
+                    photo = next((p for p in photos if p.get("id") not in used_photo_ids), None)
+                    if photo:
+                        img_url = photo["src"].get("large2x") or photo["src"]["large"]
                         img_resp = requests.get(img_url, timeout=20)
                         if img_resp.status_code == 200 and len(img_resp.content) > 20000:
                             with open(img_path, 'wb') as f:
                                 f.write(img_resp.content)
+                            used_photo_ids.add(photo.get("id"))
                             got = True
             except Exception as e:
                 print(f"  [WARN] Hero image fetch failed for {term}: {e}")
@@ -2085,10 +2090,11 @@ def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, 
         point_dx = int(direction * arm_len * math.cos(angle))
         point_dy = -int(arm_len * math.sin(angle))
         draw.line([cx, arm_y, cx + point_dx, arm_y + point_dy], fill=color, width=lw)
-        # Small arrowhead at the pointing hand for extra clarity
+        # A small solid dot marks the hand — just the line direction does
+        # the pointing, no arrowhead needed.
         hand_x, hand_y = cx + point_dx, arm_y + point_dy
-        draw.line([hand_x, hand_y, hand_x + int(9 * s), hand_y + int(14 * s)], fill=color, width=max(2, int(4 * s)))
-        draw.line([hand_x, hand_y, hand_x - int(9 * s), hand_y + int(14 * s)], fill=color, width=max(2, int(4 * s)))
+        hand_r = max(3, int(7 * s))
+        draw.ellipse([hand_x - hand_r, hand_y - hand_r, hand_x + hand_r, hand_y + hand_r], fill=color)
         # Other arm rests on hip, realistic length
         other_dx = int(38 * s) if point_left else -int(38 * s)
         draw.line([cx, arm_y, cx + other_dx, arm_y + int(32 * s)], fill=color, width=lw)
