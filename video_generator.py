@@ -1304,15 +1304,16 @@ def create_slide_audios(slides, work_dir):
 
     use_piper = False
     test_path = os.path.join(work_dir, "test_voice.mp3")
-    if _run_piper_tts("Testing voice.", test_path):
-        use_piper = True
-        try:
-            os.remove(test_path)
-        except Exception:
-            pass
-        print(f"[OK] Using Piper voice: {PIPER_VOICE_NAME}")
-    else:
-        print("[WARN] Piper unavailable, trying Google TTS / edge-tts")
+    if os.getenv("USE_PIPER_TTS", "false").lower() == "true":
+        if _run_piper_tts("Testing voice.", test_path):
+            use_piper = True
+            try:
+                os.remove(test_path)
+            except Exception:
+                pass
+            print(f"[OK] Using Piper voice: {PIPER_VOICE_NAME}")
+        else:
+            print("[WARN] Piper unavailable, trying Google TTS / edge-tts")
 
     use_google = False
     if not use_piper and GOOGLE_TTS_API_KEY:
