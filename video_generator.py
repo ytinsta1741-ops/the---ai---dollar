@@ -2154,13 +2154,28 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
     total_slides = len(slides)
     paths = []
 
-    # Hook (0) and the differentiation slide (3, per the SYSTEM_PROMPT's
-    # 7-slide arc) show both terms side by side with individual labels,
+    # Every slide shows both terms side by side with individual labels,
     # like the reference channel's comparison style — only when we
-    # actually have both hero images to show.
+    # actually have both hero images to show. The SYSTEM_PROMPT's 7-slide
+    # arc puts Term A's own explanation at index 1 and Term B's at index
+    # 2, so those slides swap in that slide's own fetched image on their
+    # side while the other side keeps showing its most recent photo.
     have_heroes = bool(term_a and term_b and hero_images[0] and hero_images[1])
-    dual_indices = {0, 3} if have_heroes else set()
-    dual_indices = {i for i in dual_indices if i < total_slides}
+    left_by_idx, right_by_idx, side_by_idx = [], [], []
+    if have_heroes:
+        cur_left, cur_right = hero_images[0], hero_images[1]
+        for i in range(total_slides):
+            if i == 1 and i < len(images) and images[i]:
+                cur_left = images[i]
+                side = 'A'
+            elif i == 2 and i < len(images) and images[i]:
+                cur_right = images[i]
+                side = 'B'
+            else:
+                side = 'both'
+            left_by_idx.append(cur_left)
+            right_by_idx.append(cur_right)
+            side_by_idx.append(side)
 
     for idx, slide in enumerate(slides):
         out = os.path.join(work_dir, f"info_{idx}.jpg")
@@ -2182,8 +2197,9 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         draw.rectangle([PAD, bar_y, W - PAD, bar_y + 4], fill=(230, 228, 222))
         draw.rectangle([PAD, bar_y, PAD + int((W - PAD * 2) * progress), bar_y + 4], fill=ACCENT)
 
-        is_dual = idx in dual_indices
+        is_dual = have_heroes
         is_diff_slide = (idx == 3 and is_dual)
+        side = side_by_idx[idx] if is_dual else 'both'
 
         def _paste_card(cx0, ctop, cw, ch, src):
             if src and os.path.exists(src):
@@ -2213,8 +2229,8 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                 lw_ = lb[2] - lb[0]
                 draw.text((cx0 + (card_w - lw_) // 2, 150), label.upper(), font=font_label, fill=INK)
 
-            _paste_card(left_x, card_top, card_w, card_h, hero_images[0])
-            _paste_card(right_x, card_top, card_w, card_h, hero_images[1])
+            _paste_card(left_x, card_top, card_w, card_h, left_by_idx[idx])
+            _paste_card(right_x, card_top, card_w, card_h, right_by_idx[idx])
         else:
             img_src = images[idx] if idx < len(images) else None
             card_top = 150
@@ -2229,10 +2245,16 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         mascot_top = card_top + card_h + 70
         is_last = (idx == len(slides) - 1)
         is_first = (idx == 0)
+        if side == 'A':
+            point_left = True
+        elif side == 'B':
+            point_left = False
+        else:
+            point_left = (idx % 2 == 0)
         mascot_box = _draw_mascot(
             draw, W // 2, mascot_top, scale=1.3, color=INK,
             confused=is_diff_slide,
-            pointing=not is_last, point_left=(idx % 2 == 0),
+            pointing=not is_last, point_left=point_left,
         )
         mascot_bottom = mascot_box[3]
 
