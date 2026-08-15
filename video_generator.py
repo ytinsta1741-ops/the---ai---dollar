@@ -2085,7 +2085,7 @@ def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, 
         # gangly overreach) and a natural ~65deg angle, aimed up toward
         # whatever sits above the mascot (the photo card). Alternates side.
         arm_len = int(75 * s)
-        angle = math.radians(65)
+        angle = math.radians(42)
         direction = -1 if point_left else 1
         point_dx = int(direction * arm_len * math.cos(angle))
         point_dy = -int(arm_len * math.sin(angle))
