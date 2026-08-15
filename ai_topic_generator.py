@@ -29,44 +29,48 @@ GEMINI_MODEL_CANDIDATES = [m for m in GEMINI_MODEL_CANDIDATES if m]
 def _gemini_url(model):
     return f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
-FINANCE_TERMS = [
-    # Personal finance
-    "compound interest", "index fund", "dividend", "inflation", "credit score",
-    "diversification", "asset allocation", "liquidity", "bull market", "bear market",
-    "market capitalization", "P/E ratio", "expense ratio", "bond yield", "amortization",
-    "equity", "REIT", "capital gains", "tax bracket", "emergency fund",
-    "net worth", "cash flow", "APR vs APY", "credit utilization", "recession",
-    "mutual fund", "ETF", "principal", "collateral", "appreciation vs depreciation",
-    "opportunity cost", "arbitrage", "leverage", "portfolio rebalancing", "vesting",
-    "401k match", "Roth vs Traditional", "escrow", "underwriting", "FICO score",
-    # Accounting / corporate finance
-    "income statement", "balance sheet (statement of financial position)",
-    "cash flow statement", "debenture", "assets vs liabilities", "shareholders equity",
-    "retained earnings", "accounts receivable", "accounts payable", "working capital",
-    "gross margin", "net margin", "EBITDA", "depreciation", "accrual accounting",
-    "revenue recognition", "goodwill", "current ratio", "debt-to-equity ratio",
-    "operating expenses vs capital expenses", "bonds vs stocks", "par value",
-    "book value vs market value", "fiscal year", "audit", "general ledger",
+CONFUSABLE_PAIRS = [
+    ("loan", "debenture"), ("overdraft", "loan"), ("equity", "debt"),
+    ("revenue", "profit"), ("gross profit", "net profit"), ("assets", "liabilities"),
+    ("cash flow", "profit"), ("interest rate", "APR"), ("stocks", "shares"),
+    ("bonds", "stocks"), ("credit", "debit"), ("savings account", "fixed deposit"),
+    ("tax deduction", "tax credit"), ("insurance", "assurance"), ("mortgage", "personal loan"),
+    ("depreciation", "amortization"), ("markup", "margin"), ("invoice", "receipt"),
+    ("balance sheet", "income statement"), ("fixed cost", "variable cost"),
+    ("capital expenditure", "operating expenditure"), ("bull market", "bear market"),
+    ("Roth IRA", "Traditional IRA"), ("APR", "APY"), ("debit card", "credit card"),
+    ("line of credit", "loan"), ("recession", "depression"), ("inflation", "deflation"),
+    ("simple interest", "compound interest"), ("wholesale price", "retail price"),
+    ("net worth", "net income"), ("dividend", "capital gains"),
+    ("secured loan", "unsecured loan"), ("term insurance", "whole life insurance"),
+    ("nominal value", "market value"), ("working capital", "fixed capital"),
+    ("direct tax", "indirect tax"), ("current assets", "fixed assets"),
+    ("trial balance", "balance sheet"), ("debenture", "share"),
 ]
 
-SYSTEM_PROMPT = """You write scripts for "The AI Dollar", a YouTube Shorts channel where every video explains ONE real finance or accounting term to a complete beginner — the way you'd explain it to a smart 10 year old, using a simple real-world analogy, not a lecture. Terms range from everyday personal finance (credit score, compound interest) to accounting/corporate finance (income statement, balance sheet, debenture, cash flow statement) — treat both equally seriously and explain any abbreviation in full the first time (e.g. "SOFP — that stands for Statement Of Financial Position, what most people just call a balance sheet").
+SYSTEM_PROMPT = """You are an expert financial educator and content creator writing scripts for "The AI Dollar", a YouTube Shorts channel. Every video takes TWO real finance or accounting terms that people genuinely confuse with each other (you'll be given the pair, e.g. "loan" vs "debenture") and clearly differentiates them for a complete beginner — the way you'd explain it to a smart 10 year old, using simple real-world analogies, not a lecture. Explain any abbreviation in full the first time it appears.
 
-Do NOT make generic "money rules", "money tips", or "habits of the rich" listicle videos. Every video must center on ONE specific finance term or concept (you'll be given one, or pick one from the same category if none is given) and unpack it fully:
-1. What everyday situation does this remind you of? (the analogy — a game, a garden, a jar of candy, splitting a pizza, a video game power-up, anything a 10 year old already understands)
-2. What does the term actually mean in finance, in one plain sentence?
-3. A concrete real-number example showing it in action.
-4. Why it actually matters to the viewer's own money.
+STRUCTURE — every video follows this arc across the 7 slides:
+1. Hook: name both confusable terms and promise the viewer will never mix them up again.
+2. Term A explained with its own simple analogy (a comparison to something everyday — an activity, a relationship, a situation, not necessarily a literal object).
+3. Term B explained with ITS OWN separate, different analogy — term B must NOT reuse term A's analogy, they need to feel like two distinct things.
+4. The direct differentiation: state in one crisp sentence exactly what separates them.
+5. A concrete real-number example showing both terms side by side in action (real dollar amounts).
+6. Why getting this confused actually costs the viewer money or causes real problems.
+7. Recap both terms and their key difference in one sentence, then tell the viewer to follow for the next confusable pair.
 
-FRAME IT AS A TENSION, COMPARISON, OR PERSONAL-STAKES QUESTION — never a flat definition. Real audience data on this channel confirms two hook styles clearly outperform plain "What is X" videos:
-- COMPARISON: if the term naturally has a counterpart (Bull vs Bear, APR vs APY, Assets vs Liabilities, Roth vs Traditional, Stocks vs Bonds), frame the whole video as that head-to-head comparison — title, hook, and structure should all lean into the "vs".
-- PERSONAL-STAKES QUESTION: frame the title as a direct question aimed at the viewer's own situation, not an abstract topic label (e.g. "Are You Behind On This?", "Is This Secretly Costing You Money?", "Do You Actually Know What's In Your Own Contract?"). This style has been the single best-performing hook on this channel so far — it makes the viewer wonder about themselves, not just learn a fact.
-- If neither comparison nor personal-stakes framing fits naturally, fall back to friend-vs-enemy tension (e.g. "Compound Interest: is it working FOR you or AGAINST you?") — never just "What is [term]".
-- Alternate between these styles across videos for variety. The title must always promise a winner, a surprise, or make the viewer wonder about their own situation — never just a definition.
+IMAGES MUST DIFFERENTIATE THE TWO TERMS. Slides about Term A need a DIFFERENT image concept than slides about Term B — e.g. if comparing "loan" vs "debenture", a loan slide might show a bank loan officer or a person signing paperwork at a bank, while a debenture slide shows a bond certificate or investment document — visually distinct so the viewer's eye associates a different picture with each term. Never reuse the same visual concept for both terms.
 
-VOICE: Talk like you're excitedly explaining this to a friend who just asked "wait what does that even mean" — not like you're reading a dictionary entry. Concretely:
+FRAME THE TITLE around the confusion itself, not a flat definition. Real audience data on this channel confirms two hook styles clearly outperform plain "What is X" videos:
+- CONFUSION-CALLOUT: "You've Been Mixing Up [A] and [B] — Here's The Difference", "[A] vs [B]: The Difference Nobody Explains"
+- PERSONAL-STAKES QUESTION: "Do You Actually Know The Difference Between [A] and [B]?", "Is Confusing These Two Costing You Money?" — this style has been the single best-performing hook on this channel so far.
+- The title must always promise clarity on a real confusion — never a plain definition.
+
+VOICE: Talk like you're excitedly explaining this to a friend who just asked "wait, aren't those the same thing?" — not like you're reading a dictionary entry. Concretely:
 - Short sentences. Never more than ~12 words per sentence. Break long ideas into two punchy sentences instead of one dense one.
 - Use "you" constantly — make it about the viewer's own money, not abstract theory.
 - Contractions always (it's, you're, don't) — never formal/stiff phrasing.
+- Speak SLOWLY and clearly in your phrasing — favor short, simple, unhurried sentences over long dense ones, since this will be read aloud at a measured pace, not rushed.
 - Vary sentence length and rhythm — a punchy 3-word sentence, then a slightly longer one. Reading it out loud should sound like a person talking, not a textbook.
 - Every slide should feel like it's building toward something, not just delivering a flat fact. End slides on a hook into the next one where possible ("But here's the part nobody tells you...").
 - Zero filler, zero throat-clearing ("So basically...", "Let's dive in..."). Start every sentence already saying something.
@@ -76,13 +80,13 @@ Rules:
 - Exactly 7 slides.
 - Every slide has "text", "speech", and "img":
   - "speech" is what the narrator says out loud, 1-3 short punchy spoken sentences (see VOICE above), energetic and conversational, never lecture-toned.
-  - "text" is the on-screen caption — it MUST be a short, verbatim excerpt taken directly from that same slide's "speech" (the single most important phrase or sentence, trimmed to fit, 3-5 short lines separated by \\n, max ~40 characters per line, ALL CAPS words for emphasis are fine). NEVER write different wording on screen than what is spoken — no separate paraphrase, no new phrasing that doesn't appear in "speech".
-  - "img" is a short, concrete visual search phrase for a stock photo site. It must ALWAYS depict a real finance/business/office scene (e.g. stock charts, cash, calculators, laptops with spreadsheets, bank buildings, people reviewing documents, coins, piggy banks) — NEVER depict the analogy literally (no kids, pizza, gardens, games, toys, animals). The image should relate to what's being discussed, expressed through finance/business imagery, not abstract ideas like "financial freedom".
-- The analogy must appear by slide 2 or 3, stated in one simple sentence a 10 year old would get instantly, BEFORE using the formal finance term. The analogy lives in the spoken words and captions — never in the imagery.
-- Slide 1 is the hook — name the term and promise it'll finally make sense, or open with the analogy itself as a curiosity hook.
-- Slide 7 is the ending — recap the term and the analogy together in one sentence, then tell the viewer to follow for the next term (do not literally write "SUBSCRIBE" as the whole slide, the app already adds a subscribe button automatically).
+  - "text" is the on-screen caption — it MUST be a short, verbatim excerpt taken directly from that same slide's "speech" (the single most important phrase or sentence, trimmed to fit, 3-5 short lines separated by \\n, max ~40 characters per line, ALL CAPS words for emphasis are fine). NEVER write different wording on screen than what is spoken.
+  - "img" is a short, concrete visual search phrase for a stock photo site. It must ALWAYS depict a real finance/business/office scene (e.g. stock charts, cash, calculators, laptops with spreadsheets, bank buildings, people reviewing documents, coins, piggy banks) — NEVER depict an analogy literally (no kids, pizza, gardens, games, toys, animals). Follow the IMAGES MUST DIFFERENTIATE rule above — Term A slides and Term B slides need visually distinct imagery.
+- Each analogy (for both terms) must be stated in one simple sentence a 10 year old would get instantly, BEFORE using the formal finance term.
+- Do not literally write "SUBSCRIBE" as the whole slide 7 text — the app already adds a subscribe button automatically.
 - Use specific, believable numbers (dollar amounts, percentages, timeframes) in the real-number example — never vague claims.
 - Never mention any brand, bank, or app name that could be factually wrong or outdated; prefer generic terms like "a high-yield savings account".
+- Great tags: "keywords" should include both term names plus 3-4 strong searchable finance tags.
 - Output JSON shape exactly:
 {"title": "...", "keywords": ["...", "...", "..."], "slides": [{"text": "...", "speech": "...", "img": "..."}, ... exactly 7 objects]}
 """
@@ -116,8 +120,8 @@ def generate_ai_topic(existing_titles_hint=""):
         print("[WARN] GEMINI_API_KEY not set, skipping AI generation")
         return None
 
-    term = random.choice(FINANCE_TERMS)
-    user_prompt = f"Write a new video explaining the finance term: \"{term}\"."
+    term_a, term_b = random.choice(CONFUSABLE_PAIRS)
+    user_prompt = f"Write a new video differentiating these two confusable terms: \"{term_a}\" vs \"{term_b}\"."
     if existing_titles_hint:
         user_prompt += f" Make it clearly different from these already-posted titles: {existing_titles_hint}."
 

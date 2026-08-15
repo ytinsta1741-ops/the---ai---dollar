@@ -1210,9 +1210,12 @@ def _run_piper_tts(text, output_path):
         return False
     try:
         import wave
+        from piper import SynthesisConfig
+        # length_scale > 1.0 slows speech down for clarity (1.0 = normal speed)
+        syn_config = SynthesisConfig(length_scale=1.15)
         wav_path = output_path.rsplit(".", 1)[0] + "_piper.wav"
         with wave.open(wav_path, "wb") as wav_file:
-            voice.synthesize_wav(text, wav_file)
+            voice.synthesize_wav(text, wav_file, syn_config=syn_config)
 
         cmd = [FFMPEG, '-y', '-i', wav_path, '-c:a', 'libmp3lame', '-b:a', '128k', output_path]
         proc = subprocess.run(cmd, capture_output=True, timeout=30)
@@ -1230,7 +1233,7 @@ GOOGLE_TTS_API_KEY = os.getenv("GOOGLE_TTS_API_KEY", "")
 GOOGLE_TTS_VOICE = os.getenv("GOOGLE_TTS_VOICE", "en-US-Neural2-D")
 
 
-def _run_google_tts(text, output_path, speaking_rate=1.05, pitch=-1.0):
+def _run_google_tts(text, output_path, speaking_rate=0.9, pitch=-1.0):
     """Synthesize speech with Google Cloud TTS Neural2 (free up to 1M chars/mo).
     Falls back to edge-tts automatically if this fails or no key is set."""
     if not GOOGLE_TTS_API_KEY:
@@ -1285,11 +1288,11 @@ def _run_edge_tts(text, output_path, voice, rate, pitch):
 
 
 VOICE_LIST = [
-    ("en-US-ChristopherNeural", "+3%", "-2Hz"),
-    ("en-US-AndrewMultilingualNeural", "+3%", "-2Hz"),
-    ("en-US-GuyNeural", "+5%", "-4Hz"),
-    ("en-GB-RyanNeural", "+5%", "-4Hz"),
-    ("en-US-DavisNeural", "+2%", "-3Hz"),
+    ("en-US-ChristopherNeural", "-12%", "-2Hz"),
+    ("en-US-AndrewMultilingualNeural", "-12%", "-2Hz"),
+    ("en-US-GuyNeural", "-10%", "-4Hz"),
+    ("en-GB-RyanNeural", "-10%", "-4Hz"),
+    ("en-US-DavisNeural", "-12%", "-3Hz"),
 ]
 
 
@@ -1946,7 +1949,7 @@ def create_video_kenburns(slides, images, audio_file, durations, output_file, la
     return True
 
 
-def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True):
+def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, point_left=True):
     """An original simple line-art stick-figure host character — hand-drawn
     with primitives, not traced from any existing meme/character."""
     s = scale
@@ -1980,15 +1983,28 @@ def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True):
     draw.line([cx, hip_y, cx - int(30 * s), foot_y], fill=color, width=lw)
     draw.line([cx, hip_y, cx + int(30 * s), foot_y], fill=color, width=lw)
 
-    arm_y = neck_y + int(25 * s)
+    arm_y = neck_y + int(15 * s)
     if pointing:
-        draw.line([cx, arm_y, cx - int(55 * s), arm_y - int(45 * s)], fill=color, width=lw)
-        draw.line([cx, arm_y, cx + int(45 * s), arm_y + int(15 * s)], fill=color, width=lw)
+        # Raised arm reaches ABOVE the head, clearly pointing up at whatever
+        # sits above the mascot (the photo card). Alternates side for variety.
+        point_dx = -int(70 * s) if point_left else int(70 * s)
+        point_dy = -(head_r + int(55 * s))
+        draw.line([cx, arm_y, cx + point_dx, top_y + point_dy], fill=color, width=lw)
+        # Small arrowhead at the pointing hand for extra clarity
+        hand_x, hand_y = cx + point_dx, top_y + point_dy
+        draw.line([hand_x, hand_y, hand_x + int(10 * s), hand_y + int(16 * s)], fill=color, width=max(2, int(4 * s)))
+        draw.line([hand_x, hand_y, hand_x - int(10 * s), hand_y + int(16 * s)], fill=color, width=max(2, int(4 * s)))
+        # Other arm rests on hip
+        other_dx = int(45 * s) if point_left else -int(45 * s)
+        draw.line([cx, arm_y, cx + other_dx, arm_y + int(35 * s)], fill=color, width=lw)
     else:
         draw.line([cx, arm_y, cx - int(45 * s), arm_y + int(35 * s)], fill=color, width=lw)
         draw.line([cx, arm_y, cx + int(45 * s), arm_y + int(35 * s)], fill=color, width=lw)
 
-    return (cx - int(55 * s), top_y, cx + int(55 * s), foot_y)
+    left_bound = min(cx - int(55 * s), cx + point_dx if pointing else cx)
+    right_bound = max(cx + int(55 * s), cx + point_dx if pointing else cx)
+    top_bound = min(top_y, (top_y + point_dy) if pointing else top_y)
+    return (left_bound, top_bound, right_bound, foot_y)
 
 
 def prep_infographic_slides(images, slides, work_dir, landscape=False):
@@ -2066,29 +2082,9 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False):
         draw.rectangle([PAD, bar_y, W - PAD, bar_y + 4], fill=(230, 228, 222))
         draw.rectangle([PAD, bar_y, PAD + int((W - PAD * 2) * progress), bar_y + 4], fill=ACCENT)
 
-        # Headline
-        text = slide['text'].upper()
-        raw_lines = text.split('\n')
-        for size in [58, 50, 44, 38, 32]:
-            f = get_font(size)
-            wrapped = []
-            for raw in raw_lines:
-                wrapped.extend(wrap_line(raw, f, draw, MAX_TW))
-            line_h = size + 20
-            total_h = len(wrapped) * line_h
-            if total_h < H * 0.28:
-                break
-
-        y = 160
-        for line in wrapped:
-            bb = draw.textbbox((0, 0), line, font=f)
-            x = (W - (bb[2] - bb[0])) // 2
-            draw.text((x, y), line, font=f, fill=INK)
-            y += line_h
-
-        # Photo card
+        # Photo card — sits right under the header, mascot points up at it
         img_src = images[idx] if idx < len(images) else None
-        card_top = y + 30
+        card_top = 150
         card_h = int(H * 0.34)
         card_w = int(W * 0.78)
         card_x = (W - card_w) // 2
@@ -2112,13 +2108,39 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False):
                 radius=16, outline=CARD_BORDER, width=2, fill=(240, 239, 234)
             )
 
-        # Mascot
-        mascot_y = card_top + card_h + 50
+        # Mascot — right below the card, arm raised to clearly point at it.
+        # Alternates which side it points from for a livelier, less static feel.
+        mascot_top = card_top + card_h + 70
         is_last = (idx == len(slides) - 1)
-        if mascot_y + 220 < H - 80:
-            _draw_mascot(draw, W // 2, mascot_y, scale=1.3, color=INK, pointing=not is_last)
-
         is_first = (idx == 0)
+        mascot_box = _draw_mascot(
+            draw, W // 2, mascot_top, scale=1.3, color=INK,
+            pointing=not is_last, point_left=(idx % 2 == 0),
+        )
+        mascot_bottom = mascot_box[3]
+
+        # Headline — at the bottom of the frame, below the mascot
+        text = slide['text'].upper()
+        raw_lines = text.split('\n')
+        bottom_zone_top = mascot_bottom + 40
+        available_h = H - bottom_zone_top - 140
+        for size in [50, 44, 38, 32, 28]:
+            f = get_font(size)
+            wrapped = []
+            for raw in raw_lines:
+                wrapped.extend(wrap_line(raw, f, draw, MAX_TW))
+            line_h = size + 18
+            total_h = len(wrapped) * line_h
+            if total_h < available_h:
+                break
+
+        y = bottom_zone_top + max(0, (available_h - total_h) // 2)
+        for line in wrapped:
+            bb = draw.textbbox((0, 0), line, font=f)
+            x = (W - (bb[2] - bb[0])) // 2
+            draw.text((x, y), line, font=f, fill=INK)
+            y += line_h
+
         if is_first:
             hook = "WATCH TIL THE END"
             hb = draw.textbbox((0, 0), hook, font=font_sub)
