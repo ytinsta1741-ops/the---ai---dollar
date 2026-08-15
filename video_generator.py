@@ -1279,7 +1279,7 @@ def _get_piper_voice():
         return None
 
 
-def _run_piper_tts(text, output_path):
+def _run_piper_tts(text, output_path, length_scale=1.15):
     """Synthesize speech with Piper (open-source, local, free forever)."""
     voice = _get_piper_voice()
     if voice is None:
@@ -1288,7 +1288,7 @@ def _run_piper_tts(text, output_path):
         import wave
         from piper import SynthesisConfig
         # length_scale > 1.0 slows speech down for clarity (1.0 = normal speed)
-        syn_config = SynthesisConfig(length_scale=1.15)
+        syn_config = SynthesisConfig(length_scale=length_scale)
         wav_path = output_path.rsplit(".", 1)[0] + "_piper.wav"
         with wave.open(wav_path, "wb") as wav_file:
             voice.synthesize_wav(text, wav_file, syn_config=syn_config)
@@ -1380,7 +1380,7 @@ def create_slide_audios(slides, work_dir):
 
     use_piper = False
     test_path = os.path.join(work_dir, "test_voice.mp3")
-    if os.getenv("USE_PIPER_TTS", "false").lower() == "true":
+    if os.getenv("USE_PIPER_TTS", "true").lower() != "false":
         if _run_piper_tts("Testing voice.", test_path):
             use_piper = True
             try:
@@ -1448,7 +1448,7 @@ def create_slide_audios(slides, work_dir):
         energy_delta = 9 if is_energetic_beat else 0
 
         if use_piper:
-            ok = _run_piper_tts(slide['speech'], audio_path)
+            ok = _run_piper_tts(slide['speech'], audio_path, length_scale=(1.0 if is_energetic_beat else 1.15))
             if not ok:
                 print(f"  [WARN] Piper failed for slide {idx}, trying fallback")
         if not ok and use_google:
