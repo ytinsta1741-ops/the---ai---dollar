@@ -1260,12 +1260,12 @@ def _get_piper_voice():
     try:
         if not os.path.exists(onnx_path):
             print(f"[Piper] Downloading voice model {PIPER_VOICE_NAME}...")
-            r = requests.get(f"{PIPER_VOICE_BASE_URL}/{PIPER_VOICE_NAME}.onnx", timeout=120)
+            r = requests.get(f"{PIPER_VOICE_BASE_URL}/{PIPER_VOICE_NAME}.onnx", timeout=600)
             r.raise_for_status()
             with open(onnx_path, "wb") as f:
                 f.write(r.content)
         if not os.path.exists(json_path):
-            r = requests.get(f"{PIPER_VOICE_BASE_URL}/{PIPER_VOICE_NAME}.onnx.json", timeout=30)
+            r = requests.get(f"{PIPER_VOICE_BASE_URL}/{PIPER_VOICE_NAME}.onnx.json", timeout=120)
             r.raise_for_status()
             with open(json_path, "wb") as f:
                 f.write(r.content)
