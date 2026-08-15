@@ -18,7 +18,6 @@ import requests
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from video_generator import generate_daily_video, generate_long_video
-from instagram_poster import post_to_instagram
 
 
 PRIVACY_POLICY_HTML = b"""<!DOCTYPE html>
@@ -148,6 +147,21 @@ class HealthHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.end_headers()
             self.wfile.write(msg)
+
+        elif path.startswith("/media/"):
+            filename = os.path.basename(path[len("/media/"):])
+            filepath = os.path.join("./videos", filename)
+            if filename.endswith(".mp4") and os.path.exists(filepath):
+                self.send_response(200)
+                self.send_header("Content-Type", "video/mp4")
+                self.send_header("Content-Length", str(os.path.getsize(filepath)))
+                self.end_headers()
+                with open(filepath, 'rb') as f:
+                    self.wfile.write(f.read())
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"Not found")
 
         elif path == "/test-instagram":
             print("\n[TEST] Manual Instagram test triggered!")
@@ -396,37 +410,21 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
         return False
 
 
+PUBLIC_BASE_URL = "https://the-ai-dollar.onrender.com"
+
+
 def upload_to_instagram(video_path, title, keywords=None):
-    """Upload video to Instagram Reels using instagrapi"""
-    username = os.getenv("INSTAGRAM_USERNAME", "")
-    password = os.getenv("INSTAGRAM_PASSWORD", "")
-    if not username or not password:
-        print("[SKIP] Instagram: INSTAGRAM_USERNAME or INSTAGRAM_PASSWORD not set")
+    """Post to Instagram via a Make.com scenario instead of talking to Meta
+    directly — Make.com already has verified Meta API access, so this
+    sidesteps Meta Developer Portal's SMS verification step entirely.
+    Sends a webhook with a public URL to the video (Make's Instagram
+    module fetches it from there) plus the caption."""
+    webhook_url = os.getenv("MAKE_INSTAGRAM_WEBHOOK_URL", "")
+    if not webhook_url:
+        print("[SKIP] Instagram: MAKE_INSTAGRAM_WEBHOOK_URL not set")
         return False
 
     try:
-        from instagrapi import Client
-
-        cl = Client()
-        cl.delay_range = [2, 5]
-
-        session_file = "instagram_session.json"
-        logged_in = False
-
-        if os.path.exists(session_file):
-            try:
-                cl.load_settings(session_file)
-                cl.login(username, password)
-                logged_in = True
-                print("[OK] Instagram: resumed session")
-            except Exception:
-                cl = Client()
-                cl.delay_range = [2, 5]
-
-        if not logged_in:
-            cl.login(username, password)
-            print("[OK] Instagram: fresh login")
-
         kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or [])[:5])
         ig_hooks = [
             "Save this for later.",
@@ -446,14 +444,19 @@ def upload_to_instagram(video_path, title, keywords=None):
             f"#FinancialEducation #MoneySavingTips {kw_tags}"
         )
 
-        media = cl.clip_upload(video_path, caption=caption)
-        print(f"[OK] Instagram Reel posted! ID: {media.pk}")
+        video_url = f"{PUBLIC_BASE_URL}/media/{os.path.basename(video_path)}"
+        print(f"[Instagram] Notifying Make.com: {video_url}")
 
-        try:
-            cl.dump_settings(session_file)
-        except Exception:
-            pass
+        resp = requests.post(
+            webhook_url,
+            json={"video_url": video_url, "caption": caption, "title": title},
+            timeout=20,
+        )
+        if resp.status_code not in (200, 201, 202):
+            print(f"[ERR] Instagram webhook failed: {resp.status_code} - {resp.text[:200]}")
+            return False
 
+        print("[OK] Instagram: sent to Make.com for posting")
         return True
 
     except Exception as e:
@@ -551,6 +554,9 @@ def post_video(is_series_part=False, series_name="", part_num=0):
         print(f"\n[STEP 3] Uploading to TikTok...")
         tiktok_success = upload_to_tiktok(video_path, title, keywords=keywords)
 
+        print(f"\n[STEP 4] Uploading to Instagram...")
+        instagram_success = upload_to_instagram(video_path, title, keywords=keywords)
+
         with open("last_post_time.txt", "w") as f:
             f.write(str(time.time()))
 
@@ -558,6 +564,7 @@ def post_video(is_series_part=False, series_name="", part_num=0):
         print(f"[DONE] POSTING COMPLETE")
         print(f"   YouTube:   {'posted' if youtube_success else 'FAILED'}")
         print(f"   TikTok:    {'posted' if tiktok_success else 'FAILED'}")
+        print(f"   Instagram: {'posted' if instagram_success else 'FAILED'}")
         print(f"{'='*50}\n")
 
     except Exception as e:
