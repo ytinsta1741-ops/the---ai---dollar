@@ -1425,23 +1425,42 @@ def create_slide_audios(slides, work_dir):
             print("[ERR] All edge-tts voices failed in create_slide_audios")
             return None
 
+    def _adjust_rate(rate_str, delta):
+        """Shift a percentage string like '-6%' by delta points."""
+        try:
+            val = int(rate_str.strip('%').replace('+', ''))
+        except ValueError:
+            val = 0
+        new_val = val + delta
+        return f"{'+' if new_val >= 0 else ''}{new_val}%"
+
     audio_paths = []
     durations = []
+    total_slides = len(slides)
 
     for idx, slide in enumerate(slides):
         audio_path = os.path.join(work_dir, f"speech_{idx}.mp3")
         ok = False
+        # Vary energy across the video instead of one flat pace throughout:
+        # punchier on the hook and the closing call-to-action, calmer and
+        # clearer through the explanation slides in between.
+        is_energetic_beat = idx == 0 or idx == total_slides - 1
+        energy_delta = 9 if is_energetic_beat else 0
+
         if use_piper:
             ok = _run_piper_tts(slide['speech'], audio_path)
             if not ok:
                 print(f"  [WARN] Piper failed for slide {idx}, trying fallback")
         if not ok and use_google:
-            ok = _run_google_tts(slide['speech'], audio_path)
+            ok = _run_google_tts(
+                slide['speech'], audio_path,
+                speaking_rate=(1.0 if is_energetic_beat else 0.9),
+            )
             if not ok:
                 print(f"  [WARN] Google TTS failed for slide {idx}, trying edge-tts fallback")
         if not ok and (working_voice or (not use_piper and not use_google)):
             voice, rate, pitch = working_voice or VOICE_LIST[0]
-            ok = _run_edge_tts(slide['speech'], audio_path, voice, rate, pitch)
+            ok = _run_edge_tts(slide['speech'], audio_path, voice, _adjust_rate(rate, energy_delta), pitch)
         if not ok:
             print(f"  [WARN] TTS failed for slide {idx}, using silence")
             silence_cmd = [FFMPEG, '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '3', '-c:a', 'aac', audio_path]
