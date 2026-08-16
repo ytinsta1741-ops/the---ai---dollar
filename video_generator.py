@@ -1534,7 +1534,11 @@ def generate_bg_music(output_path, duration):
         '-t', str(duration),
         output_path
     ]
-    proc = subprocess.run(cmd, capture_output=True, timeout=60)
+    try:
+        proc = subprocess.run(cmd, capture_output=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        print("[WARN] generate_bg_music: ffmpeg timed out, skipping background music")
+        return False
     return proc.returncode == 0 and os.path.exists(output_path)
 
 
