@@ -1391,11 +1391,11 @@ def _run_edge_tts(text, output_path, voice, rate, pitch):
 
 
 VOICE_LIST = [
-    ("en-US-GuyNeural", "-6%", "+0Hz"),
-    ("en-US-ChristopherNeural", "-6%", "+0Hz"),
-    ("en-US-AndrewMultilingualNeural", "-6%", "+0Hz"),
-    ("en-GB-RyanNeural", "-6%", "+0Hz"),
-    ("en-US-DavisNeural", "-6%", "+0Hz"),
+    ("en-US-ChristopherNeural", "+2%", "-2Hz"),
+    ("en-US-GuyNeural", "+2%", "-2Hz"),
+    ("en-US-AndrewMultilingualNeural", "+2%", "-2Hz"),
+    ("en-GB-RyanNeural", "+2%", "-2Hz"),
+    ("en-US-DavisNeural", "+2%", "-2Hz"),
 ]
 
 
@@ -1407,7 +1407,10 @@ def create_slide_audios(slides, work_dir):
 
     use_piper = False
     test_path = os.path.join(work_dir, "test_voice.mp3")
-    if os.getenv("USE_PIPER_TTS", "true").lower() != "false":
+    # edge-tts (Microsoft's actual neural voices) sounds noticeably more
+    # energetic/HD than Piper's lightweight on-device model, so it's the
+    # default now — Piper stays available as an opt-in via env var.
+    if os.getenv("USE_PIPER_TTS", "false").lower() == "true":
         if _run_piper_tts("Testing voice.", test_path):
             use_piper = True
             try:
@@ -1461,6 +1464,15 @@ def create_slide_audios(slides, work_dir):
         new_val = val + delta
         return f"{'+' if new_val >= 0 else ''}{new_val}%"
 
+    def _adjust_pitch(pitch_str, delta):
+        """Shift a Hz string like '-2Hz' by delta points."""
+        try:
+            val = int(pitch_str.replace('Hz', '').replace('+', ''))
+        except ValueError:
+            val = 0
+        new_val = val + delta
+        return f"{'+' if new_val >= 0 else ''}{new_val}Hz"
+
     audio_paths = []
     durations = []
     total_slides = len(slides)
@@ -1472,7 +1484,8 @@ def create_slide_audios(slides, work_dir):
         # punchier on the hook and the closing call-to-action, calmer and
         # clearer through the explanation slides in between.
         is_energetic_beat = idx == 0 or idx == total_slides - 1
-        energy_delta = 9 if is_energetic_beat else 0
+        energy_delta = 13 if is_energetic_beat else 0
+        pitch_delta = 5 if is_energetic_beat else 0
 
         if use_piper:
             ok = _run_piper_tts(slide['speech'], audio_path, length_scale=(1.0 if is_energetic_beat else 1.15))
@@ -1487,7 +1500,10 @@ def create_slide_audios(slides, work_dir):
                 print(f"  [WARN] Google TTS failed for slide {idx}, trying edge-tts fallback")
         if not ok and (working_voice or (not use_piper and not use_google)):
             voice, rate, pitch = working_voice or VOICE_LIST[0]
-            ok = _run_edge_tts(slide['speech'], audio_path, voice, _adjust_rate(rate, energy_delta), pitch)
+            ok = _run_edge_tts(
+                slide['speech'], audio_path, voice,
+                _adjust_rate(rate, energy_delta), _adjust_pitch(pitch, pitch_delta),
+            )
         if not ok:
             print(f"  [WARN] TTS failed for slide {idx}, using silence")
             silence_cmd = [FFMPEG, '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '3', '-c:a', 'aac', audio_path]
