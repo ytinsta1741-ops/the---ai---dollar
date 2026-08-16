@@ -1370,6 +1370,47 @@ def _run_google_tts(text, output_path, speaking_rate=0.9, pitch=-1.0):
         return False
 
 
+FISH_AUDIO_API_KEY = os.getenv("FISH_AUDIO_API_KEY", "")
+# "Energetic Male" — a popular (478k+ uses) public voice in Fish Audio's
+# library, well suited to the punchy hook/CTA delivery this channel wants.
+FISH_AUDIO_VOICE_ID = os.getenv("FISH_AUDIO_VOICE_ID", "802e3bc2b27e49c2995d23ef70e6ac89")
+
+
+def _run_fish_audio_tts(text, output_path, speed=1.0):
+    """Synthesize speech with Fish Audio's S2.1 Pro model — free (no card,
+    no billing) under Fair Use as of 2026, noticeably more natural/HD than
+    edge-tts or Piper. No official SLA, so any failure falls back to the
+    existing edge-tts chain automatically."""
+    if not FISH_AUDIO_API_KEY:
+        return False
+    try:
+        resp = requests.post(
+            "https://api.fish.audio/v1/tts",
+            headers={
+                "Authorization": f"Bearer {FISH_AUDIO_API_KEY}",
+                "Content-Type": "application/json",
+                "model": "s2.1-pro-free",
+            },
+            json={
+                "text": text,
+                "reference_id": FISH_AUDIO_VOICE_ID,
+                "format": "mp3",
+                "mp3_bitrate": 128,
+                "prosody": {"speed": speed, "normalize_loudness": True},
+            },
+            timeout=30,
+        )
+        if resp.status_code != 200:
+            print(f"  [WARN] Fish Audio TTS error {resp.status_code}: {resp.text[:200]}")
+            return False
+        with open(output_path, "wb") as f:
+            f.write(resp.content)
+        return os.path.exists(output_path) and os.path.getsize(output_path) > 500
+    except Exception as e:
+        print(f"  [WARN] Fish Audio TTS failed: {e}")
+        return False
+
+
 def _run_edge_tts(text, output_path, voice, rate, pitch):
     """Run edge-tts in a clean asyncio context with retry"""
     import edge_tts
@@ -1401,16 +1442,26 @@ VOICE_LIST = [
 
 def create_slide_audios(slides, work_dir):
     """Generate audio for each slide's speech separately, measure exact duration per slide.
-    Priority: Piper (open-source, local, free forever, no billing) -> Google Cloud TTS
-    (if a key is configured) -> edge-tts (free, no billing)."""
+    Priority: Fish Audio S2.1 Pro (free, HD, no billing) -> Piper (opt-in,
+    local) -> Google Cloud TTS (if a key is configured) -> edge-tts (free,
+    no billing, final fallback)."""
     os.makedirs(work_dir, exist_ok=True)
 
-    use_piper = False
+    use_fish = False
     test_path = os.path.join(work_dir, "test_voice.mp3")
-    # edge-tts (Microsoft's actual neural voices) sounds noticeably more
-    # energetic/HD than Piper's lightweight on-device model, so it's the
-    # default now — Piper stays available as an opt-in via env var.
-    if os.getenv("USE_PIPER_TTS", "false").lower() == "true":
+    if FISH_AUDIO_API_KEY:
+        if _run_fish_audio_tts("Testing voice.", test_path):
+            use_fish = True
+            try:
+                os.remove(test_path)
+            except Exception:
+                pass
+            print("[OK] Using Fish Audio S2.1 Pro (Energetic Male)")
+        else:
+            print("[WARN] Fish Audio unavailable, trying Piper / Google TTS / edge-tts")
+
+    use_piper = False
+    if not use_fish and os.getenv("USE_PIPER_TTS", "false").lower() == "true":
         if _run_piper_tts("Testing voice.", test_path):
             use_piper = True
             try:
@@ -1422,7 +1473,7 @@ def create_slide_audios(slides, work_dir):
             print("[WARN] Piper unavailable, trying Google TTS / edge-tts")
 
     use_google = False
-    if not use_piper and GOOGLE_TTS_API_KEY:
+    if not use_fish and not use_piper and GOOGLE_TTS_API_KEY:
         if _run_google_tts("Testing voice.", test_path):
             use_google = True
             try:
@@ -1434,7 +1485,7 @@ def create_slide_audios(slides, work_dir):
             print("[WARN] Google TTS test failed, falling back to edge-tts")
 
     working_voice = None
-    if not use_piper and not use_google:
+    if not use_fish and not use_piper and not use_google:
         try:
             import edge_tts
         except ImportError:
@@ -1487,7 +1538,11 @@ def create_slide_audios(slides, work_dir):
         energy_delta = 13 if is_energetic_beat else 0
         pitch_delta = 5 if is_energetic_beat else 0
 
-        if use_piper:
+        if use_fish:
+            ok = _run_fish_audio_tts(slide['speech'], audio_path, speed=(1.12 if is_energetic_beat else 1.0))
+            if not ok:
+                print(f"  [WARN] Fish Audio failed for slide {idx}, trying fallback")
+        if not ok and use_piper:
             ok = _run_piper_tts(slide['speech'], audio_path, length_scale=(1.0 if is_energetic_beat else 1.15))
             if not ok:
                 print(f"  [WARN] Piper failed for slide {idx}, trying fallback")
@@ -1498,12 +1553,20 @@ def create_slide_audios(slides, work_dir):
             )
             if not ok:
                 print(f"  [WARN] Google TTS failed for slide {idx}, trying edge-tts fallback")
-        if not ok and (working_voice or (not use_piper and not use_google)):
-            voice, rate, pitch = working_voice or VOICE_LIST[0]
-            ok = _run_edge_tts(
-                slide['speech'], audio_path, voice,
-                _adjust_rate(rate, energy_delta), _adjust_pitch(pitch, pitch_delta),
-            )
+        if not ok:
+            # edge-tts is the true last resort regardless of which primary
+            # engine was in use — without this, a mid-run failure on the
+            # primary engine (Fish Audio has no SLA) would silently fall
+            # through to a silent slide instead of a working fallback.
+            try:
+                import edge_tts  # noqa: F401
+                voice, rate, pitch = working_voice or VOICE_LIST[0]
+                ok = _run_edge_tts(
+                    slide['speech'], audio_path, voice,
+                    _adjust_rate(rate, energy_delta), _adjust_pitch(pitch, pitch_delta),
+                )
+            except ImportError:
+                pass
         if not ok:
             print(f"  [WARN] TTS failed for slide {idx}, using silence")
             silence_cmd = [FFMPEG, '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '3', '-c:a', 'aac', audio_path]
