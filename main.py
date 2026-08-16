@@ -425,7 +425,15 @@ def upload_to_instagram(video_path, title, keywords=None):
         return False
 
     try:
-        kw_tags = " ".join(f"#{k.replace(' ', '')}" for k in (keywords or [])[:5])
+        # SEO: lead with the title (already keyword-rich — it names both
+        # confusable terms verbatim, which is what people actually search).
+        # Keep hashtags small and targeted instead of a 15-tag wall — Meta's
+        # own creator guidance says a spammy-looking tag block suppresses
+        # reach rather than helping discovery.
+        kw_list = [k for k in (keywords or []) if k and len(k) <= 30][:5]
+        kw_tags = " ".join(f"#{k.replace(' ', '').replace('-', '')}" for k in kw_list)
+        broad_tags = "#PersonalFinance #MoneyTips #FinancialLiteracy"
+
         ig_hooks = [
             "Save this for later.",
             "Share this with someone who needs it.",
@@ -435,13 +443,8 @@ def upload_to_instagram(video_path, title, keywords=None):
         caption = (
             f"{title}\n\n"
             f"{random.choice(ig_hooks)}\n\n"
-            f"Follow @theaidollar for daily money tips that actually work.\n"
-            f"New videos every single day.\n\n"
-            f"#Finance #Money #PersonalFinance #Investing "
-            f"#FinanceTips #WealthBuilding #FinancialLiteracy "
-            f"#Reels #MoneyTips #FinancialFreedom "
-            f"#MoneyHacks #InvestingTips #DebtFree "
-            f"#FinancialEducation #MoneySavingTips {kw_tags}"
+            f"Follow @theaidollar for daily money tips that actually work.\n\n"
+            f"{broad_tags} {kw_tags} #Reels"
         )
 
         video_url = f"{PUBLIC_BASE_URL}/media/{os.path.basename(video_path)}"
@@ -528,8 +531,12 @@ def upload_to_facebook(video_path, title, keywords=None):
         return False
 
 
-def post_video(is_series_part=False, series_name="", part_num=0):
-    """Generate and post video to YouTube + TikTok"""
+def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=True):
+    """Generate and post video to YouTube + TikTok (+ Instagram when
+    post_instagram=True). Instagram Reels reach is hurt by over-posting —
+    Meta's own creator guidance caps effective frequency around 1-2/day,
+    unlike YouTube Shorts/TikTok which reward higher volume — so only a
+    couple of the day's scheduled slots pass post_instagram=True."""
     print(f"\n{'='*50}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] POSTING VIDEO{' [SERIES PART]' if is_series_part else ''}")
     print(f"{'='*50}\n")
@@ -554,8 +561,12 @@ def post_video(is_series_part=False, series_name="", part_num=0):
         print(f"\n[STEP 3] Uploading to TikTok...")
         tiktok_success = upload_to_tiktok(video_path, title, keywords=keywords)
 
-        print(f"\n[STEP 4] Uploading to Instagram...")
-        instagram_success = upload_to_instagram(video_path, title, keywords=keywords)
+        if post_instagram:
+            print(f"\n[STEP 4] Uploading to Instagram...")
+            instagram_success = upload_to_instagram(video_path, title, keywords=keywords)
+        else:
+            print(f"\n[STEP 4] Skipping Instagram this slot (throttled to ~2 posts/day for reach)")
+            instagram_success = None
 
         with open("last_post_time.txt", "w") as f:
             f.write(str(time.time()))
@@ -564,7 +575,8 @@ def post_video(is_series_part=False, series_name="", part_num=0):
         print(f"[DONE] POSTING COMPLETE")
         print(f"   YouTube:   {'posted' if youtube_success else 'FAILED'}")
         print(f"   TikTok:    {'posted' if tiktok_success else 'FAILED'}")
-        print(f"   Instagram: {'posted' if instagram_success else 'FAILED'}")
+        ig_status = "skipped (throttled)" if instagram_success is None else ("posted" if instagram_success else "FAILED")
+        print(f"   Instagram: {ig_status}")
         print(f"{'='*50}\n")
 
     except Exception as e:
@@ -773,15 +785,19 @@ def schedule_jobs():
     # Shorts get shown on the Shorts shelf to non-subscribers
     # 6 per day, spaced across US peak SCROLLING windows (times in UTC, EDT = UTC-4)
     # Replaced the old 2am EDT slot (dead time) with a second prime-time slot.
-    schedule.every().day.at("11:00").do(post_video)   # US East 7am — wake up / commute scroll
-    schedule.every().day.at("15:30").do(post_video)   # US East 11:30am — lunch break
-    schedule.every().day.at("18:00").do(post_video)   # US East 2pm — afternoon slump scroll
-    schedule.every().day.at("21:00").do(post_video)   # US East 5pm — evening commute
-    schedule.every().day.at("23:30").do(post_video)   # US East 7:30pm — prime time
-    schedule.every().day.at("01:30").do(post_video)   # US East 9:30pm — late-night scroll (peak Shorts engagement)
+    # Instagram Reels reach drops off with over-posting (Meta's own creator
+    # guidance points to ~1-2/day), unlike YouTube Shorts/TikTok which
+    # reward volume — so only the two strongest windows (lunch + prime
+    # time) also go to Instagram; the rest post YouTube + TikTok only.
+    schedule.every().day.at("11:00").do(post_video, post_instagram=False)  # US East 7am — wake up / commute scroll
+    schedule.every().day.at("15:30").do(post_video, post_instagram=True)   # US East 11:30am — lunch break
+    schedule.every().day.at("18:00").do(post_video, post_instagram=False)  # US East 2pm — afternoon slump scroll
+    schedule.every().day.at("21:00").do(post_video, post_instagram=False)  # US East 5pm — evening commute
+    schedule.every().day.at("23:30").do(post_video, post_instagram=True)   # US East 7:30pm — prime time
+    schedule.every().day.at("01:30").do(post_video, post_instagram=False)  # US East 9:30pm — late-night scroll (peak Shorts engagement)
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 6 Shorts/day — growth mode (no long-form until 500+ subs)")
+    print("[OK] Schedule: 6 Shorts/day on YouTube+TikTok, 2/day on Instagram (growth mode)")
     print("[OK] Shorts = discovery engine for non-subscribers")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
