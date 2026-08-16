@@ -23,6 +23,33 @@ except Exception as e:
     FFMPEG = "ffmpeg"
     print(f"[WARN] Using system ffmpeg: {e}")
 
+
+def _run_ffmpeg_hard_timeout(cmd, timeout):
+    """Like subprocess.run(..., timeout=timeout) but immune to the classic
+    Python gotcha where a timed-out process leaves orphaned children holding
+    the output pipe open, making the post-kill communicate() hang forever
+    anyway. Runs the process in its own session and kills the whole group.
+    Returns the completed process, or None on timeout."""
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        start_new_session=True,
+    )
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        try:
+            import signal
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except Exception:
+            proc.kill()
+        try:
+            proc.communicate(timeout=10)
+        except Exception:
+            pass
+        return None
+    proc.stderr = stderr
+    return proc
+
 CONFIG = {"output_dir": "./videos"}
 
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
@@ -1534,9 +1561,8 @@ def generate_bg_music(output_path, duration):
         '-t', str(duration),
         output_path
     ]
-    try:
-        proc = subprocess.run(cmd, capture_output=True, timeout=60)
-    except subprocess.TimeoutExpired:
+    proc = _run_ffmpeg_hard_timeout(cmd, timeout=60)
+    if proc is None:
         print("[WARN] generate_bg_music: ffmpeg timed out, skipping background music")
         return False
     return proc.returncode == 0 and os.path.exists(output_path)
@@ -1544,15 +1570,11 @@ def generate_bg_music(output_path, duration):
 
 def get_audio_duration(audio_path):
     cmd = [FFMPEG, '-i', audio_path, '-f', 'null', '-']
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    try:
-        _, stderr = proc.communicate(timeout=30)
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.communicate()
+    proc = _run_ffmpeg_hard_timeout(cmd, timeout=30)
+    if proc is None:
         print("[WARN] get_audio_duration: ffmpeg timed out, using fallback duration")
         return 4
-    output = stderr.decode('utf-8', errors='replace')
+    output = proc.stderr.decode('utf-8', errors='replace')
     for line in output.split('\n'):
         if 'Duration' in line:
             time_str = line.split('Duration:')[1].split(',')[0].strip()
@@ -2361,7 +2383,6 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
     )
 
     n = len(slides)
-    audio_duration = get_audio_duration(audio_file)
     res = "1920:1080" if landscape else "1080:1920"
 
     concat_file = os.path.join(work_dir, "concat.txt")
@@ -2371,47 +2392,36 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
             f.write(f"duration {durations[idx]:.2f}\n")
         f.write(f"file '{os.path.basename(slide_paths[n-1])}'\n")
 
-    bg_music_path = os.path.join(work_dir, "bgmusic.m4a")
-    has_music = generate_bg_music(bg_music_path, audio_duration + 2)
-
     # loudnorm brings the narration up to a clear, consistent broadcast
     # loudness (YouTube/TikTok target ~-14 LUFS) instead of whatever raw
-    # level the TTS engine happened to output.
+    # level the TTS engine happened to output. Background music was dropped
+    # from this path — the extra amix filter graph was the likely cause of
+    # ffmpeg hangs on Render's fallback system binary, and reliability here
+    # matters more than ambient music.
     loudnorm = "loudnorm=I=-14:LRA=11:TP=-1.5"
 
-    if has_music:
-        cmd = [
-            FFMPEG, '-y',
-            '-f', 'concat', '-safe', '0', '-i', concat_file,
-            '-i', audio_file,
-            '-i', bg_music_path,
-            '-filter_complex',
-            f'[0:v]scale={res},fps=30[v];[1:a]{loudnorm}[narr];[2:a]volume=0.08[bg];[narr][bg]amix=inputs=2:duration=first[aout]',
-            '-map', '[v]', '-map', '[aout]',
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
-            '-c:a', 'aac', '-b:a', '128k',
-            '-pix_fmt', 'yuv420p',
-            '-shortest',
-                        '-movflags', '+faststart',
-            output_file
-        ]
-    else:
-        cmd = [
-            FFMPEG, '-y',
-            '-f', 'concat', '-safe', '0', '-i', concat_file,
-            '-i', audio_file,
-            '-filter_complex', f'[0:v]scale={res},fps=30[v];[1:a]{loudnorm}[aout]',
-            '-map', '[v]', '-map', '[aout]',
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
-            '-c:a', 'aac', '-b:a', '128k',
-            '-pix_fmt', 'yuv420p',
-            '-shortest',
-                        '-movflags', '+faststart',
-            output_file
-        ]
+    cmd = [
+        FFMPEG, '-y',
+        '-f', 'concat', '-safe', '0', '-i', concat_file,
+        '-i', audio_file,
+        '-filter_complex', f'[0:v]scale={res},fps=30[v];[1:a]{loudnorm}[aout]',
+        '-map', '[v]', '-map', '[aout]',
+        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+        '-c:a', 'aac', '-b:a', '128k',
+        '-pix_fmt', 'yuv420p',
+        '-shortest',
+        '-movflags', '+faststart',
+        output_file
+    ]
 
-    proc = subprocess.run(cmd, capture_output=True, timeout=600)
     import shutil
+    proc = _run_ffmpeg_hard_timeout(cmd, timeout=300)
+
+    if proc is None:
+        shutil.rmtree(work_dir, ignore_errors=True)
+        print("[WARN] Infographic build: ffmpeg encode timed out")
+        return False
+
     shutil.rmtree(work_dir, ignore_errors=True)
 
     if proc.returncode != 0:
