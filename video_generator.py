@@ -2018,6 +2018,7 @@ def create_video_kenburns(slides, images, audio_file, durations, output_file, la
             '-c:v', 'copy',
             '-c:a', 'aac', '-b:a', '128k',
             '-shortest',
+                        '-movflags', '+faststart',
             output_file,
         ]
     else:
@@ -2029,6 +2030,7 @@ def create_video_kenburns(slides, images, audio_file, durations, output_file, la
             '-c:v', 'copy',
             '-c:a', 'aac', '-b:a', '128k',
             '-shortest',
+                        '-movflags', '+faststart',
             output_file,
         ]
 
@@ -2380,6 +2382,7 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
             '-c:a', 'aac', '-b:a', '128k',
             '-pix_fmt', 'yuv420p',
             '-shortest',
+                        '-movflags', '+faststart',
             output_file
         ]
     else:
@@ -2393,6 +2396,7 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
             '-c:a', 'aac', '-b:a', '128k',
             '-pix_fmt', 'yuv420p',
             '-shortest',
+                        '-movflags', '+faststart',
             output_file
         ]
 
@@ -2446,6 +2450,7 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file, land
             '-c:a', 'aac', '-b:a', '128k',
             '-pix_fmt', 'yuv420p',
             '-shortest',
+                        '-movflags', '+faststart',
             output_file
         ]
     else:
@@ -2458,6 +2463,7 @@ def create_video_ffmpeg(slides, images, audio_file, durations, output_file, land
             '-c:a', 'aac', '-b:a', '128k',
             '-pix_fmt', 'yuv420p',
             '-shortest',
+                        '-movflags', '+faststart',
             output_file
         ]
 
@@ -2487,6 +2493,7 @@ def create_video_simple(slides, audio_file, durations, output_file, landscape=Fa
         '-c:a', 'aac', '-b:a', '128k',
         '-pix_fmt', 'yuv420p',
         '-shortest',
+                '-movflags', '+faststart',
         output_file
     ]
     print("[BUILD] Running FFmpeg (simple mode)...")
