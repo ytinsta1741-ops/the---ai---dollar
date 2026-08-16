@@ -30,13 +30,13 @@ def _gemini_url(model):
     return f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 CONFUSABLE_PAIRS = [
-    ("loan", "debenture"), ("overdraft", "loan"), ("equity", "debt"),
-    ("revenue", "profit"), ("gross profit", "net profit"), ("assets", "liabilities"),
+    ("loan", "debenture"), ("overdraft", "loan"),
+    ("revenue", "profit"), ("gross profit", "net profit"),
     ("cash flow", "profit"), ("interest rate", "APR"), ("stocks", "shares"),
     ("bonds", "stocks"), ("credit", "debit"), ("savings account", "fixed deposit"),
     ("tax deduction", "tax credit"), ("insurance", "assurance"), ("mortgage", "personal loan"),
     ("depreciation", "amortization"), ("markup", "margin"), ("invoice", "receipt"),
-    ("balance sheet", "income statement"), ("fixed cost", "variable cost"),
+    ("fixed cost", "variable cost"),
     ("capital expenditure", "operating expenditure"), ("bull market", "bear market"),
     ("Roth IRA", "Traditional IRA"), ("APR", "APY"), ("debit card", "credit card"),
     ("line of credit", "loan"), ("recession", "depression"), ("inflation", "deflation"),
@@ -44,7 +44,6 @@ CONFUSABLE_PAIRS = [
     ("net worth", "net income"), ("dividend", "capital gains"),
     ("secured loan", "unsecured loan"), ("term insurance", "whole life insurance"),
     ("nominal value", "market value"), ("working capital", "fixed capital"),
-    ("direct tax", "indirect tax"), ("current assets", "fixed assets"),
     ("trial balance", "balance sheet"), ("debenture", "share"),
 ]
 
