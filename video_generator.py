@@ -1541,7 +1541,13 @@ def generate_bg_music(output_path, duration):
 def get_audio_duration(audio_path):
     cmd = [FFMPEG, '-i', audio_path, '-f', 'null', '-']
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    _, stderr = proc.communicate()
+    try:
+        _, stderr = proc.communicate(timeout=30)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        print("[WARN] get_audio_duration: ffmpeg timed out, using fallback duration")
+        return 4
     output = stderr.decode('utf-8', errors='replace')
     for line in output.split('\n'):
         if 'Duration' in line:
