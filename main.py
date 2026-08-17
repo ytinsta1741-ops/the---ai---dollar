@@ -163,23 +163,6 @@ class HealthHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b"Not found")
 
-        elif path == "/test-instagram":
-            print("\n[TEST] Manual Instagram test triggered!")
-            try:
-                result = generate_daily_video()
-                if result['status'] == 'success':
-                    video_path = result['video']
-                    title = result['title']
-                    keywords = result.get('keywords', [])
-                    success = upload_to_instagram(video_path, title, keywords=keywords)
-                    msg = b"[OK] Instagram test posted!" if success else b"[ERR] Instagram test failed"
-                else:
-                    msg = b"[ERR] Video generation failed"
-            except Exception as e:
-                msg = f"[ERR] {str(e)}".encode()
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(msg)
         else:
             self.send_response(200)
             self.end_headers()
