@@ -413,21 +413,28 @@ def upload_to_instagram(video_path, title, keywords=None):
         # Keep hashtags small and targeted instead of a 15-tag wall — Meta's
         # own creator guidance says a spammy-looking tag block suppresses
         # reach rather than helping discovery.
-        kw_list = [k for k in (keywords or []) if k and len(k) <= 30][:5]
+        kw_list = [k for k in (keywords or []) if k and len(k) <= 30][:4]
         kw_tags = " ".join(f"#{k.replace(' ', '').replace('-', '')}" for k in kw_list)
-        broad_tags = "#PersonalFinance #MoneyTips #FinancialLiteracy"
+        # Smaller/niche-leaning tag set — huge tags like #Finance (100M+ posts)
+        # bury a small account instantly; medium finance-education tags give a
+        # realistic shot at ranking. Kept to ~7 total, all relevant.
+        broad_tags = "#MoneyTips #FinanceForBeginners #PersonalFinanceTips"
 
-        ig_hooks = [
-            "Save this for later.",
-            "Share this with someone who needs it.",
-            "Tag a friend who needs to hear this.",
-            "Double tap if you agree.",
+        # Instagram pushes a Reel to non-followers based mostly on SAVES and
+        # COMMENTS, not likes — so the caption's first job is to provoke a
+        # comment (a question people can answer in one word) and a save.
+        comment_bait = [
+            "Which one always confused you? 👇",
+            "Did you know the difference? Comment yes or no 👇",
+            "Be honest — did you mix these up? 👇",
+            "Which one did you get wrong? Tell me below 👇",
         ]
         caption = (
             f"{title}\n\n"
-            f"{random.choice(ig_hooks)}\n\n"
-            f"Follow @theaidollar for daily money tips that actually work.\n\n"
-            f"{broad_tags} {kw_tags} #Reels"
+            f"{random.choice(comment_bait)}\n\n"
+            f"💾 Save this so you don't forget it.\n"
+            f"➕ Follow @theaidollar — one money term explained simply, every day.\n\n"
+            f"{broad_tags} {kw_tags} #Reels #moneyhacks"
         )
 
         video_url = f"{PUBLIC_BASE_URL}/media/{os.path.basename(video_path)}"
