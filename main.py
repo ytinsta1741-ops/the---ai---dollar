@@ -764,23 +764,16 @@ def upload_to_tiktok(video_path, title, keywords=None):
 
 
 def schedule_jobs():
-    # SHORTS ONLY — discovery engine for small channels
-    # Shorts get shown on the Shorts shelf to non-subscribers
-    # 6 per day, spaced across US peak SCROLLING windows (times in UTC, EDT = UTC-4)
-    # Replaced the old 2am EDT slot (dead time) with a second prime-time slot.
-    # Instagram Reels reach drops off with over-posting (Meta's own creator
-    # guidance points to ~1-2/day), unlike YouTube Shorts/TikTok which
-    # reward volume — so only the two strongest windows (lunch + prime
-    # time) also go to Instagram; the rest post YouTube + TikTok only.
-    schedule.every().day.at("11:00").do(post_video, post_instagram=False)  # US East 7am — wake up / commute scroll
+    # SHORTS ONLY — discovery engine for small channels.
+    # 3 per day (down from 6) at the strongest US peak SCROLLING windows,
+    # posting to ALL platforms (YouTube + TikTok + Instagram) each time —
+    # quality/consistency over raw volume. Times in UTC (EDT = UTC-4).
     schedule.every().day.at("15:30").do(post_video, post_instagram=True)   # US East 11:30am — lunch break
-    schedule.every().day.at("18:00").do(post_video, post_instagram=False)  # US East 2pm — afternoon slump scroll
-    schedule.every().day.at("21:00").do(post_video, post_instagram=False)  # US East 5pm — evening commute
+    schedule.every().day.at("21:00").do(post_video, post_instagram=True)   # US East 5pm — evening commute
     schedule.every().day.at("23:30").do(post_video, post_instagram=True)   # US East 7:30pm — prime time
-    schedule.every().day.at("01:30").do(post_video, post_instagram=False)  # US East 9:30pm — late-night scroll (peak Shorts engagement)
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 6 Shorts/day on YouTube+TikTok, 2/day on Instagram (growth mode)")
+    print("[OK] Schedule: 3 Shorts/day on YouTube + TikTok + Instagram (growth mode)")
     print("[OK] Shorts = discovery engine for non-subscribers")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
