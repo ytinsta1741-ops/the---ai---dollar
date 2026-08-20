@@ -2385,6 +2385,7 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             else:
                 draw.rounded_rectangle([cx0, ctop, cx0 + cw, ctop + ch], radius=radius, fill=(240, 239, 234))
 
+        panel_left_cx = panel_right_cx = None
         if is_dual:
             label_h = 46
             card_top = 150 + label_h
@@ -2393,6 +2394,8 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             card_w = (int(W * 0.82) - gap) // 2
             left_x = (W - (card_w * 2 + gap)) // 2
             right_x = left_x + card_w + gap
+            panel_left_cx = left_x + card_w // 2
+            panel_right_cx = right_x + card_w // 2
 
             for label, cx0 in ((term_a, left_x), (term_b, right_x)):
                 lb = draw.textbbox((0, 0), label.upper(), font=font_label)
@@ -2432,7 +2435,16 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             target_h = 430
             mw = max(1, int(mascot_png.width * target_h / mascot_png.height))
             m_resized = mascot_png.resize((mw, target_h), Image.LANCZOS)
-            mx = (W - mw) // 2
+            # Slide the mascot under whichever term is being explained so it
+            # still directs the viewer's eye (Term A slide -> under the left
+            # panel, Term B slide -> under the right), centered otherwise.
+            if side == 'A' and panel_left_cx is not None:
+                cx = panel_left_cx
+            elif side == 'B' and panel_right_cx is not None:
+                cx = panel_right_cx
+            else:
+                cx = W // 2
+            mx = cx - mw // 2
             bg.paste(m_resized, (mx, mascot_top), m_resized)
             mascot_bottom = mascot_top + target_h
         else:
