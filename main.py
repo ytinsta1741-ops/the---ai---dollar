@@ -775,12 +775,14 @@ def schedule_jobs():
     # 3 per day (down from 6) at the strongest US peak SCROLLING windows,
     # posting to ALL platforms (YouTube + TikTok + Instagram) each time —
     # quality/consistency over raw volume. Times in UTC (EDT = UTC-4).
-    schedule.every().day.at("15:30").do(post_video, post_instagram=True)   # US East 11:30am — lunch break
-    schedule.every().day.at("21:00").do(post_video, post_instagram=True)   # US East 5pm — evening commute
-    schedule.every().day.at("23:30").do(post_video, post_instagram=True)   # US East 7:30pm — prime time
+    # YouTube + TikTok tolerate volume (3/day). Instagram Reels punishes
+    # over-posting, so ONLY the prime-time slot goes to Instagram = 1/day.
+    schedule.every().day.at("15:30").do(post_video, post_instagram=False)  # US East 11:30am — lunch break
+    schedule.every().day.at("21:00").do(post_video, post_instagram=False)  # US East 5pm — evening commute
+    schedule.every().day.at("23:30").do(post_video, post_instagram=True)   # US East 7:30pm — prime time (Instagram)
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 3 Shorts/day on YouTube + TikTok + Instagram (growth mode)")
+    print("[OK] Schedule: 3/day YouTube + TikTok, 1/day Instagram (growth mode)")
     print("[OK] Shorts = discovery engine for non-subscribers")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
@@ -796,9 +798,12 @@ def main():
 
     schedule_jobs()
 
-    print("\n[NOW] Posting first short on startup...\n")
+    # Startup post skips Instagram — otherwise every redeploy floods the IG
+    # feed with a new Reel (this was the "spam" cause). YouTube/TikTok tolerate
+    # the volume; Instagram only gets its scheduled 1/day slot.
+    print("\n[NOW] Posting first short on startup (YouTube + TikTok only)...\n")
     try:
-        post_video()
+        post_video(post_instagram=False)
     except Exception as e:
         print(f"[ERR] Startup post error: {e}")
 
