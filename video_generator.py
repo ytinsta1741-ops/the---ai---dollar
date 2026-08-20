@@ -2302,6 +2302,17 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
     total_slides = len(slides)
     paths = []
 
+    # Fixed brand mascot (green metallic $ character) composited every slide
+    # for consistent branding. Falls back to the drawn stick figure if the
+    # asset is missing.
+    mascot_png = None
+    _mpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot.png")
+    try:
+        if os.path.exists(_mpath):
+            mascot_png = Image.open(_mpath).convert("RGBA")
+    except Exception:
+        mascot_png = None
+
     # Every slide shows both terms side by side with individual labels,
     # like the reference channel's comparison style — only when we
     # actually have both hero images to show. The SYSTEM_PROMPT's 7-slide
@@ -2412,24 +2423,36 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             card_x = (W - card_w) // 2
             _paste_card(card_x, card_top, card_w, card_h, img_src)
 
-        # Mascot — right below the card(s). Points up normally; on the
-        # differentiation slide it shrugs with a "?" instead, echoing the
-        # "wait, what's the difference?" beat.
+        # Mascot — right below the card(s). Fixed green $ character for brand
+        # consistency; on the differentiation slide a "?" floats above its
+        # head, echoing the "wait, what's the difference?" beat.
         mascot_top = card_top + card_h + 70
         is_last = (idx == len(slides) - 1)
         is_first = (idx == 0)
-        if side == 'A':
-            point_left = True
-        elif side == 'B':
-            point_left = False
+        if mascot_png is not None:
+            target_h = 430
+            mw = max(1, int(mascot_png.width * target_h / mascot_png.height))
+            m_resized = mascot_png.resize((mw, target_h), Image.LANCZOS)
+            mx = (W - mw) // 2
+            bg.paste(m_resized, (mx, mascot_top), m_resized)
+            mascot_bottom = mascot_top + target_h
+            if is_diff_slide:
+                qf = get_font(96)
+                qb = draw.textbbox((0, 0), "?", font=qf)
+                draw.text((W // 2 - (qb[2] - qb[0]) // 2, mascot_top - 78), "?", font=qf, fill=ACCENT)
         else:
-            point_left = (idx % 2 == 0)
-        mascot_box = _draw_mascot(
-            draw, W // 2, mascot_top, scale=1.3, color=INK,
-            confused=is_diff_slide,
-            pointing=not is_last, point_left=point_left,
-        )
-        mascot_bottom = mascot_box[3]
+            if side == 'A':
+                point_left = True
+            elif side == 'B':
+                point_left = False
+            else:
+                point_left = (idx % 2 == 0)
+            mascot_box = _draw_mascot(
+                draw, W // 2, mascot_top, scale=1.3, color=INK,
+                confused=is_diff_slide,
+                pointing=not is_last, point_left=point_left,
+            )
+            mascot_bottom = mascot_box[3]
 
         # Headline — at the bottom of the frame, below the mascot
         text = slide['text'].upper()
