@@ -2246,7 +2246,12 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
     photo card, and a recurring original mascot character for brand
     identity — inspired by high-performing comparison-style Shorts."""
     os.makedirs(work_dir, exist_ok=True)
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image, ImageDraw, ImageFont, ImageFilter
+
+    def _rounded_mask(size, radius):
+        m = Image.new("L", size, 0)
+        ImageDraw.Draw(m).rounded_rectangle([0, 0, size[0] - 1, size[1] - 1], radius=radius, fill=255)
+        return m
 
     def get_font(size, bold=True):
         names = (
@@ -2345,6 +2350,18 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         side = side_by_idx[idx] if is_dual else 'both'
 
         def _paste_card(cx0, ctop, cw, ch, src):
+            radius = 26
+            # Soft drop-shadow so the panels read as floating cards (premium
+            # depth). Drawn on a padded RGBA layer, blurred once, then
+            # composited slightly below the card.
+            pad = 34
+            shadow = Image.new("RGBA", (cw + pad * 2, ch + pad * 2), (0, 0, 0, 0))
+            ImageDraw.Draw(shadow).rounded_rectangle(
+                [pad, pad, pad + cw, pad + ch], radius=radius, fill=(18, 20, 28, 95)
+            )
+            shadow = shadow.filter(ImageFilter.GaussianBlur(15))
+            bg.paste(shadow, (cx0 - pad, ctop - pad + 12), shadow)
+
             if src and os.path.exists(src):
                 photo = Image.open(src).convert("RGB")
                 iw, ih = photo.size
@@ -2353,16 +2370,15 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                 left = (photo.width - cw) // 2
                 top = (photo.height - ch) // 2
                 photo = photo.crop((left, top, left + cw, top + ch))
-                draw.rectangle([cx0 - 4, ctop - 4, cx0 + cw + 4, ctop + ch + 4], outline=CARD_BORDER, width=2)
-                bg.paste(photo, (cx0, ctop))
+                bg.paste(photo, (cx0, ctop), _rounded_mask((cw, ch), radius))
             else:
-                draw.rounded_rectangle([cx0, ctop, cx0 + cw, ctop + ch], radius=16, outline=CARD_BORDER, width=2, fill=(240, 239, 234))
+                draw.rounded_rectangle([cx0, ctop, cx0 + cw, ctop + ch], radius=radius, fill=(240, 239, 234))
 
         if is_dual:
             label_h = 46
             card_top = 150 + label_h
             card_h = int(H * 0.30)
-            gap = 24
+            gap = 44
             card_w = (int(W * 0.82) - gap) // 2
             left_x = (W - (card_w * 2 + gap)) // 2
             right_x = left_x + card_w + gap
@@ -2374,6 +2390,20 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
 
             _paste_card(left_x, card_top, card_w, card_h, left_by_idx[idx])
             _paste_card(right_x, card_top, card_w, card_h, right_by_idx[idx])
+
+            # "VS" badge straddling the gap between the two panels — the
+            # visual signature of the comparison format. Drawn last so it
+            # sits on top of both cards' inner edges.
+            vs_cx, vs_cy = W // 2, card_top + card_h // 2
+            r = 46
+            draw.ellipse([vs_cx - r - 6, vs_cy - r - 6, vs_cx + r + 6, vs_cy + r + 6], fill=BG)
+            draw.ellipse([vs_cx - r, vs_cy - r, vs_cx + r, vs_cy + r], fill=ACCENT)
+            vs_font = get_font(40)
+            vsb = draw.textbbox((0, 0), "VS", font=vs_font)
+            draw.text(
+                (vs_cx - (vsb[2] - vsb[0]) // 2, vs_cy - (vsb[3] - vsb[1]) // 2 - vsb[1]),
+                "VS", font=vs_font, fill=(255, 255, 255),
+            )
         else:
             img_src = images[idx] if idx < len(images) else None
             card_top = 150
