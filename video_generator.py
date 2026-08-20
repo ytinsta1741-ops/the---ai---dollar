@@ -1432,11 +1432,11 @@ def _run_edge_tts(text, output_path, voice, rate, pitch):
 
 
 VOICE_LIST = [
-    ("en-US-ChristopherNeural", "+2%", "-2Hz"),
-    ("en-US-GuyNeural", "+2%", "-2Hz"),
-    ("en-US-AndrewMultilingualNeural", "+2%", "-2Hz"),
-    ("en-GB-RyanNeural", "+2%", "-2Hz"),
-    ("en-US-DavisNeural", "+2%", "-2Hz"),
+    ("en-US-ChristopherNeural", "+6%", "-2Hz"),
+    ("en-US-GuyNeural", "+6%", "-2Hz"),
+    ("en-US-AndrewMultilingualNeural", "+6%", "-2Hz"),
+    ("en-GB-RyanNeural", "+6%", "-2Hz"),
+    ("en-US-DavisNeural", "+6%", "-2Hz"),
 ]
 
 
@@ -1539,7 +1539,7 @@ def create_slide_audios(slides, work_dir):
         pitch_delta = 5 if is_energetic_beat else 0
 
         if use_fish:
-            ok = _run_fish_audio_tts(slide['speech'], audio_path, speed=(1.12 if is_energetic_beat else 1.0))
+            ok = _run_fish_audio_tts(slide['speech'], audio_path, speed=(1.16 if is_energetic_beat else 1.08))
             if not ok:
                 print(f"  [WARN] Fish Audio failed for slide {idx}, trying fallback")
         if not ok and use_piper:
