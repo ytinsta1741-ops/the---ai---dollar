@@ -402,6 +402,21 @@ def upload_to_instagram(video_path, title, keywords=None):
     sidesteps Meta Developer Portal's SMS verification step entirely.
     Sends a webhook with a public URL to the video (Make's Instagram
     module fetches it from there) plus the caption."""
+    # Instagram-only hold: set INSTAGRAM_RESUME_DATE=YYYY-MM-DD on Render and
+    # Instagram won't post until that date (YouTube/TikTok keep posting).
+    # Used to pause IG after an accidental over-post burst without stopping
+    # the other platforms. Remove the var to run normally.
+    resume = os.getenv("INSTAGRAM_RESUME_DATE", "").strip()
+    if resume:
+        try:
+            resume_date = datetime.strptime(resume, "%Y-%m-%d").date()
+            today = datetime.now().date()
+            if today < resume_date:
+                print(f"[SKIP] Instagram: on hold until {resume} (server date is {today})")
+                return False
+        except ValueError:
+            print(f"[WARN] INSTAGRAM_RESUME_DATE='{resume}' is not YYYY-MM-DD — ignoring")
+
     webhook_url = os.getenv("MAKE_INSTAGRAM_WEBHOOK_URL", "")
     if not webhook_url:
         print("[SKIP] Instagram: MAKE_INSTAGRAM_WEBHOOK_URL not set")
