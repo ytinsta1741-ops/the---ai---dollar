@@ -2423,9 +2423,8 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             card_x = (W - card_w) // 2
             _paste_card(card_x, card_top, card_w, card_h, img_src)
 
-        # Mascot — right below the card(s). Fixed green $ character for brand
-        # consistency; on the differentiation slide a "?" floats above its
-        # head, echoing the "wait, what's the difference?" beat.
+        # Mascot — right below the card(s). Fixed green $ character composited
+        # every slide for consistent branding.
         mascot_top = card_top + card_h + 70
         is_last = (idx == len(slides) - 1)
         is_first = (idx == 0)
@@ -2436,10 +2435,6 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             mx = (W - mw) // 2
             bg.paste(m_resized, (mx, mascot_top), m_resized)
             mascot_bottom = mascot_top + target_h
-            if is_diff_slide:
-                qf = get_font(96)
-                qb = draw.textbbox((0, 0), "?", font=qf)
-                draw.text((W // 2 - (qb[2] - qb[0]) // 2, mascot_top - 78), "?", font=qf, fill=ACCENT)
         else:
             if side == 'A':
                 point_left = True
