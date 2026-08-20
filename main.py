@@ -527,6 +527,13 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
     Meta's own creator guidance caps effective frequency around 1-2/day,
     unlike YouTube Shorts/TikTok which reward higher volume — so only a
     couple of the day's scheduled slots pass post_instagram=True."""
+    # Global kill-switch: set PAUSE_POSTING=true on Render to deploy/run the
+    # latest code WITHOUT posting anywhere (startup post and scheduled posts
+    # both become no-ops). Remove it (or set false) to go live again.
+    if os.getenv("PAUSE_POSTING", "false").lower() == "true":
+        print("[PAUSED] PAUSE_POSTING is set — skipping this post (nothing sent to YouTube/TikTok/Instagram).")
+        return
+
     print(f"\n{'='*50}")
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] POSTING VIDEO{' [SERIES PART]' if is_series_part else ''}")
     print(f"{'='*50}\n")
