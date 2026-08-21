@@ -45,6 +45,29 @@ CONFUSABLE_PAIRS = [
     ("secured loan", "unsecured loan"), ("term insurance", "whole life insurance"),
     ("nominal value", "market value"), ("working capital", "fixed capital"),
     ("trial balance", "balance sheet"), ("debenture", "share"),
+    # expanded pool so a fresh pair is available far longer before any repeat
+    ("ETF", "mutual fund"), ("index fund", "mutual fund"), ("HSA", "FSA"),
+    ("401k", "IRA"), ("annuity", "pension"), ("leasing", "financing"),
+    ("gross income", "net income"), ("assets", "revenue"), ("liability", "expense"),
+    ("credit score", "credit report"), ("hard inquiry", "soft inquiry"),
+    ("prequalified", "preapproved"), ("fixed rate", "variable rate"),
+    ("down payment", "deposit"), ("principal", "interest"), ("escrow", "equity"),
+    ("bear", "correction"), ("dividend yield", "dividend rate"),
+    ("market cap", "enterprise value"), ("EBITDA", "net income"),
+    ("realized gain", "unrealized gain"), ("liquidity", "solvency"),
+    ("cash", "capital"), ("budget", "forecast"), ("audit", "review"),
+    ("gross margin", "net margin"), ("markdown", "discount"),
+    ("chargeback", "refund"), ("wire transfer", "ACH transfer"),
+    ("checking account", "savings account"), ("APR", "interest rate"),
+    ("term deposit", "demand deposit"), ("bond yield", "coupon rate"),
+    ("face value", "market value"), ("premium", "deductible"),
+    ("copay", "coinsurance"), ("underwriting", "appraisal"),
+    ("refinance", "consolidation"), ("grace period", "introductory period"),
+    ("standard deduction", "itemized deduction"), ("W-2", "1099"),
+    ("gross pay", "take-home pay"), ("credit limit", "available credit"),
+    ("bull trap", "dead cat bounce"), ("stock split", "reverse split"),
+    ("IPO", "direct listing"), ("private equity", "venture capital"),
+    ("hedge fund", "mutual fund"), ("commodity", "security"),
 ]
 
 SYSTEM_PROMPT = """You are an expert financial educator and content creator writing scripts for "The AI Dollar", a YouTube Shorts channel. Every video takes TWO real finance or accounting terms that people genuinely confuse with each other (you'll be given the pair, e.g. "loan" vs "debenture") and clearly differentiates them for a complete beginner — the way you'd explain it to a smart 10 year old, using simple real-world analogies, not a lecture. Explain any abbreviation in full the first time it appears.
@@ -81,7 +104,7 @@ Rules:
 - Exactly 7 slides.
 - Every slide has "text", "speech", and "img":
   - "speech" is what the narrator says out loud, 1-3 short punchy spoken sentences (see VOICE above), energetic and conversational, never lecture-toned.
-  - "text" is the on-screen caption — it MUST be a short, verbatim excerpt taken directly from that same slide's "speech" (the single most important phrase or sentence, trimmed to fit, 3-5 short lines separated by \\n, max ~40 characters per line, ALL CAPS words for emphasis are fine). NEVER write different wording on screen than what is spoken.
+  - "text" is the on-screen caption — the SINGLE punchiest phrase from that slide's speech, and it MUST be tiny: AT MOST 2 short lines, no more than 3-4 words per line (~20 characters per line). Pick only the 3-6 most important words so a viewer reads it in one glance — never a full sentence, never a paragraph. Separate the two lines with \\n. Every word must also appear in that slide's "speech".
   - "img" is a short, concrete visual search phrase for a stock photo site. It must ALWAYS depict a real finance/business/office scene (e.g. stock charts, cash, calculators, laptops with spreadsheets, bank buildings, people reviewing documents, coins, piggy banks) — NEVER depict an analogy literally (no kids, pizza, gardens, games, toys, animals). Follow the IMAGES MUST DIFFERENTIATE rule above — Term A slides and Term B slides need visually distinct imagery.
 - Each analogy (for both terms) must be stated in one simple sentence a 10 year old would get instantly, BEFORE using the formal finance term.
 - Do not literally write "SUBSCRIBE" as the whole slide 7 text — the app already adds a subscribe button automatically.
@@ -115,13 +138,28 @@ def _validate_topic(data):
     return True
 
 
+# Pairs already used this run — so we cycle through the whole pool before any
+# pair can repeat, instead of random.choice picking the same one again soon.
+_used_pairs = set()
+
+
+def _pick_unused_pair():
+    remaining = [p for p in CONFUSABLE_PAIRS if p not in _used_pairs]
+    if not remaining:            # whole pool exhausted -> start a fresh cycle
+        _used_pairs.clear()
+        remaining = list(CONFUSABLE_PAIRS)
+    pair = random.choice(remaining)
+    _used_pairs.add(pair)
+    return pair
+
+
 def generate_ai_topic(existing_titles_hint=""):
     """Ask Gemini for one complete 7-slide short-form topic. Returns None on any failure."""
     if not GEMINI_API_KEY:
         print("[WARN] GEMINI_API_KEY not set, skipping AI generation")
         return None
 
-    term_a, term_b = random.choice(CONFUSABLE_PAIRS)
+    term_a, term_b = _pick_unused_pair()
     user_prompt = f"Write a new video differentiating these two confusable terms: \"{term_a}\" vs \"{term_b}\"."
     if existing_titles_hint:
         user_prompt += f" Make it clearly different from these already-posted titles: {existing_titles_hint}."

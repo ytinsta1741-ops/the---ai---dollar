@@ -2471,21 +2471,27 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             )
             mascot_bottom = mascot_box[3]
 
-        # Headline — at the bottom of the frame, below the mascot
-        text = slide['text'].upper()
-        raw_lines = text.split('\n')
+        # Caption — SHORT and BIG: at most 2 lines so it's readable in a
+        # single glance (long paragraphs killed readability). Flatten any
+        # line breaks, then pick the largest font that fits in <=2 lines.
+        text = " ".join(slide['text'].split()).upper()
         bottom_zone_top = mascot_bottom + 40
         available_h = H - bottom_zone_top - 140
-        for size in [50, 44, 38, 32, 28]:
+        chosen = None
+        for size in [84, 76, 68, 60, 54, 48]:
             f = get_font(size)
-            wrapped = []
-            for raw in raw_lines:
-                wrapped.extend(wrap_line(raw, f, draw, MAX_TW))
-            line_h = size + 18
-            total_h = len(wrapped) * line_h
-            if total_h < available_h:
+            wrapped = wrap_line(text, f, draw, MAX_TW)
+            if len(wrapped) <= 2:
+                chosen = (f, wrapped, size)
                 break
-
+        if chosen is None:
+            # too long even small — keep the first 2 lines so it stays legible
+            f = get_font(48)
+            wrapped = wrap_line(text, f, draw, MAX_TW)[:2]
+            chosen = (f, wrapped, 48)
+        f, wrapped, size = chosen
+        line_h = size + 20
+        total_h = len(wrapped) * line_h
         y = bottom_zone_top + max(0, (available_h - total_h) // 2)
         for line in wrapped:
             bb = draw.textbbox((0, 0), line, font=f)
