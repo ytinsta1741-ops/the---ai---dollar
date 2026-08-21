@@ -2241,7 +2241,8 @@ def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, 
 
 
 def prep_infographic_slides(images, slides, work_dir, landscape=False,
-                             term_a=None, term_b=None, hero_images=(None, None)):
+                             term_a=None, term_b=None, hero_images=(None, None),
+                             draw_mascot=True):
     """Clean white-background infographic style: bold headline, a boxed
     photo card, and a recurring original mascot character for brand
     identity — inspired by high-performing comparison-style Shorts."""
@@ -2301,6 +2302,11 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
 
     total_slides = len(slides)
     paths = []
+    # Mascot placement recorded per slide so the animated build can overlay a
+    # MOVING mascot instead of the baked-in one (draw_mascot=False).
+    mascot_cx_by_idx = []
+    mascot_meta_top = None
+    mascot_meta_wh = None
 
     # Fixed brand mascot (green metallic $ character) composited every slide
     # for consistent branding. Falls back to the drawn stick figure if the
@@ -2434,7 +2440,6 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         if mascot_png is not None:
             target_h = 430
             mw = max(1, int(mascot_png.width * target_h / mascot_png.height))
-            m_resized = mascot_png.resize((mw, target_h), Image.LANCZOS)
             # Slide the mascot under whichever term is being explained so it
             # still directs the viewer's eye (Term A slide -> under the left
             # panel, Term B slide -> under the right), centered otherwise.
@@ -2444,10 +2449,15 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                 cx = panel_right_cx
             else:
                 cx = W // 2
-            mx = cx - mw // 2
-            bg.paste(m_resized, (mx, mascot_top), m_resized)
+            mascot_cx_by_idx.append(cx)
+            mascot_meta_top = mascot_top
+            mascot_meta_wh = (mw, target_h)
+            if draw_mascot:
+                m_resized = mascot_png.resize((mw, target_h), Image.LANCZOS)
+                bg.paste(m_resized, (cx - mw // 2, mascot_top), m_resized)
             mascot_bottom = mascot_top + target_h
         else:
+            mascot_cx_by_idx.append(W // 2)
             if side == 'A':
                 point_left = True
             elif side == 'B':
@@ -2507,7 +2517,84 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         gc.collect()
         print(f"  infographic slide {idx+1}/{len(slides)} ready")
 
-    return paths
+    _mascot_asset = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot.png")
+    return paths, {
+        "cx": mascot_cx_by_idx,
+        "top": mascot_meta_top,
+        "wh": mascot_meta_wh,
+        "png": _mascot_asset if mascot_png is not None else None,
+    }
+
+
+def _build_infographic_animated(work_dir, slide_paths, meta, durations, audio_file, output_file, res):
+    """Overlay a MOVING mascot on mascot-less base slides via one ffmpeg pass:
+    it bounces during the hook (slide 0), then slides to sit under whichever
+    term is being explained. Light — no per-frame Python rendering, ffmpeg
+    evaluates the position expressions itself. Returns True on success."""
+    n = len(slide_paths)
+    mw, mh = meta["wh"]
+    top = meta["top"]
+    cx = meta["cx"]
+    mascot_png = meta["png"]
+
+    concat_file = os.path.join(work_dir, "concat_anim.txt")
+    with open(concat_file, "w") as f:
+        for i in range(n):
+            f.write(f"file '{os.path.basename(slide_paths[i])}'\n")
+            f.write(f"duration {durations[i]:.3f}\n")
+        f.write(f"file '{os.path.basename(slide_paths[n-1])}'\n")
+
+    starts, acc = [], 0.0
+    for d in durations:
+        starts.append(acc); acc += d
+    total = acc
+
+    # x-centre of the mascot over time: hold each slide's target, ramping
+    # smoothly (RAMP secs) when the target changes between slides.
+    RAMP = 0.5
+    terms = []
+    for i in range(n):
+        si = starts[i]
+        ei = (si + durations[i]) if i < n - 1 else (total + 100)
+        prev_t = cx[i - 1] if i > 0 else cx[0]
+        cur_t = cx[i]
+        gate = f"gte(t,{si:.3f})*lt(t,{ei:.3f})"
+        ramp = f"min(max((t-{si:.3f})/{RAMP},0),1)"
+        terms.append(f"({gate})*({prev_t}+({cur_t}-{prev_t})*{ramp})")
+    x_expr = f"({'+'.join(terms)})-{mw // 2}"
+
+    # y: bounce up-and-down during the hook (slide 0) only, then rest.
+    d0 = durations[0]
+    BAMP, BFREQ = 70, 2.6
+    y_expr = f"{top}-(lt(t,{d0:.3f})*abs(sin(2*PI*{BFREQ}*t))*{BAMP})"
+
+    loudnorm = "loudnorm=I=-14:LRA=11:TP=-1.5"
+    fc = (
+        f"[0:v]scale={res},fps=30[base];"
+        f"[1:v]scale={mw}:{mh}[m];"
+        f"[base][m]overlay=x='{x_expr}':y='{y_expr}'[v];"
+        f"[2:a]{loudnorm}[aout]"
+    )
+    cmd = [
+        FFMPEG, "-y",
+        "-f", "concat", "-safe", "0", "-i", concat_file,
+        "-loop", "1", "-i", mascot_png,
+        "-i", audio_file,
+        "-filter_complex", fc,
+        "-map", "[v]", "-map", "[aout]",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+        "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
+        "-shortest", "-movflags", "+faststart",
+        output_file,
+    ]
+    proc = _run_ffmpeg_hard_timeout(cmd, timeout=360)
+    if proc is None:
+        print("[WARN] Animated build: ffmpeg timed out")
+        return False
+    if proc.returncode != 0:
+        print(f"[WARN] Animated build failed: {proc.stderr.decode('utf-8', errors='replace')[-500:]}")
+        return False
+    return os.path.exists(output_file) and os.path.getsize(output_file) > 10000
 
 
 def create_video_infographic(slides, images, audio_file, durations, output_file, landscape=False,
@@ -2515,14 +2602,36 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
     """Single-pass build (lightweight, matches the original static-slide
     pipeline's memory profile) using the new white-background layout."""
     work_dir = output_file + "_infowork"
+    import shutil
     print("[BUILD] Preparing infographic slides...")
-    slide_paths = prep_infographic_slides(
-        images, slides, work_dir, landscape=landscape,
-        term_a=term_a, term_b=term_b, hero_images=hero_images,
-    )
 
     n = len(slides)
     res = "1920:1080" if landscape else "1080:1920"
+
+    # Animate the mascot (bounce on hook + slide between terms) when we have
+    # the asset and aren't in landscape. Set ANIMATE_MASCOT=false to disable.
+    mascot_asset = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot.png")
+    animate = (not landscape) and os.path.exists(mascot_asset) \
+        and os.getenv("ANIMATE_MASCOT", "true").lower() != "false"
+
+    slide_paths, meta = prep_infographic_slides(
+        images, slides, work_dir, landscape=landscape,
+        term_a=term_a, term_b=term_b, hero_images=hero_images,
+        draw_mascot=not animate,
+    )
+
+    if animate and meta.get("png") and meta.get("top") is not None and meta.get("wh"):
+        if _build_infographic_animated(work_dir, slide_paths, meta, durations, audio_file, output_file, res):
+            shutil.rmtree(work_dir, ignore_errors=True)
+            print("[OK] Video created (infographic + animated mascot)!")
+            return True
+        print("[WARN] Animated mascot build failed; rebuilding with static mascot...")
+        shutil.rmtree(work_dir, ignore_errors=True)
+        slide_paths, meta = prep_infographic_slides(
+            images, slides, work_dir, landscape=landscape,
+            term_a=term_a, term_b=term_b, hero_images=hero_images,
+            draw_mascot=True,
+        )
 
     concat_file = os.path.join(work_dir, "concat.txt")
     with open(concat_file, 'w') as f:
