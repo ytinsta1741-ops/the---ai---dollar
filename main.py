@@ -837,14 +837,15 @@ def schedule_jobs():
     # 3 per day (down from 6) at the strongest US peak SCROLLING windows,
     # posting to ALL platforms (YouTube + TikTok + Instagram) each time —
     # quality/consistency over raw volume. Times in UTC (EDT = UTC-4).
-    # YouTube + TikTok tolerate volume (3/day). Instagram Reels punishes
-    # over-posting, so ONLY the prime-time slot goes to Instagram = 1/day.
-    schedule.every().day.at("15:30").do(post_video, post_instagram=False)  # US East 11:30am — lunch break
+    # Times chosen for the US finance audience's peak scrolling windows.
+    # YouTube + TikTok post all 3 slots; Instagram posts the 2 strongest
+    # windows (midday + evening prime) = 2/day, spaced ~8h apart for reach.
+    schedule.every().day.at("15:30").do(post_video, post_instagram=True)   # US East 11:30am — lunch (Instagram)
     schedule.every().day.at("21:00").do(post_video, post_instagram=False)  # US East 5pm — evening commute
     schedule.every().day.at("23:30").do(post_video, post_instagram=True)   # US East 7:30pm — prime time (Instagram)
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 3/day YouTube + TikTok, 1/day Instagram (growth mode)")
+    print("[OK] Schedule: 3/day YouTube + TikTok, 2/day Instagram (US peak times)")
     print("[OK] Shorts = discovery engine for non-subscribers")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
