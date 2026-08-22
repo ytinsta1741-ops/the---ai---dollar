@@ -163,6 +163,45 @@ class HealthHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b"Not found")
 
+        elif path == "/status":
+            import json as _json
+            last_post = "never"
+            try:
+                if os.path.exists("last_post_time.txt"):
+                    with open("last_post_time.txt") as _f:
+                        ts = float(_f.read().strip())
+                        last_post = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d %H:%M UTC")
+            except Exception:
+                pass
+            status = {
+                "server_time_utc": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                "PAUSE_POSTING": os.getenv("PAUSE_POSTING", "(not set)"),
+                "posting_active": os.getenv("PAUSE_POSTING", "false").lower() != "true",
+                "INSTAGRAM_RESUME_DATE": os.getenv("INSTAGRAM_RESUME_DATE", "(not set)"),
+                "FISH_AUDIO_API_KEY_set": bool(os.getenv("FISH_AUDIO_API_KEY")),
+                "MAKE_INSTAGRAM_WEBHOOK_set": bool(os.getenv("MAKE_INSTAGRAM_WEBHOOK_URL")),
+                "GEMINI_API_KEY_set": bool(os.getenv("GEMINI_API_KEY")),
+                "YOUTUBE_REFRESH_TOKEN_set": bool(os.getenv("YOUTUBE_REFRESH_TOKEN")),
+                "last_post": last_post,
+                "schedule_utc": ["15:30 YT+TikTok", "21:00 YT+TikTok", "23:30 YT+TikTok+Instagram"],
+            }
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(_json.dumps(status, indent=2).encode())
+
+        elif path == "/post-now":
+            # Manual on-demand post to ALL platforms (ignores PAUSE_POSTING and
+            # the Instagram schedule) so the full chain can be tested instantly.
+            print("\n[MANUAL] /post-now triggered — posting to all platforms")
+            threading.Thread(
+                target=lambda: post_video(post_instagram=True, force=True),
+                daemon=True,
+            ).start()
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"Posting started (all platforms). Check logs / your accounts in ~3-5 min.")
+
         else:
             self.send_response(200)
             self.end_headers()
@@ -536,7 +575,7 @@ def upload_to_facebook(video_path, title, keywords=None):
         return False
 
 
-def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=True):
+def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=True, force=False):
     """Generate and post video to YouTube + TikTok (+ Instagram when
     post_instagram=True). Instagram Reels reach is hurt by over-posting —
     Meta's own creator guidance caps effective frequency around 1-2/day,
@@ -545,7 +584,8 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
     # Global kill-switch: set PAUSE_POSTING=true on Render to deploy/run the
     # latest code WITHOUT posting anywhere (startup post and scheduled posts
     # both become no-ops). Remove it (or set false) to go live again.
-    if os.getenv("PAUSE_POSTING", "false").lower() == "true":
+    # force=True (from /post-now) bypasses the pause for a manual test.
+    if not force and os.getenv("PAUSE_POSTING", "false").lower() == "true":
         print("[PAUSED] PAUSE_POSTING is set — skipping this post (nothing sent to YouTube/TikTok/Instagram).")
         return
 
