@@ -183,6 +183,7 @@ class HealthHandler(BaseHTTPRequestHandler):
                 "GEMINI_API_KEY_set": bool(os.getenv("GEMINI_API_KEY")),
                 "YOUTUBE_REFRESH_TOKEN_set": bool(os.getenv("YOUTUBE_REFRESH_TOKEN")),
                 "last_post": last_post,
+                "current_run": _LAST_RUN,
                 "schedule_utc": ["15:30 YT+TikTok", "21:00 YT+TikTok", "23:30 YT+TikTok+Instagram"],
             }
             self.send_response(200)
@@ -575,6 +576,19 @@ def upload_to_facebook(video_path, title, keywords=None):
         return False
 
 
+_LAST_RUN = {"stage": "idle", "at": "", "title": ""}
+
+
+def _mark(stage, title=""):
+    """Record the current post stage so /status can show where a run is (or
+    where it got stuck) without needing access to Render's logs."""
+    _LAST_RUN["stage"] = stage
+    _LAST_RUN["at"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    if title:
+        _LAST_RUN["title"] = title
+    print(f"[STAGE] {stage} {title}")
+
+
 def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=True, force=False):
     """Generate and post video to YouTube + TikTok (+ Instagram when
     post_instagram=True). Instagram Reels reach is hurt by over-posting —
@@ -594,10 +608,12 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
     print(f"{'='*50}\n")
 
     try:
+        _mark("generating_video")
         print("[STEP 1] Generating video...")
         result = generate_daily_video()
 
         if result['status'] != 'success':
+            _mark("ERROR_video_generation", str(result.get('message', ''))[:80])
             print(f"[ERR] Video generation failed: {result.get('message','')}")
             return
 
@@ -605,21 +621,26 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
         title      = result['title']
         script     = result['script']
         keywords   = result.get('keywords', [])
+        _mark("video_ready", title[:60])
         print(f"[OK] Video generated: {title}")
 
         print(f"\n[STEP 2] Uploading to YouTube...")
+        _mark("uploading_youtube", title[:60])
         youtube_success = upload_to_youtube(video_path, title, script, is_short=True, keywords=keywords)
 
         print(f"\n[STEP 3] Uploading to TikTok...")
+        _mark("uploading_tiktok")
         tiktok_success = upload_to_tiktok(video_path, title, keywords=keywords)
 
         if post_instagram:
             print(f"\n[STEP 4] Uploading to Instagram...")
+            _mark("uploading_instagram")
             instagram_success = upload_to_instagram(video_path, title, keywords=keywords)
         else:
             print(f"\n[STEP 4] Skipping Instagram this slot (throttled to ~2 posts/day for reach)")
             instagram_success = None
 
+        _mark("complete", title[:60])
         with open("last_post_time.txt", "w") as f:
             f.write(str(time.time()))
 
@@ -632,6 +653,7 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
         print(f"{'='*50}\n")
 
     except Exception as e:
+        _mark("ERROR_exception", str(e)[:120])
         print(f"[ERR] Error in post_video: {e}")
         import traceback
         traceback.print_exc()
@@ -832,17 +854,27 @@ def upload_to_tiktok(video_path, title, keywords=None):
         return False
 
 
+def _post_async(post_instagram=True):
+    """Kick off a post in a BACKGROUND thread so the scheduler loop and the
+    keep-alive self-ping keep running. A video build takes several minutes;
+    if it ran on the main/scheduler thread it would block the 10-min self-ping,
+    Render would see no traffic, spin the instance down mid-build, and nothing
+    would ever finish posting (root cause of 'last_post: never')."""
+    threading.Thread(
+        target=lambda: post_video(post_instagram=post_instagram),
+        daemon=True,
+    ).start()
+
+
 def schedule_jobs():
     # SHORTS ONLY — discovery engine for small channels.
-    # 3 per day (down from 6) at the strongest US peak SCROLLING windows,
-    # posting to ALL platforms (YouTube + TikTok + Instagram) each time —
-    # quality/consistency over raw volume. Times in UTC (EDT = UTC-4).
     # Times chosen for the US finance audience's peak scrolling windows.
     # YouTube + TikTok post all 3 slots; Instagram posts the 2 strongest
     # windows (midday + evening prime) = 2/day, spaced ~8h apart for reach.
-    schedule.every().day.at("15:30").do(post_video, post_instagram=True)   # US East 11:30am — lunch (Instagram)
-    schedule.every().day.at("21:00").do(post_video, post_instagram=False)  # US East 5pm — evening commute
-    schedule.every().day.at("23:30").do(post_video, post_instagram=True)   # US East 7:30pm — prime time (Instagram)
+    # Posts run async so they never block the self-ping (see _post_async).
+    schedule.every().day.at("15:30").do(_post_async, post_instagram=True)   # US East 11:30am — lunch (Instagram)
+    schedule.every().day.at("21:00").do(_post_async, post_instagram=False)  # US East 5pm — evening commute
+    schedule.every().day.at("23:30").do(_post_async, post_instagram=True)   # US East 7:30pm — prime time (Instagram)
 
     schedule.every(10).minutes.do(keep_alive)
     print("[OK] Schedule: 3/day YouTube + TikTok, 2/day Instagram (US peak times)")
@@ -865,16 +897,15 @@ def main():
     # feed with a new Reel (this was the "spam" cause). YouTube/TikTok tolerate
     # the volume; Instagram only gets its scheduled 1/day slot.
     print("\n[NOW] Posting first short on startup (YouTube + TikTok only)...\n")
-    try:
-        post_video(post_instagram=False)
-    except Exception as e:
-        print(f"[ERR] Startup post error: {e}")
+    # Runs in a background thread — the scheduler loop below starts immediately
+    # so keep-alive fires on time and the instance never spins down mid-build.
+    _post_async(post_instagram=False)
 
-    print("\n[SCHED] Scheduler running (6 shorts/day — growth mode + self-ping every 10 min)...")
+    print("\n[SCHED] Scheduler running (3/day YouTube+TikTok, 2/day Instagram + self-ping every 10 min)...")
     try:
         while True:
             schedule.run_pending()
-            time.sleep(60)
+            time.sleep(30)
     except KeyboardInterrupt:
         print("\n[STOP] Stopped")
 
