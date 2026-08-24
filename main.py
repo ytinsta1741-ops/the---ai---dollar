@@ -576,7 +576,7 @@ def upload_to_facebook(video_path, title, keywords=None):
         return False
 
 
-_LAST_RUN = {"stage": "idle", "at": "", "title": ""}
+_LAST_RUN = {"stage": "idle", "at": "", "title": "", "youtube": None, "tiktok": None, "instagram": None}
 
 
 def _mark(stage, title=""):
@@ -627,18 +627,22 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
         print(f"\n[STEP 2] Uploading to YouTube...")
         _mark("uploading_youtube", title[:60])
         youtube_success = upload_to_youtube(video_path, title, script, is_short=True, keywords=keywords)
+        _LAST_RUN["youtube"] = bool(youtube_success)
 
         print(f"\n[STEP 3] Uploading to TikTok...")
         _mark("uploading_tiktok")
         tiktok_success = upload_to_tiktok(video_path, title, keywords=keywords)
+        _LAST_RUN["tiktok"] = bool(tiktok_success)
 
         if post_instagram:
             print(f"\n[STEP 4] Uploading to Instagram...")
             _mark("uploading_instagram")
             instagram_success = upload_to_instagram(video_path, title, keywords=keywords)
+            _LAST_RUN["instagram"] = bool(instagram_success)
         else:
             print(f"\n[STEP 4] Skipping Instagram this slot (throttled to ~2 posts/day for reach)")
             instagram_success = None
+            _LAST_RUN["instagram"] = "skipped"
 
         _mark("complete", title[:60])
         with open("last_post_time.txt", "w") as f:
