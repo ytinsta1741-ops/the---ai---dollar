@@ -427,6 +427,10 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
         return True
 
     except Exception as e:
+        try:
+            _LAST_RUN["youtube_error"] = str(e)[:250]
+        except Exception:
+            pass
         print(f"[ERR] YouTube error: {e}")
         import traceback
         traceback.print_exc()
@@ -576,7 +580,7 @@ def upload_to_facebook(video_path, title, keywords=None):
         return False
 
 
-_LAST_RUN = {"stage": "idle", "at": "", "title": "", "youtube": None, "tiktok": None, "instagram": None}
+_LAST_RUN = {"stage": "idle", "at": "", "title": "", "youtube": None, "tiktok": None, "instagram": None, "youtube_error": ""}
 
 
 def _mark(stage, title=""):
