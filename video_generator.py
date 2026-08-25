@@ -2286,35 +2286,57 @@ def _draw_mascot_walk_frame(img, cx, top_y, scale, color, phase):
     return foot_y
 
 
-def _build_mascot_walk_asset(mascot_source_size, color=(20, 20, 24)):
-    """Render a short looping walk-cycle as a folder of transparent PNG
-    frames so the mascot's arms/legs actually move while on screen, not just
-    a static image sliding around. PNG alpha is simple and already proven
-    reliable here (it's how the static mascot overlay works) — WebM/VP9
-    alpha was tried first but stores alpha in a side-channel block ffmpeg's
-    overlay filter doesn't reliably composite, so PNG frames are the safer
-    choice for a build that must work unattended on Render. Built once and
-    cached to assets/."""
-    folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot_walk_frames")
-    pattern = os.path.join(folder, "f%02d.png")
+_ANIM_CANVAS = (640, 760)   # fixed canvas shared by every mascot pose/frame so
+_ANIM_SCALE = 2.0           # switching between them never jumps in size
+_ANIM_CX = 320
+_ANIM_TOP = 90              # headroom above the head for a raised pointing arm
+
+
+def _ensure_mascot_anim_assets(color=(20, 20, 24)):
+    """Build (once, cached) the full set of mascot poses used by the animated
+    build: a walking/running gait cycle for while it's travelling between
+    panels, plus point-left / point-right / calm static poses for when it
+    has arrived and is gesturing at a term — all on an IDENTICAL canvas/scale
+    so swapping between them mid-video never jumps in size or position.
+    PNG alpha (not WebM/VP9, which stores alpha in a side-channel block
+    ffmpeg's overlay doesn't reliably composite) for reliability on Render.
+    Returns dict of paths, or None entries for anything that failed."""
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot_anim")
+    walk_dir = os.path.join(base, "walk")
+    paths = {
+        "walk": os.path.join(walk_dir, "f%02d.png"),
+        "calm": os.path.join(base, "calm.png"),
+        "point_left": os.path.join(base, "point_left.png"),
+        "point_right": os.path.join(base, "point_right.png"),
+    }
     n_frames = 8
-    existing = [f for f in os.listdir(folder)] if os.path.isdir(folder) else []
-    if len(existing) >= n_frames:
-        return pattern
+    have_walk = os.path.isdir(walk_dir) and len(os.listdir(walk_dir)) >= n_frames
+    have_static = all(os.path.exists(paths[k]) for k in ("calm", "point_left", "point_right"))
+    if have_walk and have_static:
+        return paths
     try:
         from PIL import Image
-        os.makedirs(folder, exist_ok=True)
-        w, h = mascot_source_size
-        cx, top_y = w // 2, int(h * 0.06)
-        scale = w / 220.0  # tuned so the drawn figure roughly fills the frame
+        os.makedirs(walk_dir, exist_ok=True)
+        w, h = _ANIM_CANVAS
         for i in range(n_frames):
             phase = i / n_frames
             img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-            _draw_mascot_walk_frame(img, cx, top_y, scale, color, phase)
-            img.save(os.path.join(folder, f"f{i:02d}.png"))
-        return pattern
+            _draw_mascot_walk_frame(img, _ANIM_CX, _ANIM_TOP, _ANIM_SCALE, color, phase)
+            img.save(os.path.join(walk_dir, f"f{i:02d}.png"))
+
+        for key, kwargs in (
+            ("calm", dict(pointing=False)),
+            ("point_left", dict(pointing=True, point_left=True)),
+            ("point_right", dict(pointing=True, point_left=False)),
+        ):
+            img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            from PIL import ImageDraw
+            draw = ImageDraw.Draw(img)
+            _draw_mascot(draw, _ANIM_CX, _ANIM_TOP, scale=_ANIM_SCALE, color=color, **kwargs)
+            img.save(paths[key])
+        return paths
     except Exception as e:
-        print(f"[WARN] Walk-cycle asset build failed: {e}")
+        print(f"[WARN] Mascot animation asset build failed: {e}")
         return None
 
 
@@ -2383,6 +2405,7 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
     # Mascot placement recorded per slide so the animated build can overlay a
     # MOVING mascot instead of the baked-in one (draw_mascot=False).
     mascot_cx_by_idx = []
+    mascot_side_by_idx = []
     mascot_meta_top = None
     mascot_meta_wh = None
 
@@ -2528,6 +2551,7 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             else:
                 cx = W // 2
             mascot_cx_by_idx.append(cx)
+            mascot_side_by_idx.append('both' if is_first or is_last else side)
             mascot_meta_top = mascot_top
             mascot_meta_wh = (mw, target_h)
             if draw_mascot:
@@ -2536,6 +2560,7 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             mascot_bottom = mascot_top + target_h
         else:
             mascot_cx_by_idx.append(W // 2)
+            mascot_side_by_idx.append('both')
             if side == 'A':
                 point_left = True
             elif side == 'B':
@@ -2604,6 +2629,7 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
     _mascot_asset = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot.png")
     return paths, {
         "cx": mascot_cx_by_idx,
+        "side": mascot_side_by_idx,
         "top": mascot_meta_top,
         "wh": mascot_meta_wh,
         "png": _mascot_asset if mascot_png is not None else None,
@@ -2611,14 +2637,17 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
 
 
 def _build_infographic_animated(work_dir, slide_paths, meta, durations, audio_file, output_file, res):
-    """Overlay a MOVING mascot on mascot-less base slides via one ffmpeg pass:
-    it bounces during the hook (slide 0), then slides to sit under whichever
-    term is being explained. Light — no per-frame Python rendering, ffmpeg
-    evaluates the position expressions itself. Returns True on success."""
+    """Overlay a mascot that behaves like it's actually there: it RUNS (legs
+    striding, arms swinging) while travelling between panels, then POINTS at
+    whichever term it arrived at once settled — instead of a static image
+    just sliding around. Bounces during the hook. One ffmpeg pass; ffmpeg
+    evaluates the position/visibility expressions itself, no per-frame
+    Python rendering. Returns True on success."""
     n = len(slide_paths)
     mw, mh = meta["wh"]
     top = meta["top"]
     cx = meta["cx"]
+    side = meta.get("side") or ["both"] * n
     mascot_png = meta["png"]
 
     concat_file = os.path.join(work_dir, "concat_anim.txt")
@@ -2634,8 +2663,10 @@ def _build_infographic_animated(work_dir, slide_paths, meta, durations, audio_fi
     total = acc
 
     # x-centre of the mascot over time: hold each slide's target, ramping
-    # smoothly (RAMP secs) when the target changes between slides.
-    RAMP = 0.5
+    # smoothly (RAMP secs) when the target changes between slides. Same
+    # motion curve drives every pose overlay so they stay perfectly aligned
+    # when swapped.
+    RAMP = 0.6
     terms = []
     for i in range(n):
         si = starts[i]
@@ -2654,25 +2685,82 @@ def _build_infographic_animated(work_dir, slide_paths, meta, durations, audio_fi
 
     loudnorm = "loudnorm=I=-14:LRA=11:TP=-1.5"
 
-    # Walk-cycle: arms/legs actually move (not just a static image sliding
-    # around) — a looping sequence of transparent PNG frames instead of one
-    # static PNG. Falls back to the static PNG if the asset can't be built.
-    walk_pattern = _build_mascot_walk_asset((400, 640))
-    if walk_pattern:
-        mascot_input = ["-stream_loop", "-1", "-framerate", "10", "-i", walk_pattern]
-    else:
-        mascot_input = ["-loop", "1", "-i", mascot_png]
+    # Which pose is visible when: RUNNING while the target x is actually
+    # changing (the RAMP window right after a slide whose target differs
+    # from the previous one), otherwise settled — pointing left/right at
+    # its term, or calm for the hook/CTA/both-terms slides.
+    run_windows = []
+    settle_windows = {"calm": [], "point_left": [], "point_right": []}
+    for i in range(n):
+        si, ei = starts[i], (starts[i] + durations[i]) if i < n - 1 else (total + 100)
+        moved = i > 0 and cx[i] != cx[i - 1]
+        settle_start = si
+        if moved and i > 0:
+            run_windows.append((si, si + RAMP))
+            settle_start = si + RAMP
+        pose = "calm" if (i == 0 or side[i] == 'both') else ("point_left" if side[i] == 'A' else "point_right")
+        settle_windows[pose].append((settle_start, ei))
+
+    def _enable_expr(windows):
+        if not windows:
+            return "0"
+        return "+".join(f"between(t,{a:.3f},{b:.3f})" for a, b in windows)
+
+    run_enable = _enable_expr(run_windows)
+    calm_enable = _enable_expr(settle_windows["calm"])
+    left_enable = _enable_expr(settle_windows["point_left"])
+    right_enable = _enable_expr(settle_windows["point_right"])
+
+    assets = _ensure_mascot_anim_assets()
+    if not assets:
+        # Fall back to the old single-static-image overlay if pose assets
+        # couldn't be built at all.
+        fc = (
+            f"[0:v]scale={res},fps=30[base];"
+            f"[1:v]format=yuva420p,scale={mw}:{mh}[m];"
+            f"[base][m]overlay=x='{x_expr}':y='{y_expr}':format=auto[v];"
+            f"[2:a]{loudnorm}[aout]"
+        )
+        cmd = [
+            FFMPEG, "-y",
+            "-f", "concat", "-safe", "0", "-i", concat_file,
+            "-loop", "1", "-i", mascot_png,
+            "-i", audio_file,
+            "-filter_complex", fc,
+            "-map", "[v]", "-map", "[aout]",
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+            "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
+            "-shortest", "-movflags", "+faststart",
+            output_file,
+        ]
+        proc = _run_ffmpeg_hard_timeout(cmd, timeout=360)
+        if proc is None:
+            print("[WARN] Animated build: ffmpeg timed out")
+            return False
+        if proc.returncode != 0:
+            print(f"[WARN] Animated build failed: {proc.stderr.decode('utf-8', errors='replace')[-500:]}")
+            return False
+        return os.path.exists(output_file) and os.path.getsize(output_file) > 10000
 
     fc = (
         f"[0:v]scale={res},fps=30[base];"
-        f"[1:v]format=yuva420p,scale={mw}:{mh}[m];"
-        f"[base][m]overlay=x='{x_expr}':y='{y_expr}':format=auto[v];"
-        f"[2:a]{loudnorm}[aout]"
+        f"[1:v]format=yuva420p,scale={mw}:{mh}[run];"
+        f"[2:v]format=yuva420p,scale={mw}:{mh}[calm];"
+        f"[3:v]format=yuva420p,scale={mw}:{mh}[pl];"
+        f"[4:v]format=yuva420p,scale={mw}:{mh}[pr];"
+        f"[base][run]overlay=x='{x_expr}':y='{y_expr}':format=auto:enable='{run_enable}'[b1];"
+        f"[b1][calm]overlay=x='{x_expr}':y='{y_expr}':format=auto:enable='{calm_enable}'[b2];"
+        f"[b2][pl]overlay=x='{x_expr}':y='{y_expr}':format=auto:enable='{left_enable}'[b3];"
+        f"[b3][pr]overlay=x='{x_expr}':y='{y_expr}':format=auto:enable='{right_enable}'[v];"
+        f"[5:a]{loudnorm}[aout]"
     )
     cmd = [
         FFMPEG, "-y",
         "-f", "concat", "-safe", "0", "-i", concat_file,
-        *mascot_input,
+        "-stream_loop", "-1", "-framerate", "10", "-i", assets["walk"],
+        "-loop", "1", "-i", assets["calm"],
+        "-loop", "1", "-i", assets["point_left"],
+        "-loop", "1", "-i", assets["point_right"],
         "-i", audio_file,
         "-filter_complex", fc,
         "-map", "[v]", "-map", "[aout]",
@@ -2682,12 +2770,28 @@ def _build_infographic_animated(work_dir, slide_paths, meta, durations, audio_fi
         output_file,
     ]
     proc = _run_ffmpeg_hard_timeout(cmd, timeout=360)
-    if walk_pattern and (proc is None or proc.returncode != 0):
-        # Walk-cycle decode might not be supported on this ffmpeg build —
+    if proc is None or proc.returncode != 0:
+        # Multi-pose overlay might not be supported on this ffmpeg build —
         # retry once with the plain static mascot instead of failing outright.
-        print("[WARN] Walk-cycle overlay failed, retrying with static mascot...")
-        start = cmd.index("-stream_loop")
-        cmd[start:start + 6] = ["-loop", "1", "-i", mascot_png]
+        print("[WARN] Multi-pose overlay failed, retrying with static mascot...")
+        fc2 = (
+            f"[0:v]scale={res},fps=30[base];"
+            f"[1:v]format=yuva420p,scale={mw}:{mh}[m];"
+            f"[base][m]overlay=x='{x_expr}':y='{y_expr}':format=auto[v];"
+            f"[2:a]{loudnorm}[aout]"
+        )
+        cmd = [
+            FFMPEG, "-y",
+            "-f", "concat", "-safe", "0", "-i", concat_file,
+            "-loop", "1", "-i", mascot_png,
+            "-i", audio_file,
+            "-filter_complex", fc2,
+            "-map", "[v]", "-map", "[aout]",
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+            "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
+            "-shortest", "-movflags", "+faststart",
+            output_file,
+        ]
         proc = _run_ffmpeg_hard_timeout(cmd, timeout=360)
     if proc is None:
         print("[WARN] Animated build: ffmpeg timed out")
