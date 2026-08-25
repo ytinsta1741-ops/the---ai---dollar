@@ -735,6 +735,15 @@ def _prime_hashes_from_youtube():
 
         print(f"[OK] Synced {len(titles)} titles from YouTube, {added} new to dedup list")
 
+        # Also rebuild which confusable TERM PAIRS have already been covered
+        # (not just exact title matches) so the same pair can't come back
+        # around with a slightly reworded title after a redeploy.
+        try:
+            from ai_topic_generator import sync_used_pairs_from_titles
+            sync_used_pairs_from_titles(titles)
+        except Exception as e:
+            print(f"[WARN] Could not sync used pairs: {e}")
+
     except Exception as e:
         print(f"[WARN] Could not sync title history from YouTube: {e}")
 

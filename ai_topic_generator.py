@@ -138,9 +138,31 @@ def _validate_topic(data):
     return True
 
 
-# Pairs already used this run — so we cycle through the whole pool before any
-# pair can repeat, instead of random.choice picking the same one again soon.
+# Pairs already used — cycles through the whole pool before any pair repeats.
+# NOT just in-memory: Render wipes memory on every redeploy (which happens
+# often), so a purely in-memory set silently resets and repeats start
+# happening again right after any push. sync_used_pairs_from_titles() rebuilds
+# this from the channel's REAL YouTube upload history at startup instead —
+# that's the only state that actually survives a redeploy.
 _used_pairs = set()
+
+
+def sync_used_pairs_from_titles(titles):
+    """Scan real posted titles for which CONFUSABLE_PAIRS they cover (both
+    term names appear in the title, case-insensitive) and mark those used.
+    Called from topic_generator.py's YouTube history sync at every startup."""
+    added = 0
+    for title in titles:
+        low = title.lower()
+        for pair in CONFUSABLE_PAIRS:
+            if pair in _used_pairs:
+                continue
+            a, b = pair
+            if a.lower() in low and b.lower() in low:
+                _used_pairs.add(pair)
+                added += 1
+    if added:
+        print(f"[OK] Synced {added} confusable pairs as already-used from YouTube history")
 
 
 def _pick_unused_pair():

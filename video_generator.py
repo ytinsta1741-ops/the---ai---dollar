@@ -2240,6 +2240,84 @@ def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, 
     return (left_bound, top_bound, right_bound, foot_y)
 
 
+def _draw_mascot_walk_frame(img, cx, top_y, scale, color, phase):
+    """One frame of a walking/running gait: legs stride opposite each other,
+    arms swing opposite their same-side leg (natural walk), plus a small
+    vertical bob — phase is 0..1, one full cycle. Same head/face as
+    _draw_mascot so it's the same character, just animated."""
+    import math
+    from PIL import ImageDraw
+    draw = ImageDraw.Draw(img)
+    s = scale
+    bob = int(6 * s * abs(math.sin(phase * 2 * math.pi)))
+    top_y = top_y - bob
+
+    head_r = int(48 * s)
+    head_cy = top_y + head_r
+    lw = max(2, int(6 * s))
+
+    draw.ellipse([cx - head_r, head_cy - head_r, cx + head_r, head_cy + head_r], outline=color, width=lw)
+    eye_dx, eye_dy, eye_r = int(16 * s), int(6 * s), int(4 * s)
+    for ex in (cx - eye_dx, cx + eye_dx):
+        draw.ellipse([ex - eye_r, head_cy - eye_dy - eye_r, ex + eye_r, head_cy - eye_dy + eye_r], fill=color)
+    sm_r = int(20 * s)
+    draw.arc([cx - sm_r, head_cy - int(4 * s), cx + sm_r, head_cy + sm_r], start=20, end=160, fill=color, width=lw)
+
+    neck_y = head_cy + head_r
+    torso_len = int(90 * s)
+    hip_y = neck_y + torso_len
+    draw.line([cx, neck_y, cx, hip_y], fill=color, width=lw)
+
+    # Legs: sine-driven stride, opposite phase for left/right.
+    leg_len = int(70 * s)
+    stride = int(34 * s)
+    ang1 = math.sin(phase * 2 * math.pi)
+    ang2 = math.sin(phase * 2 * math.pi + math.pi)
+    draw.line([cx, hip_y, cx + int(stride * ang1), hip_y + leg_len], fill=color, width=lw)
+    draw.line([cx, hip_y, cx + int(stride * ang2), hip_y + leg_len], fill=color, width=lw)
+    foot_y = hip_y + leg_len
+
+    # Arms: swing opposite their same-side leg, like a natural run cycle.
+    arm_y = neck_y + int(15 * s)
+    arm_len = int(48 * s)
+    draw.line([cx, arm_y, cx - int(arm_len * ang1 * 0.9), arm_y + int(arm_len * 0.5)], fill=color, width=lw)
+    draw.line([cx, arm_y, cx + int(arm_len * ang2 * 0.9), arm_y + int(arm_len * 0.5)], fill=color, width=lw)
+
+    return foot_y
+
+
+def _build_mascot_walk_asset(mascot_source_size, color=(20, 20, 24)):
+    """Render a short looping walk-cycle as a folder of transparent PNG
+    frames so the mascot's arms/legs actually move while on screen, not just
+    a static image sliding around. PNG alpha is simple and already proven
+    reliable here (it's how the static mascot overlay works) — WebM/VP9
+    alpha was tried first but stores alpha in a side-channel block ffmpeg's
+    overlay filter doesn't reliably composite, so PNG frames are the safer
+    choice for a build that must work unattended on Render. Built once and
+    cached to assets/."""
+    folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot_walk_frames")
+    pattern = os.path.join(folder, "f%02d.png")
+    n_frames = 8
+    existing = [f for f in os.listdir(folder)] if os.path.isdir(folder) else []
+    if len(existing) >= n_frames:
+        return pattern
+    try:
+        from PIL import Image
+        os.makedirs(folder, exist_ok=True)
+        w, h = mascot_source_size
+        cx, top_y = w // 2, int(h * 0.06)
+        scale = w / 220.0  # tuned so the drawn figure roughly fills the frame
+        for i in range(n_frames):
+            phase = i / n_frames
+            img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            _draw_mascot_walk_frame(img, cx, top_y, scale, color, phase)
+            img.save(os.path.join(folder, f"f{i:02d}.png"))
+        return pattern
+    except Exception as e:
+        print(f"[WARN] Walk-cycle asset build failed: {e}")
+        return None
+
+
 def prep_infographic_slides(images, slides, work_dir, landscape=False,
                              term_a=None, term_b=None, hero_images=(None, None),
                              draw_mascot=True):
@@ -2575,16 +2653,26 @@ def _build_infographic_animated(work_dir, slide_paths, meta, durations, audio_fi
     y_expr = f"{top}-(lt(t,{d0:.3f})*abs(sin(2*PI*{BFREQ}*t))*{BAMP})"
 
     loudnorm = "loudnorm=I=-14:LRA=11:TP=-1.5"
+
+    # Walk-cycle: arms/legs actually move (not just a static image sliding
+    # around) — a looping sequence of transparent PNG frames instead of one
+    # static PNG. Falls back to the static PNG if the asset can't be built.
+    walk_pattern = _build_mascot_walk_asset((400, 640))
+    if walk_pattern:
+        mascot_input = ["-stream_loop", "-1", "-framerate", "10", "-i", walk_pattern]
+    else:
+        mascot_input = ["-loop", "1", "-i", mascot_png]
+
     fc = (
         f"[0:v]scale={res},fps=30[base];"
-        f"[1:v]scale={mw}:{mh}[m];"
-        f"[base][m]overlay=x='{x_expr}':y='{y_expr}'[v];"
+        f"[1:v]format=yuva420p,scale={mw}:{mh}[m];"
+        f"[base][m]overlay=x='{x_expr}':y='{y_expr}':format=auto[v];"
         f"[2:a]{loudnorm}[aout]"
     )
     cmd = [
         FFMPEG, "-y",
         "-f", "concat", "-safe", "0", "-i", concat_file,
-        "-loop", "1", "-i", mascot_png,
+        *mascot_input,
         "-i", audio_file,
         "-filter_complex", fc,
         "-map", "[v]", "-map", "[aout]",
@@ -2594,6 +2682,13 @@ def _build_infographic_animated(work_dir, slide_paths, meta, durations, audio_fi
         output_file,
     ]
     proc = _run_ffmpeg_hard_timeout(cmd, timeout=360)
+    if walk_pattern and (proc is None or proc.returncode != 0):
+        # Walk-cycle decode might not be supported on this ffmpeg build —
+        # retry once with the plain static mascot instead of failing outright.
+        print("[WARN] Walk-cycle overlay failed, retrying with static mascot...")
+        start = cmd.index("-stream_loop")
+        cmd[start:start + 6] = ["-loop", "1", "-i", mascot_png]
+        proc = _run_ffmpeg_hard_timeout(cmd, timeout=360)
     if proc is None:
         print("[WARN] Animated build: ffmpeg timed out")
         return False
