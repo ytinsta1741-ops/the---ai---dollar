@@ -1371,11 +1371,10 @@ def _run_google_tts(text, output_path, speaking_rate=0.9, pitch=-1.0):
 
 
 FISH_AUDIO_API_KEY = os.getenv("FISH_AUDIO_API_KEY", "")
-# "CGM" — Fish Audio's own description: "authoritative and energetic,
-# perfect for news, financial reports, or announcements." Deep + clear +
-# energetic in one voice, a better match for finance content than the
-# previous "Energetic Male" (which leaned younger/lighter, less deep).
-FISH_AUDIO_VOICE_ID = os.getenv("FISH_AUDIO_VOICE_ID", "049000cac4a54854a73146dcc6ffee41")
+# "Adam" — picked by ear from a side-by-side sample test as the most
+# natural/human-sounding of the candidates; clear and engaging rather than
+# obviously synthetic, which is what the channel needs for retention.
+FISH_AUDIO_VOICE_ID = os.getenv("FISH_AUDIO_VOICE_ID", "722523118ee94709b661502c76b016b7")
 
 
 def _run_fish_audio_tts(text, output_path, speed=1.0):
@@ -1458,7 +1457,7 @@ def create_slide_audios(slides, work_dir):
                 os.remove(test_path)
             except Exception:
                 pass
-            print("[OK] Using Fish Audio S2.1 Pro (CGM - deep/energetic)")
+            print("[OK] Using Fish Audio S2.1 Pro (Adam - natural)")
         else:
             print("[WARN] Fish Audio unavailable, trying Piper / Google TTS / edge-tts")
 
@@ -2216,11 +2215,34 @@ CHAR_PANTS   = (92, 92, 96)
 CHAR_SHOE    = (58, 58, 62)
 
 
-def _limb(draw, p0, p1, w_out, w_in, fill):
-    """A limb segment drawn as an outlined stroke: a thick dark line with a
-    thinner coloured line on top, which reads as a clean cartoon outline."""
-    draw.line([p0, p1], fill=CHAR_OUTLINE, width=w_out)
-    draw.line([p0, p1], fill=fill, width=w_in)
+def _seg_quad(p0, p1, w0, w1):
+    """Quad for a limb segment that tapers from width w0 at p0 to w1 at p1."""
+    import math
+    (x0, y0), (x1, y1) = p0, p1
+    dx, dy = x1 - x0, y1 - y0
+    L = math.hypot(dx, dy) or 1.0
+    nx, ny = -dy / L, dx / L
+    return [
+        (x0 + nx * w0 / 2, y0 + ny * w0 / 2),
+        (x1 + nx * w1 / 2, y1 + ny * w1 / 2),
+        (x1 - nx * w1 / 2, y1 - ny * w1 / 2),
+        (x0 - nx * w0 / 2, y0 - ny * w0 / 2),
+    ]
+
+
+def _limb(draw, pts, widths, fill, ow):
+    """A tapered, rounded, outlined limb through a chain of points — the
+    look of the reference sketch (solid shapes with a clean dark outline)
+    rather than thin sticks. Drawn as an oversized outline pass followed by
+    the fill pass so joints merge seamlessly with no internal seams."""
+    for colour, pad in ((CHAR_OUTLINE, ow), (fill, 0)):
+        for i in range(len(pts) - 1):
+            draw.polygon(_seg_quad(pts[i], pts[i + 1],
+                                   widths[i] + pad * 2, widths[i + 1] + pad * 2),
+                         fill=colour)
+        for p, w in zip(pts, widths):
+            r = (w + pad * 2) / 2
+            draw.ellipse([p[0] - r, p[1] - r, p[0] + r, p[1] + r], fill=colour)
 
 
 def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
@@ -2238,73 +2260,103 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     d = ImageDraw.Draw(img)
     s = scale
 
-    ow = max(3, int(7 * s))     # outline stroke width
-    iw = max(2, int(4 * s))     # inner (coloured) stroke width
+    ow = max(2, int(4 * s))     # outline thickness
 
-    # --- proportions ---
-    head_r = int(46 * s)
+    # --- proportions (matched to the reference sketch) ---
+    head_r = int(44 * s)
     head_cx = cx
     head_cy = top_y + head_r
-    neck_y = head_cy + head_r - int(4 * s)
 
-    shoulder_y = neck_y + int(16 * s)
-    torso_w = int(96 * s)
-    torso_h = int(120 * s)
+    neck_top = head_cy + head_r - int(6 * s)
+    neck_y = neck_top + int(16 * s)          # where the collar sits
+
+    shoulder_y = neck_y + int(6 * s)
+    torso_w = int(104 * s)
+    torso_h = int(124 * s)
     hip_y = shoulder_y + torso_h
 
-    leg_len = int(130 * s)
+    leg_len = int(150 * s)
     foot_y = hip_y + leg_len
 
     swing = math.sin(phase * 2 * math.pi) if pose == 'walk' else 0.0
 
     # --- ground shadow ---
-    sh_w = int(70 * s)
-    sh_h = int(12 * s)
-    d.ellipse([cx - sh_w, foot_y + int(6 * s) - sh_h // 2,
-               cx + sh_w, foot_y + int(6 * s) + sh_h // 2],
-              fill=(228, 228, 226))
+    sh_w, sh_h = int(74 * s), int(13 * s)
+    d.ellipse([cx - sh_w, foot_y + int(10 * s) - sh_h // 2,
+               cx + sh_w, foot_y + int(10 * s) + sh_h // 2],
+              fill=(230, 230, 228))
 
-    # --- legs (drawn before torso so hips tuck under the shirt) ---
-    leg_spread = int(24 * s)
-    stride = int(46 * s) * swing
-    lx = cx - leg_spread - int(stride)
-    rx = cx + leg_spread + int(stride)
-    lw_out, lw_in = max(4, int(20 * s)), max(3, int(15 * s))
-    _limb(d, (cx - int(16 * s), hip_y), (lx, foot_y), lw_out, lw_in, CHAR_PANTS)
-    _limb(d, (cx + int(16 * s), hip_y), (rx, foot_y), lw_out, lw_in, CHAR_PANTS)
+    # --- legs: solid tapered trousers from a shared hip. Each leg stays on
+    # its own side (the sway is deliberately smaller than the stance width
+    # so they can never scissor past each other, which looked broken from
+    # this front-on view); the gait reads through alternating knee-lift. ---
+    hip_dx = int(20 * s)
+    stance = int(22 * s)
+    sway = int(14 * s)
+    thigh_w, calf_w, ankle_w = int(34 * s), int(28 * s), int(22 * s)
+
+    feet = []
+    for sign, ph in ((-1, swing), (1, -swing)):
+        lift = max(0.0, ph)                      # this leg is mid-step
+        footx = cx + sign * stance + int(sway * ph)
+        footy = foot_y - int(30 * s) * lift
+        kneex = cx + sign * stance + int(sway * ph * 0.6)
+        kneey = hip_y + int(leg_len * 0.52) - int(20 * s) * lift
+        _limb(d, [(cx + sign * hip_dx, hip_y - int(6 * s)), (kneex, kneey), (footx, footy)],
+              [thigh_w, calf_w, ankle_w], CHAR_PANTS, ow)
+        feet.append((sign, footx, footy))
 
     # --- shoes ---
-    shoe_w, shoe_h = int(30 * s), int(15 * s)
-    for fx in (lx, rx):
+    shoe_w, shoe_h = int(38 * s), int(17 * s)
+    for sign, footx, footy in feet:
+        toe = int(12 * s) * sign
         d.rounded_rectangle(
-            [fx - shoe_w // 2, foot_y - shoe_h // 2, fx + shoe_w // 2 + int(10 * s), foot_y + shoe_h],
-            radius=int(7 * s), fill=CHAR_SHOE, outline=CHAR_OUTLINE, width=max(2, int(3 * s)))
+            [min(footx - shoe_w // 2, footx - shoe_w // 2 + toe), footy - shoe_h // 2,
+             max(footx + shoe_w // 2, footx + shoe_w // 2 + toe), footy + shoe_h],
+            radius=int(8 * s), fill=CHAR_SHOE, outline=CHAR_OUTLINE, width=ow)
+
+    # --- neck (tucks under both head and collar) ---
+    _limb(d, [(cx, neck_top), (cx, neck_y + int(10 * s))],
+          [int(26 * s), int(26 * s)], CHAR_SKIN, ow)
 
     # --- torso / t-shirt ---
     d.rounded_rectangle(
-        [cx - torso_w // 2, shoulder_y, cx + torso_w // 2, hip_y + int(6 * s)],
-        radius=int(18 * s), fill=CHAR_SHIRT, outline=CHAR_OUTLINE, width=ow)
+        [cx - torso_w // 2, shoulder_y, cx + torso_w // 2, hip_y + int(4 * s)],
+        radius=int(22 * s), fill=CHAR_SHIRT, outline=CHAR_OUTLINE, width=ow)
 
-    # --- arms ---
+    # --- arms: upper arm + forearm, tapering to a wrist, ending in a hand
+    # with an extended index finger when pointing ---
     def _arm(sign, mode, sw):
-        """sign: -1 left, +1 right. mode: 'down' | 'point' | 'up'."""
-        sx = cx + sign * (torso_w // 2 - int(4 * s))
-        sy = shoulder_y + int(16 * s)
+        sx = cx + sign * (torso_w // 2 - int(10 * s))
+        sy = shoulder_y + int(20 * s)
+        upper_w, fore_w, wrist_w = int(30 * s), int(24 * s), int(18 * s)
+
         if mode == 'point':
-            ex = cx + sign * int(150 * s)
-            ey = sy + int(6 * s)
+            elbow = (cx + sign * int(96 * s), sy + int(10 * s))
+            wrist = (cx + sign * int(158 * s), sy - int(4 * s))
+            hand_dir = (sign, 0)
         elif mode == 'up':
-            ex = cx + sign * int(96 * s)
-            ey = sy - int(74 * s)
-        else:  # relaxed at the side, swinging while walking
-            ex = cx + sign * int(66 * s)
-            ey = sy + int(96 * s) + int(26 * s) * sw * sign
-        _limb(d, (sx, sy), (ex, ey), max(4, int(16 * s)), max(3, int(11 * s)), CHAR_SKIN)
+            elbow = (cx + sign * int(74 * s), sy - int(30 * s))
+            wrist = (cx + sign * int(96 * s), sy - int(88 * s))
+            hand_dir = (sign * 0.4, -1)
+        else:  # relaxed at the side, swinging with the gait
+            elbow = (cx + sign * int(62 * s), sy + int(56 * s))
+            wrist = (cx + sign * int(70 * s), sy + int(112 * s) + int(24 * s) * sw)
+            hand_dir = (0, 1)
+
+        _limb(d, [(sx, sy), elbow, wrist],
+              [upper_w, fore_w, wrist_w], CHAR_SKIN, ow)
+
         # hand
-        hr = int(10 * s)
-        d.ellipse([ex - hr, ey - hr, ex + hr, ey + hr],
-                  fill=CHAR_SKIN, outline=CHAR_OUTLINE, width=max(2, int(3 * s)))
-        return ex, ey
+        hr = int(15 * s)
+        hx, hy = wrist
+        d.ellipse([hx - hr, hy - hr, hx + hr, hy + hr],
+                  fill=CHAR_SKIN, outline=CHAR_OUTLINE, width=ow)
+        if mode == 'point':
+            fx = hx + hand_dir[0] * int(30 * s)
+            fy = hy + hand_dir[1] * int(30 * s)
+            _limb(d, [(hx, hy), (fx, fy)],
+                  [int(13 * s), int(9 * s)], CHAR_SKIN, ow)
 
     if pose == 'point_both':
         _arm(-1, 'point', 0); _arm(1, 'point', 0)
@@ -2314,26 +2366,26 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         _arm(-1, 'down', 0); _arm(1, 'point', 0)
     elif pose == 'confused':
         _arm(-1, 'up', 0); _arm(1, 'up', 0)
-    else:  # calm / walk — arms swing opposite the same-side leg
-        _arm(-1, 'down', -swing); _arm(1, 'down', swing)
+    else:  # calm / walk — arms swing opposite their same-side leg
+        _arm(-1, 'down', swing); _arm(1, 'down', -swing)
 
     # --- head ---
     d.ellipse([head_cx - head_r, head_cy - head_r, head_cx + head_r, head_cy + head_r],
               fill=CHAR_SKIN, outline=CHAR_OUTLINE, width=ow)
-    eye_dx, eye_dy, eye_r = int(17 * s), int(7 * s), int(5 * s)
+    eye_dx, eye_dy, eye_r = int(16 * s), int(6 * s), int(5 * s)
     for ex in (head_cx - eye_dx, head_cx + eye_dx):
         d.ellipse([ex - eye_r, head_cy - eye_dy - eye_r, ex + eye_r, head_cy - eye_dy + eye_r],
                   fill=CHAR_OUTLINE)
     if pose == 'confused':
         mo = int(9 * s)
-        d.ellipse([head_cx - mo, head_cy + int(14 * s) - mo, head_cx + mo, head_cy + int(14 * s) + mo],
-                  outline=CHAR_OUTLINE, width=max(2, int(4 * s)))
+        d.ellipse([head_cx - mo, head_cy + int(15 * s) - mo, head_cx + mo, head_cy + int(15 * s) + mo],
+                  outline=CHAR_OUTLINE, width=ow)
     else:
-        sm = int(21 * s)
-        d.arc([head_cx - sm, head_cy - int(2 * s), head_cx + sm, head_cy + sm + int(6 * s)],
-              start=15, end=165, fill=CHAR_OUTLINE, width=max(2, int(4 * s)))
+        sm = int(20 * s)
+        d.arc([head_cx - sm, head_cy - int(2 * s), head_cx + sm, head_cy + sm + int(8 * s)],
+              start=20, end=160, fill=CHAR_OUTLINE, width=ow)
 
-    return foot_y + shoe_h + int(8 * s)
+    return foot_y + shoe_h + int(12 * s)
 
 
 def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, point_left=True, confused=False):
