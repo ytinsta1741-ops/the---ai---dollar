@@ -2160,6 +2160,133 @@ def create_video_kenburns(slides, images, audio_file, durations, output_file, la
     return True
 
 
+CHAR_OUTLINE = (38, 38, 42)
+CHAR_SKIN    = (248, 248, 248)
+CHAR_SHIRT   = (168, 168, 172)
+CHAR_PANTS   = (92, 92, 96)
+CHAR_SHOE    = (58, 58, 62)
+
+
+def _limb(draw, p0, p1, w_out, w_in, fill):
+    """A limb segment drawn as an outlined stroke: a thick dark line with a
+    thinner coloured line on top, which reads as a clean cartoon outline."""
+    draw.line([p0, p1], fill=CHAR_OUTLINE, width=w_out)
+    draw.line([p0, p1], fill=fill, width=w_in)
+
+
+def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
+                    point_left=True):
+    """The AI Dollar host: a friendly cartoon presenter (round head, grey
+    tee, dark trousers and shoes) drawn entirely from primitives so EVERY
+    limb can be posed and animated — a flat PNG of the character can't move
+    its arms or legs, which is why this is redrawn rather than pasted.
+
+    poses: calm | walk | point_left | point_right | point_both | confused
+    phase: 0..1 position within the walk cycle.
+    Returns the character's bottom y so callers can lay out below it."""
+    import math
+    from PIL import ImageDraw
+    d = ImageDraw.Draw(img)
+    s = scale
+
+    ow = max(3, int(7 * s))     # outline stroke width
+    iw = max(2, int(4 * s))     # inner (coloured) stroke width
+
+    # --- proportions ---
+    head_r = int(46 * s)
+    head_cx = cx
+    head_cy = top_y + head_r
+    neck_y = head_cy + head_r - int(4 * s)
+
+    shoulder_y = neck_y + int(16 * s)
+    torso_w = int(96 * s)
+    torso_h = int(120 * s)
+    hip_y = shoulder_y + torso_h
+
+    leg_len = int(130 * s)
+    foot_y = hip_y + leg_len
+
+    swing = math.sin(phase * 2 * math.pi) if pose == 'walk' else 0.0
+
+    # --- ground shadow ---
+    sh_w = int(70 * s)
+    sh_h = int(12 * s)
+    d.ellipse([cx - sh_w, foot_y + int(6 * s) - sh_h // 2,
+               cx + sh_w, foot_y + int(6 * s) + sh_h // 2],
+              fill=(228, 228, 226))
+
+    # --- legs (drawn before torso so hips tuck under the shirt) ---
+    leg_spread = int(24 * s)
+    stride = int(46 * s) * swing
+    lx = cx - leg_spread - int(stride)
+    rx = cx + leg_spread + int(stride)
+    lw_out, lw_in = max(4, int(20 * s)), max(3, int(15 * s))
+    _limb(d, (cx - int(16 * s), hip_y), (lx, foot_y), lw_out, lw_in, CHAR_PANTS)
+    _limb(d, (cx + int(16 * s), hip_y), (rx, foot_y), lw_out, lw_in, CHAR_PANTS)
+
+    # --- shoes ---
+    shoe_w, shoe_h = int(30 * s), int(15 * s)
+    for fx in (lx, rx):
+        d.rounded_rectangle(
+            [fx - shoe_w // 2, foot_y - shoe_h // 2, fx + shoe_w // 2 + int(10 * s), foot_y + shoe_h],
+            radius=int(7 * s), fill=CHAR_SHOE, outline=CHAR_OUTLINE, width=max(2, int(3 * s)))
+
+    # --- torso / t-shirt ---
+    d.rounded_rectangle(
+        [cx - torso_w // 2, shoulder_y, cx + torso_w // 2, hip_y + int(6 * s)],
+        radius=int(18 * s), fill=CHAR_SHIRT, outline=CHAR_OUTLINE, width=ow)
+
+    # --- arms ---
+    def _arm(sign, mode, sw):
+        """sign: -1 left, +1 right. mode: 'down' | 'point' | 'up'."""
+        sx = cx + sign * (torso_w // 2 - int(4 * s))
+        sy = shoulder_y + int(16 * s)
+        if mode == 'point':
+            ex = cx + sign * int(150 * s)
+            ey = sy + int(6 * s)
+        elif mode == 'up':
+            ex = cx + sign * int(96 * s)
+            ey = sy - int(74 * s)
+        else:  # relaxed at the side, swinging while walking
+            ex = cx + sign * int(66 * s)
+            ey = sy + int(96 * s) + int(26 * s) * sw * sign
+        _limb(d, (sx, sy), (ex, ey), max(4, int(16 * s)), max(3, int(11 * s)), CHAR_SKIN)
+        # hand
+        hr = int(10 * s)
+        d.ellipse([ex - hr, ey - hr, ex + hr, ey + hr],
+                  fill=CHAR_SKIN, outline=CHAR_OUTLINE, width=max(2, int(3 * s)))
+        return ex, ey
+
+    if pose == 'point_both':
+        _arm(-1, 'point', 0); _arm(1, 'point', 0)
+    elif pose == 'point_left':
+        _arm(-1, 'point', 0); _arm(1, 'down', 0)
+    elif pose == 'point_right':
+        _arm(-1, 'down', 0); _arm(1, 'point', 0)
+    elif pose == 'confused':
+        _arm(-1, 'up', 0); _arm(1, 'up', 0)
+    else:  # calm / walk — arms swing opposite the same-side leg
+        _arm(-1, 'down', -swing); _arm(1, 'down', swing)
+
+    # --- head ---
+    d.ellipse([head_cx - head_r, head_cy - head_r, head_cx + head_r, head_cy + head_r],
+              fill=CHAR_SKIN, outline=CHAR_OUTLINE, width=ow)
+    eye_dx, eye_dy, eye_r = int(17 * s), int(7 * s), int(5 * s)
+    for ex in (head_cx - eye_dx, head_cx + eye_dx):
+        d.ellipse([ex - eye_r, head_cy - eye_dy - eye_r, ex + eye_r, head_cy - eye_dy + eye_r],
+                  fill=CHAR_OUTLINE)
+    if pose == 'confused':
+        mo = int(9 * s)
+        d.ellipse([head_cx - mo, head_cy + int(14 * s) - mo, head_cx + mo, head_cy + int(14 * s) + mo],
+                  outline=CHAR_OUTLINE, width=max(2, int(4 * s)))
+    else:
+        sm = int(21 * s)
+        d.arc([head_cx - sm, head_cy - int(2 * s), head_cx + sm, head_cy + sm + int(6 * s)],
+              start=15, end=165, fill=CHAR_OUTLINE, width=max(2, int(4 * s)))
+
+    return foot_y + shoe_h + int(8 * s)
+
+
 def _draw_mascot(draw, cx, top_y, scale=1.0, color=(25, 25, 30), pointing=True, point_left=True, confused=False):
     """An original simple line-art stick-figure host character — hand-drawn
     with primitives, not traced from any existing meme/character."""
@@ -2378,22 +2505,16 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         durations = [4.0] * total_slides
     frame_paths, frame_durations = [], []
 
+    CHAR_SCALE = 1.35
+
     def _stamp_mascot(img, pose, cx_frame, top_y, phase=0.0):
-        d = ImageDraw.Draw(img)
-        if pose == 'walk':
-            _draw_mascot_walk_frame(img, cx_frame, top_y, 1.3, INK, phase)
-        elif pose == 'bounce':
+        if pose == 'bounce':
             import math
             bounce_amt = int(55 * abs(math.sin(phase * 2 * math.pi * 2.5)))
-            _draw_mascot(d, cx_frame, top_y - bounce_amt, scale=1.3, color=INK, pointing=False)
-        elif pose == 'confused':
-            _draw_mascot(d, cx_frame, top_y, scale=1.3, color=INK, confused=True)
-        elif pose == 'point_left':
-            _draw_mascot(d, cx_frame, top_y, scale=1.3, color=INK, pointing=True, point_left=True)
-        elif pose == 'point_right':
-            _draw_mascot(d, cx_frame, top_y, scale=1.3, color=INK, pointing=True, point_left=False)
-        else:
-            _draw_mascot(d, cx_frame, top_y, scale=1.3, color=INK, pointing=False)
+            return _draw_character(img, cx_frame, top_y - bounce_amt,
+                                   scale=CHAR_SCALE, pose='point_both')
+        return _draw_character(img, cx_frame, top_y, scale=CHAR_SCALE,
+                               pose=pose, phase=phase)
 
     prev_cx = None
 
@@ -2527,9 +2648,9 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         # Fixed bottom-bound estimate (dry-run on a scratch canvas) so the
         # headline position below the mascot stays stable across every pose
         # this slide might use, instead of jittering per sub-frame.
-        _scratch = Image.new("RGB", (10, 10))
-        _scratch_box = _draw_mascot(ImageDraw.Draw(_scratch), 0, mascot_top, scale=1.3, color=INK, pointing=False)
-        mascot_bottom = _scratch_box[3]
+        _scratch = Image.new("RGB", (4, 4))
+        mascot_bottom = _draw_character(_scratch, -9999, mascot_top,
+                                        scale=CHAR_SCALE, pose='calm')
         del _scratch
 
         # Caption — SHORT and BIG: at most 2 lines so it's readable in a
