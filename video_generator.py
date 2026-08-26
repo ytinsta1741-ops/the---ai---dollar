@@ -2270,20 +2270,31 @@ def _draw_mascot_walk_frame(img, cx, top_y, scale, color, phase):
     hip_y = neck_y + torso_len
     draw.line([cx, neck_y, cx, hip_y], fill=color, width=lw)
 
-    # Legs: sine-driven stride, opposite phase for left/right.
+    # Legs: base outward stance (so they're ALWAYS visibly apart, not
+    # overlapping at any point in the cycle) plus a stride swing that
+    # alternates left/right. A running gait — one leg forward, one back.
     leg_len = int(70 * s)
-    stride = int(34 * s)
-    ang1 = math.sin(phase * 2 * math.pi)
-    ang2 = math.sin(phase * 2 * math.pi + math.pi)
-    draw.line([cx, hip_y, cx + int(stride * ang1), hip_y + leg_len], fill=color, width=lw)
-    draw.line([cx, hip_y, cx + int(stride * ang2), hip_y + leg_len], fill=color, width=lw)
+    base_leg_spread = int(18 * s)
+    stride = int(40 * s)
+    swing = math.sin(phase * 2 * math.pi)
+    left_foot_x = cx - base_leg_spread - int(stride * swing)
+    right_foot_x = cx + base_leg_spread + int(stride * swing)
+    draw.line([cx, hip_y, left_foot_x, hip_y + leg_len], fill=color, width=lw)
+    draw.line([cx, hip_y, right_foot_x, hip_y + leg_len], fill=color, width=lw)
     foot_y = hip_y + leg_len
 
-    # Arms: swing opposite their same-side leg, like a natural run cycle.
+    # Arms: base spread so both are always visible off the torso, plus a
+    # real swing angle (opposite to same-side leg). Both hands are always
+    # off-body — never a "no arms" frame.
     arm_y = neck_y + int(15 * s)
-    arm_len = int(48 * s)
-    draw.line([cx, arm_y, cx - int(arm_len * ang1 * 0.9), arm_y + int(arm_len * 0.5)], fill=color, width=lw)
-    draw.line([cx, arm_y, cx + int(arm_len * ang2 * 0.9), arm_y + int(arm_len * 0.5)], fill=color, width=lw)
+    arm_len = int(50 * s)
+    arm_swing = math.sin(phase * 2 * math.pi)
+    left_hand_x = cx - int(arm_len * 0.55) - int(arm_len * 0.35 * arm_swing)
+    right_hand_x = cx + int(arm_len * 0.55) + int(arm_len * 0.35 * arm_swing)
+    left_hand_y = arm_y + int(arm_len * 0.6) + int(arm_len * 0.25 * arm_swing)
+    right_hand_y = arm_y + int(arm_len * 0.6) - int(arm_len * 0.25 * arm_swing)
+    draw.line([cx, arm_y, left_hand_x, left_hand_y], fill=color, width=lw)
+    draw.line([cx, arm_y, right_hand_x, right_hand_y], fill=color, width=lw)
 
     return foot_y
 
