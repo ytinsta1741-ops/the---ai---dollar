@@ -2286,66 +2286,26 @@ def _draw_mascot_walk_frame(img, cx, top_y, scale, color, phase):
     return foot_y
 
 
-_ANIM_CANVAS = (640, 760)   # fixed canvas shared by every mascot pose/frame so
-_ANIM_SCALE = 2.0           # switching between them never jumps in size
-_ANIM_CX = 320
-_ANIM_TOP = 90              # headroom above the head for a raised pointing arm
-
-
-def _ensure_mascot_anim_assets(color=(20, 20, 24)):
-    """Build (once, cached) the full set of mascot poses used by the animated
-    build: a walking/running gait cycle for while it's travelling between
-    panels, plus point-left / point-right / calm static poses for when it
-    has arrived and is gesturing at a term — all on an IDENTICAL canvas/scale
-    so swapping between them mid-video never jumps in size or position.
-    PNG alpha (not WebM/VP9, which stores alpha in a side-channel block
-    ffmpeg's overlay doesn't reliably composite) for reliability on Render.
-    Returns dict of paths, or None entries for anything that failed."""
-    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot_anim")
-    walk_dir = os.path.join(base, "walk")
-    paths = {
-        "walk": os.path.join(walk_dir, "f%02d.png"),
-        "calm": os.path.join(base, "calm.png"),
-        "point_left": os.path.join(base, "point_left.png"),
-        "point_right": os.path.join(base, "point_right.png"),
-    }
-    n_frames = 8
-    have_walk = os.path.isdir(walk_dir) and len(os.listdir(walk_dir)) >= n_frames
-    have_static = all(os.path.exists(paths[k]) for k in ("calm", "point_left", "point_right"))
-    if have_walk and have_static:
-        return paths
-    try:
-        from PIL import Image
-        os.makedirs(walk_dir, exist_ok=True)
-        w, h = _ANIM_CANVAS
-        for i in range(n_frames):
-            phase = i / n_frames
-            img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-            _draw_mascot_walk_frame(img, _ANIM_CX, _ANIM_TOP, _ANIM_SCALE, color, phase)
-            img.save(os.path.join(walk_dir, f"f{i:02d}.png"))
-
-        for key, kwargs in (
-            ("calm", dict(pointing=False)),
-            ("point_left", dict(pointing=True, point_left=True)),
-            ("point_right", dict(pointing=True, point_left=False)),
-        ):
-            img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-            from PIL import ImageDraw
-            draw = ImageDraw.Draw(img)
-            _draw_mascot(draw, _ANIM_CX, _ANIM_TOP, scale=_ANIM_SCALE, color=color, **kwargs)
-            img.save(paths[key])
-        return paths
-    except Exception as e:
-        print(f"[WARN] Mascot animation asset build failed: {e}")
-        return None
-
-
 def prep_infographic_slides(images, slides, work_dir, landscape=False,
                              term_a=None, term_b=None, hero_images=(None, None),
-                             draw_mascot=True):
+                             durations=None):
     """Clean white-background infographic style: bold headline, a boxed
     photo card, and a recurring original mascot character for brand
-    identity — inspired by high-performing comparison-style Shorts."""
+    identity — inspired by high-performing comparison-style Shorts.
+
+    The mascot is animated by drawing it DIRECTLY with PIL onto multiple
+    frames per slide (running while it travels between panels, pointing at
+    a term once it arrives, bouncing on the hook) — deliberately not an
+    ffmpeg overlay/alpha trick, because two different ffmpeg-side attempts
+    (WebM/VP9 alpha, then a multi-input overlay+enable filter chain) both
+    silently failed on Render's ffmpeg build and fell back to a motionless
+    mascot in production despite working locally. Direct PIL drawing is the
+    same method already proven reliable for the rest of the slide (photos,
+    text, badges), so it can't have that class of failure.
+
+    Returns (frame_paths, frame_durations) — more entries than len(slides)
+    when a slide has multiple animation sub-frames; durations sum to match
+    the original per-slide audio durations exactly."""
     os.makedirs(work_dir, exist_ok=True)
     from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
@@ -2401,24 +2361,28 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
     font_label = get_font(30)
 
     total_slides = len(slides)
-    paths = []
-    # Mascot placement recorded per slide so the animated build can overlay a
-    # MOVING mascot instead of the baked-in one (draw_mascot=False).
-    mascot_cx_by_idx = []
-    mascot_side_by_idx = []
-    mascot_meta_top = None
-    mascot_meta_wh = None
+    if durations is None:
+        durations = [4.0] * total_slides
+    frame_paths, frame_durations = [], []
 
-    # Fixed brand mascot (green metallic $ character) composited every slide
-    # for consistent branding. Falls back to the drawn stick figure if the
-    # asset is missing.
-    mascot_png = None
-    _mpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot.png")
-    try:
-        if os.path.exists(_mpath):
-            mascot_png = Image.open(_mpath).convert("RGBA")
-    except Exception:
-        mascot_png = None
+    def _stamp_mascot(img, pose, cx_frame, top_y, phase=0.0):
+        d = ImageDraw.Draw(img)
+        if pose == 'walk':
+            _draw_mascot_walk_frame(img, cx_frame, top_y, 1.3, INK, phase)
+        elif pose == 'bounce':
+            import math
+            bounce_amt = int(55 * abs(math.sin(phase * 2 * math.pi * 2.5)))
+            _draw_mascot(d, cx_frame, top_y - bounce_amt, scale=1.3, color=INK, pointing=False)
+        elif pose == 'confused':
+            _draw_mascot(d, cx_frame, top_y, scale=1.3, color=INK, confused=True)
+        elif pose == 'point_left':
+            _draw_mascot(d, cx_frame, top_y, scale=1.3, color=INK, pointing=True, point_left=True)
+        elif pose == 'point_right':
+            _draw_mascot(d, cx_frame, top_y, scale=1.3, color=INK, pointing=True, point_left=False)
+        else:
+            _draw_mascot(d, cx_frame, top_y, scale=1.3, color=INK, pointing=False)
+
+    prev_cx = None
 
     # Every slide shows both terms side by side with individual labels,
     # like the reference channel's comparison style — only when we
@@ -2444,7 +2408,6 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             side_by_idx.append(side)
 
     for idx, slide in enumerate(slides):
-        out = os.path.join(work_dir, f"info_{idx}.jpg")
         bg = Image.new("RGB", (W, H), BG)
         draw = ImageDraw.Draw(bg)
 
@@ -2533,46 +2496,28 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             card_x = (W - card_w) // 2
             _paste_card(card_x, card_top, card_w, card_h, img_src)
 
-        # Mascot — right below the card(s). Fixed green $ character composited
-        # every slide for consistent branding.
+        # Mascot — right below the card(s). Not drawn into `bg` yet: it's
+        # stamped per-animation-sub-frame further down (running while it
+        # travels to whichever term is being explained, pointing once it
+        # arrives) so the SAME background is reused for every sub-frame of
+        # this slide instead of re-rendering photos/text repeatedly.
         mascot_top = card_top + card_h + 70
         is_last = (idx == len(slides) - 1)
         is_first = (idx == 0)
-        if mascot_png is not None:
-            target_h = 430
-            mw = max(1, int(mascot_png.width * target_h / mascot_png.height))
-            # Slide the mascot under whichever term is being explained so it
-            # still directs the viewer's eye (Term A slide -> under the left
-            # panel, Term B slide -> under the right), centered otherwise.
-            if side == 'A' and panel_left_cx is not None:
-                cx = panel_left_cx
-            elif side == 'B' and panel_right_cx is not None:
-                cx = panel_right_cx
-            else:
-                cx = W // 2
-            mascot_cx_by_idx.append(cx)
-            mascot_side_by_idx.append('both' if is_first or is_last else side)
-            mascot_meta_top = mascot_top
-            mascot_meta_wh = (mw, target_h)
-            if draw_mascot:
-                m_resized = mascot_png.resize((mw, target_h), Image.LANCZOS)
-                bg.paste(m_resized, (cx - mw // 2, mascot_top), m_resized)
-            mascot_bottom = mascot_top + target_h
+        if side == 'A' and panel_left_cx is not None:
+            target_cx = panel_left_cx
+        elif side == 'B' and panel_right_cx is not None:
+            target_cx = panel_right_cx
         else:
-            mascot_cx_by_idx.append(W // 2)
-            mascot_side_by_idx.append('both')
-            if side == 'A':
-                point_left = True
-            elif side == 'B':
-                point_left = False
-            else:
-                point_left = (idx % 2 == 0)
-            mascot_box = _draw_mascot(
-                draw, W // 2, mascot_top, scale=1.3, color=INK,
-                confused=is_diff_slide,
-                pointing=not is_last, point_left=point_left,
-            )
-            mascot_bottom = mascot_box[3]
+            target_cx = W // 2
+
+        # Fixed bottom-bound estimate (dry-run on a scratch canvas) so the
+        # headline position below the mascot stays stable across every pose
+        # this slide might use, instead of jittering per sub-frame.
+        _scratch = Image.new("RGB", (10, 10))
+        _scratch_box = _draw_mascot(ImageDraw.Draw(_scratch), 0, mascot_top, scale=1.3, color=INK, pointing=False)
+        mascot_bottom = _scratch_box[3]
+        del _scratch
 
         # Caption — SHORT and BIG: at most 2 lines so it's readable in a
         # single glance (long paragraphs killed readability). Flatten any
@@ -2620,230 +2565,83 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             draw.rounded_rectangle([cx2 - 30, cy2 - 16, cx2 + cw + 30, cy2 + 46], radius=16, fill=ACCENT)
             draw.text((cx2, cy2), cta, font=font_cta, fill=(255, 255, 255))
 
-        bg.save(out, "JPEG", quality=95)
-        paths.append(out)
-        del draw, bg
+        # `bg` is now the finished background (photos/text/badges), mascot
+        # NOT yet drawn. Build this slide's animation sub-frames: bounce on
+        # the hook, run while the target changes, then hold a pointing (or
+        # confused, on the differentiation slide) pose for the rest.
+        del draw
+        slide_dur = durations[idx] if idx < len(durations) else 4.0
+        moved = (prev_cx is not None and target_cx != prev_cx)
+        RAMP = min(0.6, slide_dur * 0.4)
+
+        sub_frames = []  # (pose, phase, cx_for_frame, duration)
+        if is_first:
+            N = 6
+            for k in range(N):
+                phase = (k + 1) / N
+                sub_frames.append(('bounce', phase, target_cx, slide_dur / N))
+        else:
+            settled_pose = (
+                'confused' if (is_diff_slide) else
+                'calm' if (is_last or side == 'both') else
+                ('point_left' if side == 'A' else 'point_right')
+            )
+            if moved:
+                RN = 4
+                per = RAMP / RN
+                for k in range(RN):
+                    phase = k / RN
+                    t = (k + 1) / RN
+                    interp_cx = int(prev_cx + (target_cx - prev_cx) * t)
+                    sub_frames.append(('walk', phase, interp_cx, per))
+                sub_frames.append((settled_pose, 0.0, target_cx, max(slide_dur - RAMP, 0.1)))
+            else:
+                sub_frames.append((settled_pose, 0.0, target_cx, slide_dur))
+
+        for k, (pose, phase, cx_frame, dur) in enumerate(sub_frames):
+            frame = bg.copy()
+            _stamp_mascot(frame, pose, cx_frame, mascot_top, phase)
+            fp = os.path.join(work_dir, f"info_{idx}_{k}.jpg")
+            frame.save(fp, "JPEG", quality=95)
+            frame_paths.append(fp)
+            frame_durations.append(dur)
+            del frame
+
+        prev_cx = target_cx
+        del bg
         gc.collect()
-        print(f"  infographic slide {idx+1}/{len(slides)} ready")
+        print(f"  infographic slide {idx+1}/{len(slides)} ready ({len(sub_frames)} anim frame(s))")
 
-    _mascot_asset = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot.png")
-    return paths, {
-        "cx": mascot_cx_by_idx,
-        "side": mascot_side_by_idx,
-        "top": mascot_meta_top,
-        "wh": mascot_meta_wh,
-        "png": _mascot_asset if mascot_png is not None else None,
-    }
-
-
-def _build_infographic_animated(work_dir, slide_paths, meta, durations, audio_file, output_file, res):
-    """Overlay a mascot that behaves like it's actually there: it RUNS (legs
-    striding, arms swinging) while travelling between panels, then POINTS at
-    whichever term it arrived at once settled — instead of a static image
-    just sliding around. Bounces during the hook. One ffmpeg pass; ffmpeg
-    evaluates the position/visibility expressions itself, no per-frame
-    Python rendering. Returns True on success."""
-    n = len(slide_paths)
-    mw, mh = meta["wh"]
-    top = meta["top"]
-    cx = meta["cx"]
-    side = meta.get("side") or ["both"] * n
-    mascot_png = meta["png"]
-
-    concat_file = os.path.join(work_dir, "concat_anim.txt")
-    with open(concat_file, "w") as f:
-        for i in range(n):
-            f.write(f"file '{os.path.basename(slide_paths[i])}'\n")
-            f.write(f"duration {durations[i]:.3f}\n")
-        f.write(f"file '{os.path.basename(slide_paths[n-1])}'\n")
-
-    starts, acc = [], 0.0
-    for d in durations:
-        starts.append(acc); acc += d
-    total = acc
-
-    # x-centre of the mascot over time: hold each slide's target, ramping
-    # smoothly (RAMP secs) when the target changes between slides. Same
-    # motion curve drives every pose overlay so they stay perfectly aligned
-    # when swapped.
-    RAMP = 0.6
-    terms = []
-    for i in range(n):
-        si = starts[i]
-        ei = (si + durations[i]) if i < n - 1 else (total + 100)
-        prev_t = cx[i - 1] if i > 0 else cx[0]
-        cur_t = cx[i]
-        gate = f"gte(t,{si:.3f})*lt(t,{ei:.3f})"
-        ramp = f"min(max((t-{si:.3f})/{RAMP},0),1)"
-        terms.append(f"({gate})*({prev_t}+({cur_t}-{prev_t})*{ramp})")
-    x_expr = f"({'+'.join(terms)})-{mw // 2}"
-
-    # y: bounce up-and-down during the hook (slide 0) only, then rest.
-    d0 = durations[0]
-    BAMP, BFREQ = 70, 2.6
-    y_expr = f"{top}-(lt(t,{d0:.3f})*abs(sin(2*PI*{BFREQ}*t))*{BAMP})"
-
-    loudnorm = "loudnorm=I=-14:LRA=11:TP=-1.5"
-
-    # Which pose is visible when: RUNNING while the target x is actually
-    # changing (the RAMP window right after a slide whose target differs
-    # from the previous one), otherwise settled — pointing left/right at
-    # its term, or calm for the hook/CTA/both-terms slides.
-    run_windows = []
-    settle_windows = {"calm": [], "point_left": [], "point_right": []}
-    for i in range(n):
-        si, ei = starts[i], (starts[i] + durations[i]) if i < n - 1 else (total + 100)
-        moved = i > 0 and cx[i] != cx[i - 1]
-        settle_start = si
-        if moved and i > 0:
-            run_windows.append((si, si + RAMP))
-            settle_start = si + RAMP
-        pose = "calm" if (i == 0 or side[i] == 'both') else ("point_left" if side[i] == 'A' else "point_right")
-        settle_windows[pose].append((settle_start, ei))
-
-    def _enable_expr(windows):
-        if not windows:
-            return "0"
-        return "+".join(f"between(t,{a:.3f},{b:.3f})" for a, b in windows)
-
-    run_enable = _enable_expr(run_windows)
-    calm_enable = _enable_expr(settle_windows["calm"])
-    left_enable = _enable_expr(settle_windows["point_left"])
-    right_enable = _enable_expr(settle_windows["point_right"])
-
-    assets = _ensure_mascot_anim_assets()
-    if not assets:
-        # Fall back to the old single-static-image overlay if pose assets
-        # couldn't be built at all.
-        fc = (
-            f"[0:v]scale={res},fps=30[base];"
-            f"[1:v]format=yuva420p,scale={mw}:{mh}[m];"
-            f"[base][m]overlay=x='{x_expr}':y='{y_expr}':format=auto[v];"
-            f"[2:a]{loudnorm}[aout]"
-        )
-        cmd = [
-            FFMPEG, "-y",
-            "-f", "concat", "-safe", "0", "-i", concat_file,
-            "-loop", "1", "-i", mascot_png,
-            "-i", audio_file,
-            "-filter_complex", fc,
-            "-map", "[v]", "-map", "[aout]",
-            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-            "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
-            "-shortest", "-movflags", "+faststart",
-            output_file,
-        ]
-        proc = _run_ffmpeg_hard_timeout(cmd, timeout=360)
-        if proc is None:
-            print("[WARN] Animated build: ffmpeg timed out")
-            return False
-        if proc.returncode != 0:
-            print(f"[WARN] Animated build failed: {proc.stderr.decode('utf-8', errors='replace')[-500:]}")
-            return False
-        return os.path.exists(output_file) and os.path.getsize(output_file) > 10000
-
-    fc = (
-        f"[0:v]scale={res},fps=30[base];"
-        f"[1:v]format=yuva420p,scale={mw}:{mh}[run];"
-        f"[2:v]format=yuva420p,scale={mw}:{mh}[calm];"
-        f"[3:v]format=yuva420p,scale={mw}:{mh}[pl];"
-        f"[4:v]format=yuva420p,scale={mw}:{mh}[pr];"
-        f"[base][run]overlay=x='{x_expr}':y='{y_expr}':format=auto:enable='{run_enable}'[b1];"
-        f"[b1][calm]overlay=x='{x_expr}':y='{y_expr}':format=auto:enable='{calm_enable}'[b2];"
-        f"[b2][pl]overlay=x='{x_expr}':y='{y_expr}':format=auto:enable='{left_enable}'[b3];"
-        f"[b3][pr]overlay=x='{x_expr}':y='{y_expr}':format=auto:enable='{right_enable}'[v];"
-        f"[5:a]{loudnorm}[aout]"
-    )
-    cmd = [
-        FFMPEG, "-y",
-        "-f", "concat", "-safe", "0", "-i", concat_file,
-        "-stream_loop", "-1", "-framerate", "10", "-i", assets["walk"],
-        "-loop", "1", "-i", assets["calm"],
-        "-loop", "1", "-i", assets["point_left"],
-        "-loop", "1", "-i", assets["point_right"],
-        "-i", audio_file,
-        "-filter_complex", fc,
-        "-map", "[v]", "-map", "[aout]",
-        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-        "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
-        "-shortest", "-movflags", "+faststart",
-        output_file,
-    ]
-    proc = _run_ffmpeg_hard_timeout(cmd, timeout=360)
-    if proc is None or proc.returncode != 0:
-        # Multi-pose overlay might not be supported on this ffmpeg build —
-        # retry once with the plain static mascot instead of failing outright.
-        print("[WARN] Multi-pose overlay failed, retrying with static mascot...")
-        fc2 = (
-            f"[0:v]scale={res},fps=30[base];"
-            f"[1:v]format=yuva420p,scale={mw}:{mh}[m];"
-            f"[base][m]overlay=x='{x_expr}':y='{y_expr}':format=auto[v];"
-            f"[2:a]{loudnorm}[aout]"
-        )
-        cmd = [
-            FFMPEG, "-y",
-            "-f", "concat", "-safe", "0", "-i", concat_file,
-            "-loop", "1", "-i", mascot_png,
-            "-i", audio_file,
-            "-filter_complex", fc2,
-            "-map", "[v]", "-map", "[aout]",
-            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-            "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
-            "-shortest", "-movflags", "+faststart",
-            output_file,
-        ]
-        proc = _run_ffmpeg_hard_timeout(cmd, timeout=360)
-    if proc is None:
-        print("[WARN] Animated build: ffmpeg timed out")
-        return False
-    if proc.returncode != 0:
-        print(f"[WARN] Animated build failed: {proc.stderr.decode('utf-8', errors='replace')[-500:]}")
-        return False
-    return os.path.exists(output_file) and os.path.getsize(output_file) > 10000
+    return frame_paths, frame_durations
 
 
 def create_video_infographic(slides, images, audio_file, durations, output_file, landscape=False,
                               term_a=None, term_b=None, hero_images=(None, None)):
     """Single-pass build (lightweight, matches the original static-slide
-    pipeline's memory profile) using the new white-background layout."""
+    pipeline's memory profile) using the new white-background layout. The
+    mascot (running between panels, pointing once it arrives, bouncing on
+    the hook) is drawn directly into the frames by prep_infographic_slides —
+    no ffmpeg-side overlay/alpha trickery, which twice silently failed on
+    Render's ffmpeg build in production despite working locally."""
     work_dir = output_file + "_infowork"
     import shutil
     print("[BUILD] Preparing infographic slides...")
 
-    n = len(slides)
     res = "1920:1080" if landscape else "1080:1920"
 
-    # Animate the mascot (bounce on hook + slide between terms) when we have
-    # the asset and aren't in landscape. Set ANIMATE_MASCOT=false to disable.
-    mascot_asset = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "mascot.png")
-    animate = (not landscape) and os.path.exists(mascot_asset) \
-        and os.getenv("ANIMATE_MASCOT", "true").lower() != "false"
-
-    slide_paths, meta = prep_infographic_slides(
+    frame_paths, frame_durations = prep_infographic_slides(
         images, slides, work_dir, landscape=landscape,
         term_a=term_a, term_b=term_b, hero_images=hero_images,
-        draw_mascot=not animate,
+        durations=durations,
     )
-
-    if animate and meta.get("png") and meta.get("top") is not None and meta.get("wh"):
-        if _build_infographic_animated(work_dir, slide_paths, meta, durations, audio_file, output_file, res):
-            shutil.rmtree(work_dir, ignore_errors=True)
-            print("[OK] Video created (infographic + animated mascot)!")
-            return True
-        print("[WARN] Animated mascot build failed; rebuilding with static mascot...")
-        shutil.rmtree(work_dir, ignore_errors=True)
-        slide_paths, meta = prep_infographic_slides(
-            images, slides, work_dir, landscape=landscape,
-            term_a=term_a, term_b=term_b, hero_images=hero_images,
-            draw_mascot=True,
-        )
+    n = len(frame_paths)
 
     concat_file = os.path.join(work_dir, "concat.txt")
     with open(concat_file, 'w') as f:
         for idx in range(n):
-            f.write(f"file '{os.path.basename(slide_paths[idx])}'\n")
-            f.write(f"duration {durations[idx]:.2f}\n")
-        f.write(f"file '{os.path.basename(slide_paths[n-1])}'\n")
+            f.write(f"file '{os.path.basename(frame_paths[idx])}'\n")
+            f.write(f"duration {frame_durations[idx]:.3f}\n")
+        f.write(f"file '{os.path.basename(frame_paths[n-1])}'\n")
 
     # loudnorm brings the narration up to a clear, consistent broadcast
     # loudness (YouTube/TikTok target ~-14 LUFS) instead of whatever raw
