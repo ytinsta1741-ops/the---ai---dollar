@@ -1371,9 +1371,11 @@ def _run_google_tts(text, output_path, speaking_rate=0.9, pitch=-1.0):
 
 
 FISH_AUDIO_API_KEY = os.getenv("FISH_AUDIO_API_KEY", "")
-# "Energetic Male" — a popular (478k+ uses) public voice in Fish Audio's
-# library, well suited to the punchy hook/CTA delivery this channel wants.
-FISH_AUDIO_VOICE_ID = os.getenv("FISH_AUDIO_VOICE_ID", "802e3bc2b27e49c2995d23ef70e6ac89")
+# "CGM" — Fish Audio's own description: "authoritative and energetic,
+# perfect for news, financial reports, or announcements." Deep + clear +
+# energetic in one voice, a better match for finance content than the
+# previous "Energetic Male" (which leaned younger/lighter, less deep).
+FISH_AUDIO_VOICE_ID = os.getenv("FISH_AUDIO_VOICE_ID", "049000cac4a54854a73146dcc6ffee41")
 
 
 def _run_fish_audio_tts(text, output_path, speed=1.0):
@@ -1456,7 +1458,7 @@ def create_slide_audios(slides, work_dir):
                 os.remove(test_path)
             except Exception:
                 pass
-            print("[OK] Using Fish Audio S2.1 Pro (Energetic Male)")
+            print("[OK] Using Fish Audio S2.1 Pro (CGM - deep/energetic)")
         else:
             print("[WARN] Fish Audio unavailable, trying Piper / Google TTS / edge-tts")
 
