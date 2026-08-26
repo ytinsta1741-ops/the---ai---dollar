@@ -1622,31 +1622,80 @@ def create_audio(text, output_path):
 
 
 def generate_bg_music(output_path, duration):
-    """Generate a warm ambient pad using layered sine waves — sounds professional."""
-    cmd = [
-        FFMPEG, '-y',
-        '-f', 'lavfi', '-i',
-        (f'sine=f=110:d={duration}[a];'
-         f'sine=f=165:d={duration}[b];'
-         f'sine=f=220:d={duration}[c];'
-         f'sine=f=330:d={duration}[d];'
-         f'[a][b]amix=inputs=2[ab];'
-         f'[c][d]amix=inputs=2[cd];'
-         f'[ab][cd]amix=inputs=2'),
-        '-af', (
-            'lowpass=f=400,highpass=f=60,'
-            'afade=t=in:st=0:d=2,afade=t=out:st=' + f'{max(duration-3,1)}' + ':d=3,'
-            'volume=0.08'
-        ),
-        '-c:a', 'aac', '-b:a', '64k',
-        '-t', str(duration),
-        output_path
-    ]
-    proc = _run_ffmpeg_hard_timeout(cmd, timeout=60)
-    if proc is None:
-        print("[WARN] generate_bg_music: ffmpeg timed out, skipping background music")
+    """Write an original, gentle background music bed: a soft four-chord pad
+    progression that moves every couple of bars so the track breathes with
+    the video instead of sitting on one flat drone.
+
+    Synthesised sample-by-sample with the stdlib (wave/array/math) rather
+    than a big ffmpeg lavfi filter graph — an earlier amix-based version was
+    the suspected cause of ffmpeg hangs on Render, and this needs no extra
+    dependencies and cannot hang. Fully original audio, so there are no
+    music-licensing or Content-ID problems on YouTube/TikTok/Instagram."""
+    import wave
+    import array as _array
+    import math as _math
+
+    try:
+        sr = 44100
+        total = int(sr * duration)
+        # Am - F - C - G: a warm, neutral loop that suits explainer content.
+        chords = [
+            (110.00, 130.81, 164.81),   # Am
+            (87.31, 110.00, 130.81),    # F
+            (130.81, 164.81, 196.00),   # C
+            (98.00, 123.47, 146.83),    # G
+        ]
+        bar = max(1.0, duration / 8.0)   # chord change roughly every bar
+        samples = _array.array("h", bytes(total * 2))
+
+        fade = int(sr * 1.5)
+        for i in range(total):
+            t = i / sr
+            ci = int(t / bar) % len(chords)
+            # crossfade between chords so changes are smooth, not clicky
+            local = (t % bar) / bar
+            nxt = chords[(ci + 1) % len(chords)]
+            cur = chords[ci]
+            blend = max(0.0, (local - 0.85) / 0.15)   # last 15% of the bar
+
+            v = 0.0
+            for f_cur, f_nxt in zip(cur, nxt):
+                f = f_cur * (1 - blend) + f_nxt * blend
+                v += _math.sin(2 * _math.pi * f * t)
+            v /= len(cur)
+            # slow tremolo gives it a little life
+            v *= 0.85 + 0.15 * _math.sin(2 * _math.pi * 0.15 * t)
+
+            amp = 0.10                      # quiet bed, sits under narration
+            if i < fade:
+                amp *= i / fade
+            if i > total - fade:
+                amp *= max(0.0, (total - i) / fade)
+
+            samples[i] = int(max(-1.0, min(1.0, v * amp)) * 32767)
+
+        wav_path = output_path + ".wav"
+        with wave.open(wav_path, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(sr)
+            w.writeframes(samples.tobytes())
+
+        cmd = [FFMPEG, "-y", "-i", wav_path,
+               "-af", "lowpass=f=1200,highpass=f=55",
+               "-c:a", "aac", "-b:a", "96k", output_path]
+        proc = _run_ffmpeg_hard_timeout(cmd, timeout=60)
+        try:
+            os.remove(wav_path)
+        except Exception:
+            pass
+        if proc is None or proc.returncode != 0:
+            print("[WARN] generate_bg_music: encode failed, skipping background music")
+            return False
+        return os.path.exists(output_path)
+    except Exception as e:
+        print(f"[WARN] generate_bg_music failed ({e}), skipping background music")
         return False
-    return proc.returncode == 0 and os.path.exists(output_path)
 
 
 def get_audio_duration(audio_path):
@@ -2779,17 +2828,39 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
 
     # loudnorm brings the narration up to a clear, consistent broadcast
     # loudness (YouTube/TikTok target ~-14 LUFS) instead of whatever raw
-    # level the TTS engine happened to output. Background music was dropped
-    # from this path — the extra amix filter graph was the likely cause of
-    # ffmpeg hangs on Render's fallback system binary, and reliability here
-    # matters more than ambient music.
+    # level the TTS engine happened to output.
     loudnorm = "loudnorm=I=-14:LRA=11:TP=-1.5"
+
+    # Quiet original music bed under the narration. Optional by design: if
+    # it can't be produced we still ship the video with clean narration
+    # rather than failing the whole build. Disable with BG_MUSIC=false.
+    music_path = None
+    if os.getenv("BG_MUSIC", "true").lower() != "false":
+        total_len = sum(frame_durations) + 1.0
+        candidate = os.path.join(work_dir, "bgmusic.m4a")
+        if generate_bg_music(candidate, total_len):
+            music_path = candidate
+
+    if music_path:
+        # sidechaincompress ducks the music automatically whenever the
+        # narrator speaks, so the bed never fights the voice.
+        filter_complex = (
+            f"[0:v]scale={res},fps=30[v];"
+            f"[1:a]{loudnorm},asplit=2[narr][key];"
+            f"[2:a]volume=0.22[bg];"
+            f"[bg][key]sidechaincompress=threshold=0.02:ratio=8:attack=5:release=350[duck];"
+            f"[narr][duck]amix=inputs=2:duration=first:dropout_transition=0[aout]"
+        )
+        inputs = ['-i', audio_file, '-i', music_path]
+    else:
+        filter_complex = f"[0:v]scale={res},fps=30[v];[1:a]{loudnorm}[aout]"
+        inputs = ['-i', audio_file]
 
     cmd = [
         FFMPEG, '-y',
         '-f', 'concat', '-safe', '0', '-i', concat_file,
-        '-i', audio_file,
-        '-filter_complex', f'[0:v]scale={res},fps=30[v];[1:a]{loudnorm}[aout]',
+        *inputs,
+        '-filter_complex', filter_complex,
         '-map', '[v]', '-map', '[aout]',
         '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
         '-c:a', 'aac', '-b:a', '128k',
@@ -2801,6 +2872,24 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
 
     import shutil
     proc = _run_ffmpeg_hard_timeout(cmd, timeout=300)
+
+    if music_path and (proc is None or proc.returncode != 0):
+        # Never let the optional music bed break the build — retry clean.
+        print("[WARN] Music mix failed, rebuilding with narration only...")
+        cmd = [
+            FFMPEG, '-y',
+            '-f', 'concat', '-safe', '0', '-i', concat_file,
+            '-i', audio_file,
+            '-filter_complex', f"[0:v]scale={res},fps=30[v];[1:a]{loudnorm}[aout]",
+            '-map', '[v]', '-map', '[aout]',
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-pix_fmt', 'yuv420p',
+            '-shortest',
+            '-movflags', '+faststart',
+            output_file
+        ]
+        proc = _run_ffmpeg_hard_timeout(cmd, timeout=300)
 
     if proc is None:
         shutil.rmtree(work_dir, ignore_errors=True)
