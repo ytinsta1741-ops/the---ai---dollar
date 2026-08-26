@@ -2271,8 +2271,8 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     neck_y = neck_top + int(16 * s)          # where the collar sits
 
     shoulder_y = neck_y + int(6 * s)
-    torso_w = int(104 * s)
-    torso_h = int(124 * s)
+    torso_w = int(78 * s)        # slim tee, not a barrel chest
+    torso_h = int(128 * s)
     hip_y = shoulder_y + torso_h
 
     leg_len = int(150 * s)
@@ -2291,7 +2291,7 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     # so they can never scissor past each other, which looked broken from
     # this front-on view); the gait reads through alternating knee-lift. ---
     hip_dx = int(20 * s)
-    stance = int(22 * s)
+    stance = int(32 * s)     # wide enough that the trouser legs read as two
     sway = int(14 * s)
     thigh_w, calf_w, ankle_w = int(34 * s), int(28 * s), int(22 * s)
 
@@ -2322,7 +2322,7 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     # --- torso / t-shirt ---
     d.rounded_rectangle(
         [cx - torso_w // 2, shoulder_y, cx + torso_w // 2, hip_y + int(4 * s)],
-        radius=int(22 * s), fill=CHAR_SHIRT, outline=CHAR_OUTLINE, width=ow)
+        radius=int(20 * s), fill=CHAR_SHIRT, outline=CHAR_OUTLINE, width=ow)
 
     # --- arms: upper arm + forearm, tapering to a wrist, ending in a hand
     # with an extended index finger when pointing ---
@@ -2347,16 +2347,20 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         _limb(d, [(sx, sy), elbow, wrist],
               [upper_w, fore_w, wrist_w], CHAR_SKIN, ow)
 
-        # hand
-        hr = int(15 * s)
+        # --- hand: a palm noticeably wider than the wrist so it actually
+        # reads as a hand rather than the arm just stopping, plus a clearly
+        # separated index finger on the pointing poses.
         hx, hy = wrist
-        d.ellipse([hx - hr, hy - hr, hx + hr, hy + hr],
-                  fill=CHAR_SKIN, outline=CHAR_OUTLINE, width=ow)
+        dx, dy = hand_dir
+        norm = math.hypot(dx, dy) or 1.0
+        dx, dy = dx / norm, dy / norm
+        palm_c = (hx + dx * int(10 * s), hy + dy * int(10 * s))
+        palm_w = int(30 * s)
+        _limb(d, [wrist, palm_c], [wrist_w, palm_w], CHAR_SKIN, ow)
         if mode == 'point':
-            fx = hx + hand_dir[0] * int(30 * s)
-            fy = hy + hand_dir[1] * int(30 * s)
-            _limb(d, [(hx, hy), (fx, fy)],
-                  [int(13 * s), int(9 * s)], CHAR_SKIN, ow)
+            f0 = (palm_c[0] + dx * int(12 * s), palm_c[1] + dy * int(12 * s))
+            f1 = (palm_c[0] + dx * int(42 * s), palm_c[1] + dy * int(42 * s))
+            _limb(d, [f0, f1], [int(15 * s), int(11 * s)], CHAR_SKIN, ow)
 
     if pose == 'point_both':
         _arm(-1, 'point', 0); _arm(1, 'point', 0)
