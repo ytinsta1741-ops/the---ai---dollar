@@ -2332,8 +2332,8 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         upper_w, fore_w, wrist_w = int(30 * s), int(24 * s), int(18 * s)
 
         if mode == 'point':
-            elbow = (cx + sign * int(96 * s), sy + int(10 * s))
-            wrist = (cx + sign * int(158 * s), sy - int(4 * s))
+            elbow = (cx + sign * int(74 * s), sy + int(10 * s))
+            wrist = (cx + sign * int(120 * s), sy - int(4 * s))
             hand_dir = (sign, 0)
         elif mode == 'up':
             elbow = (cx + sign * int(74 * s), sy - int(30 * s))
@@ -2749,6 +2749,11 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             target_cx = panel_right_cx
         else:
             target_cx = W // 2
+        # Keep the whole character comfortably on screen: a pointing arm
+        # reaches ~180px (at scale 1.0) from the body centre, so standing
+        # directly under a side panel could push the hand off the frame.
+        reach = int(180 * CHAR_SCALE) + 45
+        target_cx = max(reach, min(W - reach, target_cx))
 
         # Fixed bottom-bound estimate (dry-run on a scratch canvas) so the
         # headline position below the mascot stays stable across every pose
@@ -2779,12 +2784,27 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         f, wrapped, size = chosen
         line_h = size + 20
         total_h = len(wrapped) * line_h
-        y = bottom_zone_top + max(0, (available_h - total_h) // 2)
-        for line in wrapped:
-            bb = draw.textbbox((0, 0), line, font=f)
-            x = (W - (bb[2] - bb[0])) // 2
-            draw.text((x, y), line, font=f, fill=INK)
-            y += line_h
+        cap_y0 = bottom_zone_top + max(0, (available_h - total_h) // 2)
+
+        def _draw_caption(img, tscale=1.0, dx=0, dy=0):
+            """Kinetic caption: heavy-stroke type that pops in and jitters.
+            Drawn per animation frame (not baked into the slide background)
+            so it can scale and vibrate — the entrance overshoots 100% then
+            settles, and a small offset keeps it alive while on screen."""
+            dd = ImageDraw.Draw(img)
+            fs = max(8, int(size * tscale))
+            ff = get_font(fs)
+            lh = int((size + 20) * tscale)
+            th = len(wrapped) * lh
+            # keep the block vertically centred in its zone as it scales
+            yy = cap_y0 + (total_h - th) // 2 + dy
+            stroke = max(2, int(fs * 0.14))
+            for ln in wrapped:
+                b = dd.textbbox((0, 0), ln, font=ff, stroke_width=stroke)
+                xx = (W - (b[2] - b[0])) // 2 + dx
+                dd.text((xx, yy), ln, font=ff, fill=(255, 255, 255),
+                        stroke_width=stroke, stroke_fill=INK)
+                yy += lh
 
         if is_first:
             hook = "WATCH TIL THE END"
@@ -2813,43 +2833,68 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         moved = (prev_cx is not None and target_cx != prev_cx)
         RAMP = min(0.6, slide_dur * 0.4)
 
-        sub_frames = []  # (pose, phase, cx_for_frame, duration)
-        if is_first:
-            N = 6
-            for k in range(N):
-                phase = (k + 1) / N
-                sub_frames.append(('bounce', phase, target_cx, slide_dur / N))
-        else:
-            settled_pose = (
-                'confused' if (is_diff_slide) else
-                'calm' if (is_last or side == 'both') else
-                ('point_left' if side == 'A' else 'point_right')
-            )
-            if moved:
-                RN = 4
-                per = RAMP / RN
-                for k in range(RN):
-                    phase = k / RN
-                    t = (k + 1) / RN
-                    interp_cx = int(prev_cx + (target_cx - prev_cx) * t)
-                    sub_frames.append(('walk', phase, interp_cx, per))
-                sub_frames.append((settled_pose, 0.0, target_cx, max(slide_dur - RAMP, 0.1)))
-            else:
-                sub_frames.append((settled_pose, 0.0, target_cx, slide_dur))
+        settled_pose = (
+            'confused' if is_diff_slide else
+            'calm' if (is_last or side == 'both') else
+            ('point_left' if side == 'A' else 'point_right')
+        )
 
-        for k, (pose, phase, cx_frame, dur) in enumerate(sub_frames):
-            frame = bg.copy()
-            _stamp_mascot(frame, pose, cx_frame, mascot_top, phase)
-            fp = os.path.join(work_dir, f"info_{idx}_{k}.jpg")
-            frame.save(fp, "JPEG", quality=95)
+        def _mascot_at(t):
+            """(pose, phase, cx) for the mascot at time t within this slide."""
+            if is_first:
+                return ('bounce', t / max(slide_dur, 0.01), target_cx)
+            if moved and t < RAMP:
+                fr = t / RAMP
+                return ('walk', (fr * 2.0) % 1.0,
+                        int(prev_cx + (target_cx - prev_cx) * fr))
+            return (settled_pose, 0.0, target_cx)
+
+        # Caption entrance: overshoot past full size, then settle.
+        POP = [(0.30, 0.05), (0.80, 0.05), (1.15, 0.06), (1.04, 0.05), (1.0, 0.05)]
+        # Then a small looping vibration so the type never sits dead still.
+        JITTER = [(0, 0), (3, -2), (-3, 2), (2, 3), (-2, -3)]
+        JIT_STEP = 0.10
+
+        sub_frames = []   # (mascot_pose, mascot_phase, cx, tscale, dx, dy, dur)
+        t = 0.0
+        for tscale, dur in POP:
+            if t >= slide_dur:
+                break
+            mp, mph, mcx = _mascot_at(t)
+            sub_frames.append((mp, mph, mcx, tscale, 0, 0, min(dur, slide_dur - t)))
+            t += dur
+        ji = 0
+        while t < slide_dur - 1e-3:
+            dur = min(JIT_STEP, slide_dur - t)
+            mp, mph, mcx = _mascot_at(t)
+            dx, dy = JITTER[ji % len(JITTER)]
+            sub_frames.append((mp, mph, mcx, 1.0, dx, dy, dur))
+            ji += 1
+            t += dur
+
+        # Identical frames are written once and simply referenced again in
+        # the concat list — a 5s slide is ~50 steps but only a handful of
+        # unique images, which keeps disk and encode time down on Render.
+        cache = {}
+        for k, (pose, phase, cx_frame, tscale, dx, dy, dur) in enumerate(sub_frames):
+            key = (pose, round(phase, 3), cx_frame, round(tscale, 3), dx, dy)
+            fp = cache.get(key)
+            if fp is None:
+                frame = bg.copy()
+                _stamp_mascot(frame, pose, cx_frame, mascot_top, phase)
+                _draw_caption(frame, tscale, dx, dy)
+                fp = os.path.join(work_dir, f"info_{idx}_{k}.jpg")
+                frame.save(fp, "JPEG", quality=95)
+                del frame
+                cache[key] = fp
             frame_paths.append(fp)
             frame_durations.append(dur)
-            del frame
 
         prev_cx = target_cx
         del bg
         gc.collect()
-        print(f"  infographic slide {idx+1}/{len(slides)} ready ({len(sub_frames)} anim frame(s))")
+        print(f"  infographic slide {idx+1}/{len(slides)} ready "
+              f"({len(sub_frames)} steps, {len(cache)} unique frames)")
 
     return frame_paths, frame_durations
 
