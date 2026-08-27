@@ -2332,9 +2332,12 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         upper_w, fore_w, wrist_w = int(30 * s), int(24 * s), int(18 * s)
 
         if mode == 'point':
-            elbow = (cx + sign * int(74 * s), sy + int(10 * s))
-            wrist = (cx + sign * int(120 * s), sy - int(4 * s))
-            hand_dir = (sign, 0)
+            # Angled UP-and-out so the gesture actually lands on the photo
+            # panel above the character, instead of pointing horizontally
+            # into empty space beside it.
+            elbow = (cx + sign * int(66 * s), sy - int(26 * s))
+            wrist = (cx + sign * int(104 * s), sy - int(74 * s))
+            hand_dir = (sign * 0.55, -0.84)
         elif mode == 'up':
             elbow = (cx + sign * int(74 * s), sy - int(30 * s))
             wrist = (cx + sign * int(96 * s), sy - int(88 * s))
