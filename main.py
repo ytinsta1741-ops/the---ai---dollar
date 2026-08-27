@@ -249,35 +249,21 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
 
         youtube = build("youtube", "v3", credentials=creds)
 
-        topic_tags = keywords if keywords else []
-        base_tags = [
-            "personal finance", "money tips", "investing for beginners",
-            "financial literacy", "how to invest", "money management",
-            "wealth building", "passive income", "financial education",
-            "stock market for beginners", "save money", "make money online",
-            "budget tips", "debt free journey", "credit score tips",
-            "side hustle ideas 2026", "financial freedom", "money advice",
-            "finance tips", "how to get rich", "TheAIDollar",
-            "money hacks that work", "rich vs poor habits", "compound interest explained",
-            "index funds for beginners", "roth ira explained", "how to save money fast",
-            "money mistakes to avoid", "millionaire habits", "financial independence",
-            "how to build wealth", "money rules", "investing tips 2026",
-        ]
-        yt_tags = topic_tags + [t for t in base_tags if t.lower() not in [k.lower() for k in topic_tags]]
+        # TAGS — deliberately few and specific. Stuffing 30+ generic tags is
+        # a soft negative ranking signal on YouTube now; current guidance is
+        # ~3-5 focused tags: the exact topic, close variants, then one or two
+        # broader category tags. Topic keywords come from the AI script, so
+        # they're the real subject of THIS video rather than boilerplate.
         import re
-        yt_tags = [re.sub(r'[<>",]', '', t).strip() for t in yt_tags if t.strip()]
-        yt_tags = [t[:30] for t in yt_tags if t]
-        total = 0
-        trimmed = []
-        for t in yt_tags:
-            added = len(t) + (1 if trimmed else 0)
-            if total + added > 450:
-                break
-            trimmed.append(t)
-            total += added
-        yt_tags = trimmed
+        topic_tags = [k for k in (keywords or []) if k and k.strip()][:4]
+        broad_tags = ["personal finance", "financial literacy"]
+        yt_tags = topic_tags + [t for t in broad_tags
+                                if t.lower() not in [k.lower() for k in topic_tags]]
+        yt_tags = [re.sub(r'[<>",]', '', t).strip()[:30] for t in yt_tags]
+        yt_tags = [t for t in yt_tags if t][:6]
 
-        kw_line = ", ".join(topic_tags[:5]) if topic_tags else "money tips, finance, investing"
+        kw_line = ", ".join(topic_tags[:3]) if topic_tags else "money tips, finance, investing"
+        primary_kw = topic_tags[0] if topic_tags else "personal finance"
 
         if is_short:
             yt_title = title[:100]
@@ -301,27 +287,28 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
                 "Tip #3 alone is worth watching the whole video.",
                 "The ending will shock you.",
             ]
+            # DESCRIPTION — leads with the real topic keyword inside the
+            # first ~100 characters (what YouTube reads to classify a Short),
+            # then natural prose. Only 3 hashtags: current guidance is that
+            # 1-3 relevant hashtags outperform a 20-tag block, which reads
+            # as spam.
+            # Keep the keyword's own casing — .title() would turn an acronym
+            # like "APR vs APY" into the unreadable "#AprVsApy".
+            hashtag_kw = re.sub(r'[^A-Za-z0-9]', '', primary_kw) or "PersonalFinance"
             yt_desc = (
-                f"{kw_line} — {title}\n"
-                f"Learn {kw_line} in 60 seconds. Free finance education daily.\n\n"
-                f"{random.choice(hooks)}\n"
-                f"{random.choice(open_loops)}\n\n"
-                f"WATCH MORE:\n"
-                f"Subscribe for daily money lessons: https://www.youtube.com/@TheAIDollar?sub_confirmation=1\n\n"
-                f"ENGAGE:\n"
-                f"Comment your #1 money struggle below\n"
-                f"Share this with someone who needs to hear it\n"
-                f"Turn on notifications — new videos every day\n\n"
-                f"TOPICS COVERED: {kw_line}, personal finance tips, "
-                f"how to build wealth, money management for beginners, "
-                f"investing basics, financial literacy 2026\n\n"
-                f"#Shorts #Finance #Money #Investing #PersonalFinance "
-                f"#WealthBuilding #FinancialFreedom #MoneyTips "
-                f"#HowToGetRich #PassiveIncome #DebtFree #SideHustle "
-                f"#FinancialLiteracy #MakeMoney #MoneyHacks "
-                f"#InvestingForBeginners #TheAIDollar "
-                f"#MillionaireMindset #FinancialEducation "
-                f"#MoneyTok #FinTok #LearnOnYouTube"
+                f"{title}\n\n"
+                f"{primary_kw} explained in under a minute — the difference "
+                f"most people get wrong, in plain English with a real example.\n\n"
+                f"{random.choice(hooks)} {random.choice(open_loops)}\n\n"
+                f"This channel breaks down one confusing pair of money terms "
+                f"every day: what each one actually means, how to tell them "
+                f"apart in seconds, and what mixing them up costs you in real "
+                f"dollars. No jargon, no filler.\n\n"
+                f"Covered here: {kw_line}.\n\n"
+                f"Comment which one you always mixed up, and subscribe for a "
+                f"new money term explained daily:\n"
+                f"https://www.youtube.com/@TheAIDollar?sub_confirmation=1\n\n"
+                f"#Shorts #{hashtag_kw} #PersonalFinance"
             )
             yt_tags.append("Shorts")
         else:
@@ -467,33 +454,37 @@ def upload_to_instagram(video_path, title, keywords=None):
         return False
 
     try:
-        # SEO: lead with the title (already keyword-rich — it names both
-        # confusable terms verbatim, which is what people actually search).
-        # Keep hashtags small and targeted instead of a 15-tag wall — Meta's
-        # own creator guidance says a spammy-looking tag block suppresses
-        # reach rather than helping discovery.
-        kw_list = [k for k in (keywords or []) if k and len(k) <= 30][:4]
-        kw_tags = " ".join(f"#{k.replace(' ', '').replace('-', '')}" for k in kw_list)
-        # Smaller/niche-leaning tag set — huge tags like #Finance (100M+ posts)
-        # bury a small account instantly; medium finance-education tags give a
-        # realistic shot at ranking. Kept to ~7 total, all relevant.
-        broad_tags = "#MoneyTips #FinanceForBeginners #PersonalFinanceTips"
+        # Instagram now reads the CAPTION TEXT itself as keywords for search
+        # and recommendations — captions outrank hashtags for discovery — so
+        # the opening lines spell the topic out in natural language rather
+        # than relying on tags. Hashtags are capped at 5 (Instagram's current
+        # limit) and kept niche: broad tags like #Finance bury a small
+        # account and add little ranking value now.
+        import re as _re
+        kw_list = [k for k in (keywords or []) if k and len(k) <= 30][:2]
+        kw_tags = [f"#{_re.sub(r'[^A-Za-z0-9]', '', k)}" for k in kw_list]
+        niche_tags = ["#MoneyTips", "#FinanceForBeginners", "#FinancialLiteracy"]
+        tags = (kw_tags + [t for t in niche_tags if t.lower() not in
+                           [x.lower() for x in kw_tags]])[:5]
 
-        # Instagram pushes a Reel to non-followers based mostly on SAVES and
-        # COMMENTS, not likes — so the caption's first job is to provoke a
-        # comment (a question people can answer in one word) and a save.
+        # Reach to non-followers is driven mostly by SAVES and COMMENTS, so
+        # the caption asks a one-word question and prompts a save.
         comment_bait = [
             "Which one always confused you? 👇",
             "Did you know the difference? Comment yes or no 👇",
             "Be honest — did you mix these up? 👇",
             "Which one did you get wrong? Tell me below 👇",
         ]
+        topic_line = ", ".join(kw_list) if kw_list else "personal finance basics"
         caption = (
             f"{title}\n\n"
+            f"{topic_line} explained simply — what each one actually means, "
+            f"how to tell them apart in seconds, and what confusing them "
+            f"costs you in real money.\n\n"
             f"{random.choice(comment_bait)}\n\n"
             f"💾 Save this so you don't forget it.\n"
             f"➕ Follow @theaidollar — one money term explained simply, every day.\n\n"
-            f"{broad_tags} {kw_tags} #Reels #moneyhacks"
+            + " ".join(tags)
         )
 
         video_url = f"{PUBLIC_BASE_URL}/media/{os.path.basename(video_path)}"
