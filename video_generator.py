@@ -2793,9 +2793,28 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         mascot_top = card_top + card_h + 70
         is_last = (idx == len(slides) - 1)
         is_first = (idx == 0)
-        if side == 'A' and panel_left_cx is not None:
+
+        # Where the character stands is driven by the SCRIPT ARC, not by
+        # which images happened to load. The 7-slide structure is:
+        #   0 hook | 1-2 Person A / Term A | 3-4 Person B / Term B
+        #   5 verdict | 6 loop closer
+        # Deriving it from image indices meant the character wandered and
+        # pointed at panels that had nothing to do with the line being
+        # spoken, which read as random movement.
+        n_sl = len(slides)
+        if n_sl >= 7:
+            if idx in (1, 2):
+                arc_side = 'A'
+            elif idx in (3, 4):
+                arc_side = 'B'
+            else:
+                arc_side = 'both'
+        else:
+            arc_side = side
+
+        if arc_side == 'A' and panel_left_cx is not None:
             target_cx = panel_left_cx
-        elif side == 'B' and panel_right_cx is not None:
+        elif arc_side == 'B' and panel_right_cx is not None:
             target_cx = panel_right_cx
         else:
             target_cx = W // 2
@@ -2836,25 +2855,28 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         cap_chunks = []
         i = 0
         while i < len(cap_words):
-            # pair short words, keep long ones alone so they stay huge
-            if (i + 1 < len(cap_words)
-                    and len(cap_words[i]) + len(cap_words[i + 1]) <= 13):
-                cap_chunks.append(cap_words[i:i + 2])
-                i += 2
-            else:
-                cap_chunks.append([cap_words[i]])
+            # group up to 3 short words; long words stand alone
+            grp = [cap_words[i]]
+            i += 1
+            while (i < len(cap_words) and len(grp) < 3
+                   and sum(len(w) for w in grp) + len(cap_words[i]) <= 16):
+                grp.append(cap_words[i])
                 i += 1
+            cap_chunks.append(grp)
         if not cap_chunks:
             cap_chunks = [[""]]
 
+        # One font size for the whole slide, chosen so the LONGEST chunk fits
+        # the safe width — the type then never changes scale between chunks.
+        _longest = max(len(" ".join(c)) for c in cap_chunks)
+        _cap_base = 92 if _longest <= 10 else (78 if _longest <= 14 else 66)
+
         def _draw_caption(img, chunk_idx, tscale=1.0, dx=0, dy=0):
-            """Draw one 1-2 word chunk, centred, heavy-stroked and colour
+            """Draw one short word-chunk, centred, heavy-stroked and colour
             coded. tscale drives the pop-in overshoot for that chunk."""
             dd = ImageDraw.Draw(img)
             words = cap_chunks[min(chunk_idx, len(cap_chunks) - 1)]
-            # size to fit the widest chunk so the type never jumps in scale
-            base = 150 if max(len(" ".join(c)) for c in cap_chunks) <= 9 else 110
-            fs = max(10, int(base * tscale))
+            fs = max(10, int(_cap_base * tscale))
             ff = get_font(fs)
             stroke = max(3, int(fs * 0.13))
             space = fs // 4
@@ -2896,12 +2918,12 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         del draw
         slide_dur = durations[idx] if idx < len(durations) else 4.0
         moved = (prev_cx is not None and target_cx != prev_cx)
-        RAMP = min(0.6, slide_dur * 0.4)
+        RAMP = min(1.1, slide_dur * 0.45)   # long enough to read as walking
 
         settled_pose = (
-            'confused' if is_diff_slide else
-            'calm' if (is_last or side == 'both') else
-            ('point_left' if side == 'A' else 'point_right')
+            'point_both' if (n_sl >= 7 and idx == 5) else   # the verdict names both
+            'calm' if (is_last or arc_side == 'both') else
+            ('point_left' if arc_side == 'A' else 'point_right')
         )
 
         def _mascot_at(t):
@@ -2910,8 +2932,11 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                 return ('bounce', t / max(slide_dur, 0.01), target_cx)
             if moved and t < RAMP:
                 fr = t / RAMP
-                return ('walk', (fr * 2.0) % 1.0,
-                        int(prev_cx + (target_cx - prev_cx) * fr))
+                # ease in/out so the walk starts and stops naturally rather
+                # than snapping to full speed
+                eased = fr * fr * (3.0 - 2.0 * fr)
+                return ('walk', (fr * 3.0) % 1.0,
+                        int(prev_cx + (target_cx - prev_cx) * eased))
             return (settled_pose, 0.0, target_cx)
 
         # Chunk timing is weighted by SYLLABLE-ish length (word characters)
@@ -2928,8 +2953,15 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             acc += share
 
         POP = [(0.55, 0.04), (1.18, 0.045), (1.0, 0.0)]   # last dur = remainder
-        JITTER = [(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1)]
-        JIT_STEP = 0.12   # finer sampling so motion doesn't look choppy
+
+        # Frame budget is spent where motion actually happens. The jitter
+        # loop is gone: it forced a new unique frame every step across the
+        # whole slide purely to wiggle the text 1px, which spent the budget
+        # on nothing and still looked choppy. Instead the character's walk
+        # is sampled at 30fps (genuinely smooth) while a settled character
+        # emits ONE frame that simply holds — no cost, and nothing on screen
+        # is moving during it anyway.
+        MOTION_STEP = 1.0 / 30.0
 
         sub_frames = []   # (pose, phase, cx, chunk, tscale, dx, dy, dur)
         for ci in range(n_chunks):
@@ -2942,13 +2974,12 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                 d = min(dur, c_end - t)
                 sub_frames.append((mp, mph, mcx, ci, tscale, 0, 0, d))
                 t += d
-            ji = 0
             while t < c_end - 1e-3:
-                d = min(JIT_STEP, c_end - t)
                 mp, mph, mcx = _mascot_at(t)
-                dx, dy = JITTER[ji % len(JITTER)]
-                sub_frames.append((mp, mph, mcx, ci, 1.0, dx, dy, d))
-                ji += 1
+                in_motion = mp in ('walk', 'bounce')
+                d = min(MOTION_STEP if in_motion else (c_end - t), c_end - t)
+                sub_frames.append((mp, mph, mcx, ci, 1.0, 0, 0, d))
+                t += d
                 t += d
 
         # Identical frames are written once and simply referenced again in
