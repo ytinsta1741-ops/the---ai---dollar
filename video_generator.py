@@ -6,6 +6,7 @@ Finance education Shorts with per-slide audio sync + zoom + crossfade + deep mal
 
 import os
 import gc
+import base64
 import subprocess
 import asyncio
 import requests
@@ -52,7 +53,10 @@ def _run_ffmpeg_hard_timeout(cmd, timeout):
 
 CONFIG = {"output_dir": "./videos"}
 
-PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
+# Strip surrounding quotes: a key pasted as "abc123" (the .env convention)
+# is sent verbatim in the Authorization header and Pexels answers 401, which
+# silently disabled every photo lookup in this file.
+PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "").strip().strip('"').strip("'")
 
 from topic_generator import generate_short_topic, generate_long_topic
 
@@ -1158,6 +1162,97 @@ def _fetch_wikipedia_thumbnail(name, img_path):
     return False
 
 
+CF_ACCOUNT_ID = os.getenv("CF_ACCOUNT_ID", "").strip().strip('"').strip("'")
+CF_API_TOKEN = os.getenv("CF_API_TOKEN", "").strip().strip('"').strip("'")
+CF_IMAGE_MODEL = os.getenv("CF_IMAGE_MODEL", "@cf/black-forest-labs/flux-1-schnell")
+
+# Appended to every generated prompt. Kept separate from the subject so the
+# subject stays the dominant part of the prompt.
+_GEN_STYLE = ("professional editorial photograph, 50mm lens, natural soft "
+              "lighting, shallow depth of field, sharp focus, crisp fine "
+              "detail, high resolution, clean composition, commercial stock "
+              "photography quality")
+# flux-1-schnell takes no negative_prompt, so exclusions have to be worded
+# as part of the prompt itself.
+_GEN_NEGATIVE = ("No text, no words, no letters, no watermark, no logos. "
+                 "Not blurry, not distorted, not deformed.")
+
+
+def _generate_cloudflare(prompt, img_path, width=768, height=1024, seed=13):
+    """Generate one image with FLUX-1-schnell on Cloudflare Workers AI.
+
+    This is the primary generator. Pollinations, the previous one, retired
+    its FLUX endpoint and now serves only `sana` regardless of the `model`
+    parameter sent — a small distilled model whose output is consistently
+    soft and melted-looking. No amount of prompt wording fixed it, so the
+    fix had to be a different model. Cloudflare's free tier covers roughly
+    2,000 images a day against the ~14 this channel needs, with no card.
+
+    flux-1-schnell accepts only prompt/steps/seed and always returns a
+    square image; `width`/`height` are accepted for call-site symmetry but
+    ignored, and the frame prep step crops to 9:16 — which is why prompts
+    ask for a centred subject."""
+    if not (CF_ACCOUNT_ID and CF_API_TOKEN):
+        return False
+    url = (f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT_ID}"
+           f"/ai/run/{CF_IMAGE_MODEL}")
+    try:
+        resp = requests.post(
+            url,
+            headers={"Authorization": f"Bearer {CF_API_TOKEN}"},
+            json={"prompt": f"{prompt}. {_GEN_STYLE}. {_GEN_NEGATIVE}"[:2048],
+                  "steps": 8,
+                  "seed": seed},
+            timeout=120,
+        )
+        if resp.status_code != 200:
+            print(f"  [WARN] Cloudflare image {resp.status_code}: "
+                  f"{resp.text[:160]}")
+            return False
+        data = resp.json()
+        # flux-1-schnell returns base64 in result.image; other image models
+        # return raw bytes, so handle both rather than assuming one shape.
+        b64 = (data.get("result") or {}).get("image")
+        if not b64:
+            print(f"  [WARN] Cloudflare returned no image: {str(data)[:160]}")
+            return False
+        raw = base64.b64decode(b64)
+        if len(raw) < 5000:
+            return False
+        with open(img_path, "wb") as f:
+            f.write(raw)
+        return True
+    except Exception as e:
+        print(f"  [WARN] Cloudflare image generation failed: {e}")
+        return False
+
+
+def _generate_pollinations(prompt, img_path, width=768, height=1024, seed=13):
+    """Last-resort generator. Quality is poor (see _generate_cloudflare) but
+    it needs no credentials, so it keeps the pipeline producing something if
+    the Cloudflare token is missing or its daily quota runs out."""
+    full = f"{_GEN_STYLE}, {prompt}, no text, no words, no watermark"
+    url = ("https://image.pollinations.ai/prompt/"
+           f"{urllib.parse.quote(full)}"
+           f"?width={width}&height={height}&nologo=true&seed={seed}")
+    try:
+        resp = requests.get(url, timeout=90)
+        if resp.status_code == 200 and len(resp.content) > 5000:
+            with open(img_path, "wb") as f:
+                f.write(resp.content)
+            return True
+    except Exception as e:
+        print(f"  [WARN] Pollinations generation failed: {e}")
+    return False
+
+
+def generate_image(prompt, img_path, width=768, height=1024, seed=13):
+    """Generate one image for `prompt`, best available generator first."""
+    if _generate_cloudflare(prompt, img_path, width, height, seed):
+        return True
+    return _generate_pollinations(prompt, img_path, width, height, seed)
+
+
 def fetch_term_hero_images(term_a, term_b, save_dir, icon_a=None, icon_b=None):
     """One clean, purpose-drawn ILLUSTRATION per confusable term for the
     side-by-side panels.
@@ -1190,25 +1285,10 @@ def fetch_term_hero_images(term_a, term_b, save_dir, icon_a=None, icon_b=None):
             subject = (icons[idx] or "").strip()
             if not subject:
                 subject = f"a bank building and coins representing {term}"
-            style = ("flat vector illustration, simple bold clean icon, "
-                     "minimal shapes, thick outlines, muted professional "
-                     "palette, centred single subject, plain light "
-                     "background, infographic style, no text, no words, "
-                     "no letters, no watermark")
-            prompt = f"{style}, {subject}"
-            encoded = urllib.parse.quote(prompt)
-            url = (f"https://image.pollinations.ai/prompt/{encoded}"
-                   f"?width=768&height=1024&nologo=true&seed={idx * 977 + 13}"
-                   f"&model=flux&enhance=true")
-            try:
-                resp = requests.get(url, timeout=90)
-                if resp.status_code == 200 and len(resp.content) > 5000:
-                    with open(img_path, 'wb') as f:
-                        f.write(resp.content)
-                    got = True
-                    print(f"  [ILLUS] {term}")
-            except Exception as e:
-                print(f"  [WARN] Illustration generation failed for {term}: {e}")
+            if generate_image(subject, img_path, 768, 1024,
+                              seed=idx * 977 + 13):
+                got = True
+                print(f"  [ILLUS] {term}")
 
         if not got and PEXELS_API_KEY:
             try:
@@ -1270,25 +1350,11 @@ def fetch_hd_images(slides, save_dir, landscape=False):
             # Same illustration style as the comparison panels so the whole
             # video looks like one designed piece rather than a mix of
             # stock photography and graphics.
-            style = ("flat vector illustration, simple bold clean shapes, "
-                     "thick outlines, muted professional palette, centred "
-                     "subject, plain light background, infographic style, "
-                     "no text, no words, no letters, no watermark")
-            prompt = f"{style}, {desc}"
-            encoded = urllib.parse.quote(prompt)
-            url = (f"https://image.pollinations.ai/prompt/{encoded}"
-                   f"?width={img_w}&height={img_h}&nologo=true"
-                   f"&seed={i * 131 + 7}&model=flux&enhance=true")
-            try:
-                resp = requests.get(url, timeout=90)
-                if resp.status_code == 200 and len(resp.content) > 5000:
-                    with open(img_path, 'wb') as f:
-                        f.write(resp.content)
-                    images.append(img_path)
-                    print(f"  [ILLUS] Slide {i+1}: {desc[:44]}")
-                    got = True
-            except Exception as e:
-                print(f"  [WARN] Illustration gen failed slide {i+1}: {e}")
+            if generate_image(desc, img_path, img_w, img_h,
+                              seed=i * 131 + 7):
+                images.append(img_path)
+                print(f"  [ILLUS] Slide {i+1}: {desc[:44]}")
+                got = True
 
         if not got and PEXELS_API_KEY:
             try:
