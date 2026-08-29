@@ -1422,10 +1422,11 @@ def _run_google_tts(text, output_path, speaking_rate=0.9, pitch=-1.0):
 
 
 FISH_AUDIO_API_KEY = os.getenv("FISH_AUDIO_API_KEY", "")
-# "Adam" — picked by ear from a side-by-side sample test as the most
-# natural/human-sounding of the candidates; clear and engaging rather than
-# obviously synthetic, which is what the channel needs for retention.
-FISH_AUDIO_VOICE_ID = os.getenv("FISH_AUDIO_VOICE_ID", "722523118ee94709b661502c76b016b7")
+# "ALEX_CHIKNA" — picked by ear from a side-by-side sample test: a
+# confident, fast-paced young male voice. Chosen over the deeper narrator
+# options because a lighter, brighter delivery reads as more human and
+# energetic in short-form than a bass documentary voice.
+FISH_AUDIO_VOICE_ID = os.getenv("FISH_AUDIO_VOICE_ID", "52e0660e03fe4f9a8d2336f67cab5440")
 
 
 def _run_fish_audio_tts(text, output_path, speed=1.0):
@@ -1508,7 +1509,7 @@ def create_slide_audios(slides, work_dir):
                 os.remove(test_path)
             except Exception:
                 pass
-            print("[OK] Using Fish Audio S2.1 Pro (Adam - natural)")
+            print("[OK] Using Fish Audio S2.1 Pro (Alex Chikna - energetic)")
         else:
             print("[WARN] Fish Audio unavailable, trying Piper / Google TTS / edge-tts")
 
@@ -2897,52 +2898,80 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         size = 96
         cap_y0 = bottom_zone_top + max(0, (available_h - size) // 2)
 
-        # Word-by-word caption: only one or two words are on screen at a
-        # time, each chunk popping in as it is spoken. Because so little
-        # text is shown at once it can be set far larger than a full
-        # sentence would allow, which is what makes it readable on a phone
-        # at a glance. Colour carries meaning (see _word_colour).
+        # AUTO-HIGHLIGHT (karaoke) SUBTITLES: the whole spoken line stays on
+        # screen and the word currently being said is highlighted in a
+        # coloured pill, the highlight stepping along in time with the
+        # narration. Chunk-replacement (only 1-3 words visible at a time)
+        # was tried first, but it hides the sentence, so the viewer can't
+        # read ahead and the line never reads as a sentence at all.
         cap_words = text.split()
-        cap_chunks = []
-        i = 0
-        while i < len(cap_words):
-            # group up to 3 short words; long words stand alone
-            grp = [cap_words[i]]
-            i += 1
-            while (i < len(cap_words) and len(grp) < 3
-                   and sum(len(w) for w in grp) + len(cap_words[i]) <= 16):
-                grp.append(cap_words[i])
-                i += 1
-            cap_chunks.append(grp)
-        if not cap_chunks:
-            cap_chunks = [[""]]
+        if not cap_words:
+            cap_words = [""]
 
-        # One font size for the whole slide, chosen so the LONGEST chunk fits
-        # the safe width — the type then never changes scale between chunks.
-        _longest = max(len(" ".join(c)) for c in cap_chunks)
-        _cap_base = 92 if _longest <= 10 else (78 if _longest <= 14 else 66)
+        # Pick the largest size at which the line wraps to at most 3 rows.
+        _cap_fs, _cap_rows = 62, None
+        for _try in (72, 66, 60, 54, 48, 42):
+            _f = get_font(_try)
+            rows, cur = [], []
+            for w in cap_words:
+                trial = cur + [w]
+                bb = draw.textbbox((0, 0), " ".join(trial), font=_f)
+                if (bb[2] - bb[0]) <= MAX_TW or not cur:
+                    cur = trial
+                else:
+                    rows.append(cur)
+                    cur = [w]
+            if cur:
+                rows.append(cur)
+            if len(rows) <= 3:
+                _cap_fs, _cap_rows = _try, rows
+                break
+        if _cap_rows is None:
+            _f = get_font(42)
+            _cap_rows = [cap_words[i:i + 4] for i in range(0, len(cap_words), 4)][:3]
+            _cap_fs = 42
 
-        def _draw_caption(img, chunk_idx, tscale=1.0, dx=0, dy=0):
-            """Draw one short word-chunk, centred, heavy-stroked and colour
-            coded. tscale drives the pop-in overshoot for that chunk."""
+        # index of the first word on each row, so the active word can be found
+        _row_starts, _n = [], 0
+        for r in _cap_rows:
+            _row_starts.append(_n)
+            _n += len(r)
+
+        def _draw_caption(img, word_idx, tscale=1.0, dx=0, dy=0):
+            """Draw the full line with the active word highlighted. tscale
+            scales only the active word, giving it a small pop as it lands."""
             dd = ImageDraw.Draw(img)
-            words = cap_chunks[min(chunk_idx, len(cap_chunks) - 1)]
-            fs = max(10, int(_cap_base * tscale))
-            ff = get_font(fs)
-            stroke = max(3, int(fs * 0.13))
-            space = fs // 4
+            ff = get_font(_cap_fs)
+            stroke = max(3, int(_cap_fs * 0.13))
+            space = int(_cap_fs * 0.30)
+            line_h = int(_cap_fs * 1.28)
+            total_h = line_h * len(_cap_rows)
+            yy = cap_y0 - total_h // 2 + dy
 
-            widths = []
-            for w in words:
-                b = dd.textbbox((0, 0), w, font=ff, stroke_width=stroke)
-                widths.append(b[2] - b[0])
-            total_w = sum(widths) + space * (len(words) - 1)
-            xx = (W - total_w) // 2 + dx
-            yy = cap_y0 + dy
-            for w, wd in zip(words, widths):
-                dd.text((xx, yy), w, font=ff, fill=_word_colour(w),
-                        stroke_width=stroke, stroke_fill=INK)
-                xx += wd + space
+            for ri, row in enumerate(_cap_rows):
+                widths = []
+                for w in row:
+                    b = dd.textbbox((0, 0), w, font=ff, stroke_width=stroke)
+                    widths.append(b[2] - b[0])
+                total_w = sum(widths) + space * (len(row) - 1)
+                xx = (W - total_w) // 2 + dx
+                for wi, (w, wd) in enumerate(zip(row, widths)):
+                    gi = _row_starts[ri] + wi
+                    if gi == word_idx:
+                        # highlight pill behind the word being spoken
+                        pad_x, pad_y = int(_cap_fs * 0.16), int(_cap_fs * 0.10)
+                        dd.rounded_rectangle(
+                            [xx - pad_x, yy - pad_y,
+                             xx + wd + pad_x, yy + _cap_fs + pad_y],
+                            radius=int(_cap_fs * 0.22),
+                            fill=_word_colour(w) if _word_colour(w) != CAP_WHITE else ACCENT)
+                        dd.text((xx, yy), w, font=ff, fill=(255, 255, 255),
+                                stroke_width=stroke, stroke_fill=INK)
+                    else:
+                        dd.text((xx, yy), w, font=ff, fill=CAP_WHITE,
+                                stroke_width=stroke, stroke_fill=INK)
+                    xx += wd + space
+                yy += line_h
 
         if is_first:
             hook = "WATCH TIL THE END"
@@ -2990,12 +3019,11 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                         int(prev_cx + (target_cx - prev_cx) * eased))
             return (settled_pose, 0.0, target_cx)
 
-        # Chunk timing is weighted by SYLLABLE-ish length (word characters)
-        # rather than split evenly, so a two-long-word chunk holds longer
-        # than a two-short-word chunk — that tracks natural speech pace and
-        # keeps the on-screen words with the voice instead of drifting.
-        n_chunks = len(cap_chunks)
-        weights = [max(1, sum(len(w) for w in c)) for c in cap_chunks]
+        # The highlight advances one WORD at a time, each word holding for a
+        # share of the slide weighted by its length, so longer words linger
+        # and the highlight tracks the narration instead of drifting.
+        n_words = len(cap_words)
+        weights = [max(2, len(w)) for w in cap_words]
         w_total = sum(weights)
         bounds, acc = [], 0.0
         for wt in weights:
@@ -3003,34 +3031,21 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             bounds.append((acc, acc + share))
             acc += share
 
-        POP = [(0.55, 0.04), (1.18, 0.045), (1.0, 0.0)]   # last dur = remainder
-
-        # Frame budget is spent where motion actually happens. The jitter
-        # loop is gone: it forced a new unique frame every step across the
-        # whole slide purely to wiggle the text 1px, which spent the budget
-        # on nothing and still looked choppy. Instead the character's walk
-        # is sampled at 30fps (genuinely smooth) while a settled character
-        # emits ONE frame that simply holds — no cost, and nothing on screen
-        # is moving during it anyway.
+        # Frame budget is spent where motion actually happens. Sampling the
+        # character's walk at the output framerate keeps it genuinely
+        # smooth, while a settled character emits ONE frame that simply
+        # holds — nothing is moving during it, so extra frames buy nothing.
         MOTION_STEP = 1.0 / 60.0   # matches the 60fps output exactly
 
-        sub_frames = []   # (pose, phase, cx, chunk, tscale, dx, dy, dur)
-        for ci in range(n_chunks):
+        sub_frames = []   # (pose, phase, cx, word_idx, tscale, dx, dy, dur)
+        for ci in range(n_words):
             c_start, c_end = bounds[ci]
             t = c_start
-            for tscale, dur in POP[:-1]:
-                if t >= c_end:
-                    break
-                mp, mph, mcx = _mascot_at(t)
-                d = min(dur, c_end - t)
-                sub_frames.append((mp, mph, mcx, ci, tscale, 0, 0, d))
-                t += d
             while t < c_end - 1e-3:
                 mp, mph, mcx = _mascot_at(t)
                 in_motion = mp in ('walk', 'bounce')
                 d = min(MOTION_STEP if in_motion else (c_end - t), c_end - t)
                 sub_frames.append((mp, mph, mcx, ci, 1.0, 0, 0, d))
-                t += d
                 t += d
 
         # Identical frames are written once and simply referenced again in
