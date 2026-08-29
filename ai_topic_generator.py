@@ -29,71 +29,79 @@ GEMINI_MODEL_CANDIDATES = [m for m in GEMINI_MODEL_CANDIDATES if m]
 def _gemini_url(model):
     return f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
-# A deliberately ORDERED 60-day curriculum. The first ~60 pairs run in this
-# sequence (front-loaded with the terms beginners search for most, so the
-# channel's early uploads target the highest-intent queries) before the
-# generator falls back to random selection from the wider pool below.
+# 60-day curriculum, ordered into six 10-day thematic sprints. Running a
+# consistent theme for ten days straight gives the platform a coherent
+# topic signal to categorise the channel against, instead of the scattered
+# signal that random topic order produces. Falls through to the wider pool
+# below once all 60 are used.
 CURRICULUM = [
+    # Days 1-10 — Corporate Wealth & Business Mistakes
+    ("revenue", "profit"),
+    ("gross profit", "net profit"),
     ("cash flow", "profit"),
-    ("net worth", "net income"),
-    ("cash flow", "net worth"),
-    ("APR", "APY"),
-    ("debit card", "credit card"),
-    ("gross income", "net income"),
-    ("simple interest", "compound interest"),
-    ("credit score", "credit report"),
-    ("Roth IRA", "Traditional IRA"),
+    ("markup", "margin"),
+    ("gross margin", "net margin"),
+    ("fixed cost", "variable cost"),
+    ("assets", "revenue"),
+    ("liability", "expense"),
+    ("working capital", "fixed capital"),
+    ("liquidity", "solvency"),
+    # Days 11-20 — Investing & The Stock Market Mechanics
     ("stocks", "shares"),
     ("bonds", "stocks"),
     ("ETF", "mutual fund"),
     ("index fund", "mutual fund"),
-    ("401k", "IRA"),
-    ("fixed rate", "variable rate"),
-    ("secured loan", "unsecured loan"),
-    ("prequalified", "preapproved"),
-    ("hard inquiry", "soft inquiry"),
-    ("principal", "interest"),
-    ("gross profit", "net profit"),
-    ("revenue", "profit"),
-    ("assets", "revenue"),
-    ("liability", "expense"),
-    ("markup", "margin"),
-    ("gross margin", "net margin"),
-    ("fixed cost", "variable cost"),
-    ("invoice", "receipt"),
-    ("depreciation", "amortization"),
-    ("inflation", "deflation"),
-    ("recession", "depression"),
-    ("bull market", "bear market"),
     ("dividend", "capital gains"),
-    ("dividend yield", "dividend rate"),
     ("realized gain", "unrealized gain"),
     ("market cap", "enterprise value"),
-    ("savings account", "fixed deposit"),
+    ("bull market", "bear market"),
+    ("dividend yield", "dividend rate"),
+    ("stock split", "reverse split"),
+    # Days 21-30 — Personal Finance & Banking Survival
+    ("APR", "APY"),
+    ("debit card", "credit card"),
+    ("credit score", "credit report"),
+    ("hard inquiry", "soft inquiry"),
+    ("simple interest", "compound interest"),
+    ("secured loan", "unsecured loan"),
+    ("overdraft", "loan"),
+    ("credit limit", "available credit"),
     ("checking account", "savings account"),
-    ("HSA", "FSA"),
+    ("prequalified", "preapproved"),
+    # Days 31-40 — Macroeconomics & Global Systems
+    ("inflation", "deflation"),
+    ("recession", "depression"),
+    ("fixed rate", "variable rate"),
+    ("nominal value", "market value"),
+    ("wholesale price", "retail price"),
+    ("interest rate", "APR"),
+    ("wire transfer", "ACH transfer"),
+    ("commodity", "security"),
+    ("private equity", "venture capital"),
+    ("IPO", "direct listing"),
+    # Days 41-50 — Tax Strategies & Corporate Secrets
     ("tax deduction", "tax credit"),
     ("standard deduction", "itemized deduction"),
     ("W-2", "1099"),
     ("gross pay", "take-home pay"),
+    ("gross income", "net income"),
+    ("depreciation", "amortization"),
+    ("capital expenditure", "operating expenditure"),
+    ("HSA", "FSA"),
+    ("401k", "IRA"),
+    ("Roth IRA", "Traditional IRA"),
+    # Days 51-60 — Highest-search recap set (the concepts with the
+    # strongest standing search demand, revisited to consolidate ranking)
+    ("net worth", "net income"),
+    ("cash flow", "net worth"),
+    ("principal", "interest"),
     ("mortgage", "personal loan"),
-    ("overdraft", "loan"),
-    ("line of credit", "loan"),
-    ("credit limit", "available credit"),
     ("down payment", "deposit"),
     ("escrow", "equity"),
-    ("refinance", "consolidation"),
     ("term insurance", "whole life insurance"),
     ("premium", "deductible"),
-    ("copay", "coinsurance"),
-    ("insurance", "assurance"),
     ("annuity", "pension"),
     ("leasing", "financing"),
-    ("wire transfer", "ACH transfer"),
-    ("chargeback", "refund"),
-    ("liquidity", "solvency"),
-    ("working capital", "fixed capital"),
-    ("budget", "forecast"),
 ]
 
 CONFUSABLE_PAIRS = [
@@ -141,14 +149,18 @@ SYSTEM_PROMPT = """You are an expert financial educator and content creator writ
 
 HARD LENGTH LIMIT — the "speech" text across ALL 7 slides combined must total 75 WORDS OR FEWER. This is the single most important constraint: at the channel's 1.15x delivery that lands the video at 25-28 seconds, which is where retention holds. Count the words before you answer. If you are over 75, cut adjectives and whole sentences until you are under — never pad to fill slides. A slide may be as short as four words.
 
+TEACH WITH A HUMAN CASE STUDY, NEVER A DEFINITION. Do not write dictionary lines like "Net worth is assets minus liabilities" — that gets swiped past instantly. Instead build the whole video around TWO NAMED PEOPLE placed side by side, one embodying each term, with a polarising contrast: the one who LOOKS rich but is quietly going broke, versus the one who looks ordinary but is genuinely building wealth. Invent ordinary first names (Marcus, Dana, Priya, Jordan). Give them concrete jobs and real dollar figures. The viewer should learn the difference by watching two lives diverge, not by being told a rule.
+
 STRUCTURE — every video follows this arc across the 7 slides:
-1. Hook (first 4 seconds — this decides if they keep watching): open with a SHOCKING, high-stakes statement that stops the scroll, THEN name both terms and promise the fix. Do NOT open calmly ("Today we'll learn...", "Let's talk about..."). Open with the cost of confusing them, a bold claim, or a blunt callout — then the terms. Examples of the energy: "Confusing these two just cost someone $4,000." / "Ninety percent of people get these two backwards." / "One of these makes you money. The other quietly drains it." The last line of the hook must PROMISE the payoff is coming ("Here's the difference in 20 seconds"), so they stay to the end.
-2. Term A explained with its own simple analogy (a comparison to something everyday — an activity, a relationship, a situation, not necessarily a literal object).
-3. Term B explained with ITS OWN separate, different analogy — term B must NOT reuse term A's analogy, they need to feel like two distinct things.
-4. The direct differentiation: state in one crisp sentence exactly what separates them.
-5. A concrete real-number example showing both terms side by side in action (real dollar amounts).
-6. Why getting this confused actually costs the viewer money or causes real problems.
-7. Recap both terms and their key difference in one sentence, then tell the viewer to follow for the next confusable pair.
+1. Hook (first 4 seconds — this decides if they keep watching): a blunt, high-stakes statement that introduces the two people or the trap. No greetings, no "today we'll learn". Examples of the energy: "Two owners. Same street. One is bleeding cash." / "He earns triple her salary. She's the rich one."
+2. Person A introduced — their job, their impressive-looking number.
+3. What is actually draining Person A — the hidden cost, with figures.
+4. Person B introduced — the unglamorous job, the smaller number.
+5. What Person B actually keeps — the figures that reveal the truth.
+6. The one-line verdict naming both terms explicitly and which person has which.
+7. LOOP CLOSER: end MID-THOUGHT on a cliffhanger that runs straight back into the first words of slide 1, so the video loops seamlessly. End on "because…", "and that's when…", "which means…". NEVER end with "subscribe", "follow for more", or any sign-off — the app adds its own end card.
+
+FORBIDDEN: introductory phrases ("Hey guys", "Welcome back", "Let's talk about") and concluding phrases ("Subscribe", "Follow for more", "Thanks for watching"). Open cold on the hook, end mid-sentence on the loop.
 
 IMAGES MUST DIFFERENTIATE THE TWO TERMS. Slides about Term A need a DIFFERENT image concept than slides about Term B — e.g. if comparing "loan" vs "debenture", a loan slide might show a bank loan officer or a person signing paperwork at a bank, while a debenture slide shows a bond certificate or investment document — visually distinct so the viewer's eye associates a different picture with each term. Never reuse the same visual concept for both terms.
 
@@ -160,13 +172,14 @@ FRAME THE TITLE around the confusion itself, not a flat definition. Real audienc
 - The title must always promise clarity on a real confusion — never a plain definition.
 
 VOICE: Explain it like you're talking to a smart 10 year old who's never heard either word before — not like you're reading a dictionary entry. Be VERY compact. Concretely:
-- Max 2 short sentences per slide. Never more than ~10 words per sentence. If an idea needs more than that, cut it down or move it to the next slide — do not cram.
-- One idea per slide, always. The differentiation slide (4) states the ONE core difference in a single sentence — not a list of several differences, just the one thing that matters most.
-- Use "you" constantly — make it about the viewer's own money, not abstract theory.
-- Contractions always (it's, you're, don't) — never formal/stiff phrasing.
-- Speak SLOWLY and simply — short words over long ones, simple structure over clever structure.
+- REGISTER: write like a dark-mode investigative documentary narrator or a high-status financial investigator delivering a verdict — cold, authoritative, slightly ominous. Not chirpy, not a teacher, not a friend.
+- Reach for raw power words where they fit honestly: trapped, illusion, bankrupt, drained, bleeding cash, quietly, vanishes, collapse.
+- Max 2 short sentences per slide. Never more than ~10 words per sentence. Short declaratives with hard full stops — "Rent. Staff. Suppliers. Eighty-eight thousand gone." Sharp punctuation gives text-to-speech clean breaks and zero awkward pauses.
+- One idea per slide, always.
+- Contractions where natural — never stiff or academic phrasing.
 - Zero filler, zero throat-clearing ("So basically...", "Let's dive in..."). Start every sentence already saying something.
 - If you'd have to explain a word you just used, you used the wrong word — replace it with a simpler one.
+- Numbers must be written as words in "speech" so text-to-speech reads them cleanly ("ninety thousand", not "$90,000"), but may stay as digits in the on-screen "text".
 
 Rules:
 - Output ONLY valid JSON, no markdown fences, no commentary.

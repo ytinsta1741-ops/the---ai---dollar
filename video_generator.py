@@ -2208,6 +2208,53 @@ def create_video_kenburns(slides, images, audio_file, durations, output_file, la
     return True
 
 
+# Caption colour coding. Meaning is carried by colour so a viewer grasps
+# the sentiment of a word before they've finished reading it. Classified
+# here in code rather than asking the model to tag words, because a
+# keyword table is deterministic and can't drift or return bad markup.
+CAP_GREEN = (0, 220, 90)     # assets, profit, income, structural wins
+CAP_RED = (255, 45, 45)      # liabilities, taxes, debt, traps, losses
+CAP_YELLOW = (255, 214, 0)   # shocks, hooks, and any number
+CAP_WHITE = (255, 255, 255)  # ordinary narrative words
+
+_CAP_GREEN_WORDS = {
+    "profit", "profits", "asset", "assets", "income", "gain", "gains",
+    "wealth", "wealthy", "rich", "keeps", "keep", "kept", "saved", "saves",
+    "savings", "earns", "earn", "growth", "grows", "compound", "equity",
+    "credit", "surplus", "net", "return", "returns", "yield", "free",
+    "owns", "own", "builds", "building", "stays", "up",
+}
+_CAP_RED_WORDS = {
+    "debt", "debts", "loss", "losses", "lost", "liability", "liabilities",
+    "tax", "taxes", "trap", "trapped", "broke", "bankrupt", "drained",
+    "drain", "drains", "bleeding", "bleed", "owe", "owes", "owed", "cost",
+    "costs", "expense", "expenses", "fees", "fee", "interest", "gone",
+    "vanishes", "vanish", "collapse", "risk", "wrong", "mistake", "down",
+    "negative", "minus", "spent", "spend", "spends", "illusion", "hidden",
+    "quietly", "poor",
+}
+_CAP_YELLOW_WORDS = {
+    "never", "always", "shocking", "secret", "nobody", "everyone", "most",
+    "why", "how", "truth", "actually", "really", "difference", "versus",
+    "vs", "but", "until", "because", "warning", "stop", "watch",
+}
+
+
+def _word_colour(word):
+    """Colour for one caption word: numbers and shock words pop yellow,
+    money-in words green, money-out words red, everything else white."""
+    w = word.strip().lower().strip(".,!?:;\"'()-")
+    if any(ch.isdigit() for ch in w) or w.startswith("$") or "%" in word:
+        return CAP_YELLOW
+    if w in _CAP_GREEN_WORDS:
+        return CAP_GREEN
+    if w in _CAP_RED_WORDS:
+        return CAP_RED
+    if w in _CAP_YELLOW_WORDS:
+        return CAP_YELLOW
+    return CAP_WHITE
+
+
 CHAR_OUTLINE = (38, 38, 42)
 CHAR_SKIN    = (248, 248, 248)
 CHAR_SHIRT   = (168, 168, 172)
@@ -2789,25 +2836,49 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         total_h = len(wrapped) * line_h
         cap_y0 = bottom_zone_top + max(0, (available_h - total_h) // 2)
 
-        def _draw_caption(img, tscale=1.0, dx=0, dy=0):
-            """Kinetic caption: heavy-stroke type that pops in and jitters.
-            Drawn per animation frame (not baked into the slide background)
-            so it can scale and vibrate — the entrance overshoots 100% then
-            settles, and a small offset keeps it alive while on screen."""
+        # Word-by-word caption: only one or two words are on screen at a
+        # time, each chunk popping in as it is spoken. Because so little
+        # text is shown at once it can be set far larger than a full
+        # sentence would allow, which is what makes it readable on a phone
+        # at a glance. Colour carries meaning (see _word_colour).
+        cap_words = text.split()
+        cap_chunks = []
+        i = 0
+        while i < len(cap_words):
+            # pair short words, keep long ones alone so they stay huge
+            if (i + 1 < len(cap_words)
+                    and len(cap_words[i]) + len(cap_words[i + 1]) <= 13):
+                cap_chunks.append(cap_words[i:i + 2])
+                i += 2
+            else:
+                cap_chunks.append([cap_words[i]])
+                i += 1
+        if not cap_chunks:
+            cap_chunks = [[""]]
+
+        def _draw_caption(img, chunk_idx, tscale=1.0, dx=0, dy=0):
+            """Draw one 1-2 word chunk, centred, heavy-stroked and colour
+            coded. tscale drives the pop-in overshoot for that chunk."""
             dd = ImageDraw.Draw(img)
-            fs = max(8, int(size * tscale))
+            words = cap_chunks[min(chunk_idx, len(cap_chunks) - 1)]
+            # size to fit the widest chunk so the type never jumps in scale
+            base = 150 if max(len(" ".join(c)) for c in cap_chunks) <= 9 else 110
+            fs = max(10, int(base * tscale))
             ff = get_font(fs)
-            lh = int((size + 20) * tscale)
-            th = len(wrapped) * lh
-            # keep the block vertically centred in its zone as it scales
-            yy = cap_y0 + (total_h - th) // 2 + dy
-            stroke = max(2, int(fs * 0.14))
-            for ln in wrapped:
-                b = dd.textbbox((0, 0), ln, font=ff, stroke_width=stroke)
-                xx = (W - (b[2] - b[0])) // 2 + dx
-                dd.text((xx, yy), ln, font=ff, fill=(255, 255, 255),
+            stroke = max(3, int(fs * 0.13))
+            space = fs // 4
+
+            widths = []
+            for w in words:
+                b = dd.textbbox((0, 0), w, font=ff, stroke_width=stroke)
+                widths.append(b[2] - b[0])
+            total_w = sum(widths) + space * (len(words) - 1)
+            xx = (W - total_w) // 2 + dx
+            yy = cap_y0 + dy
+            for w, wd in zip(words, widths):
+                dd.text((xx, yy), w, font=ff, fill=_word_colour(w),
                         stroke_width=stroke, stroke_fill=INK)
-                yy += lh
+                xx += wd + space
 
         if is_first:
             hook = "WATCH TIL THE END"
@@ -2852,42 +2923,46 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                         int(prev_cx + (target_cx - prev_cx) * fr))
             return (settled_pose, 0.0, target_cx)
 
-        # Caption entrance: overshoot past full size, then settle.
-        POP = [(0.30, 0.05), (0.80, 0.05), (1.15, 0.06), (1.04, 0.05), (1.0, 0.05)]
-        # Then a very slight drift so the type isn't frozen. Deliberately
-        # subtle: a ±3px shake at 10Hz read as the text visibly "shaking"
-        # and was distracting to watch, so this is 1px on a slow cycle.
+        # Each word-chunk gets an equal share of the slide, and lands with a
+        # short scale overshoot so it visibly "jumps" onto the screen in
+        # time with the narration.
+        n_chunks = len(cap_chunks)
+        per_chunk = slide_dur / n_chunks
+        POP = [(0.55, 0.045), (1.18, 0.05), (1.0, 0.0)]   # last dur = remainder
         JITTER = [(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1)]
         JIT_STEP = 0.30
 
-        sub_frames = []   # (mascot_pose, mascot_phase, cx, tscale, dx, dy, dur)
-        t = 0.0
-        for tscale, dur in POP:
-            if t >= slide_dur:
-                break
-            mp, mph, mcx = _mascot_at(t)
-            sub_frames.append((mp, mph, mcx, tscale, 0, 0, min(dur, slide_dur - t)))
-            t += dur
-        ji = 0
-        while t < slide_dur - 1e-3:
-            dur = min(JIT_STEP, slide_dur - t)
-            mp, mph, mcx = _mascot_at(t)
-            dx, dy = JITTER[ji % len(JITTER)]
-            sub_frames.append((mp, mph, mcx, 1.0, dx, dy, dur))
-            ji += 1
-            t += dur
+        sub_frames = []   # (pose, phase, cx, chunk, tscale, dx, dy, dur)
+        for ci in range(n_chunks):
+            c_start = ci * per_chunk
+            t = c_start
+            c_end = c_start + per_chunk
+            for tscale, dur in POP[:-1]:
+                if t >= c_end:
+                    break
+                mp, mph, mcx = _mascot_at(t)
+                d = min(dur, c_end - t)
+                sub_frames.append((mp, mph, mcx, ci, tscale, 0, 0, d))
+                t += d
+            ji = 0
+            while t < c_end - 1e-3:
+                d = min(JIT_STEP, c_end - t)
+                mp, mph, mcx = _mascot_at(t)
+                dx, dy = JITTER[ji % len(JITTER)]
+                sub_frames.append((mp, mph, mcx, ci, 1.0, dx, dy, d))
+                ji += 1
+                t += d
 
         # Identical frames are written once and simply referenced again in
-        # the concat list — a 5s slide is ~50 steps but only a handful of
-        # unique images, which keeps disk and encode time down on Render.
+        # the concat list, which keeps disk and encode time down on Render.
         cache = {}
-        for k, (pose, phase, cx_frame, tscale, dx, dy, dur) in enumerate(sub_frames):
-            key = (pose, round(phase, 3), cx_frame, round(tscale, 3), dx, dy)
+        for k, (pose, phase, cx_frame, ci, tscale, dx, dy, dur) in enumerate(sub_frames):
+            key = (pose, round(phase, 3), cx_frame, ci, round(tscale, 3), dx, dy)
             fp = cache.get(key)
             if fp is None:
                 frame = bg.copy()
                 _stamp_mascot(frame, pose, cx_frame, mascot_top, phase)
-                _draw_caption(frame, tscale, dx, dy)
+                _draw_caption(frame, ci, tscale, dx, dy)
                 fp = os.path.join(work_dir, f"info_{idx}_{k}.jpg")
                 frame.save(fp, "JPEG", quality=95)
                 del frame
