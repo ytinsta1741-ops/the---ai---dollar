@@ -29,6 +29,73 @@ GEMINI_MODEL_CANDIDATES = [m for m in GEMINI_MODEL_CANDIDATES if m]
 def _gemini_url(model):
     return f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
+# A deliberately ORDERED 60-day curriculum. The first ~60 pairs run in this
+# sequence (front-loaded with the terms beginners search for most, so the
+# channel's early uploads target the highest-intent queries) before the
+# generator falls back to random selection from the wider pool below.
+CURRICULUM = [
+    ("cash flow", "profit"),
+    ("net worth", "net income"),
+    ("cash flow", "net worth"),
+    ("APR", "APY"),
+    ("debit card", "credit card"),
+    ("gross income", "net income"),
+    ("simple interest", "compound interest"),
+    ("credit score", "credit report"),
+    ("Roth IRA", "Traditional IRA"),
+    ("stocks", "shares"),
+    ("bonds", "stocks"),
+    ("ETF", "mutual fund"),
+    ("index fund", "mutual fund"),
+    ("401k", "IRA"),
+    ("fixed rate", "variable rate"),
+    ("secured loan", "unsecured loan"),
+    ("prequalified", "preapproved"),
+    ("hard inquiry", "soft inquiry"),
+    ("principal", "interest"),
+    ("gross profit", "net profit"),
+    ("revenue", "profit"),
+    ("assets", "revenue"),
+    ("liability", "expense"),
+    ("markup", "margin"),
+    ("gross margin", "net margin"),
+    ("fixed cost", "variable cost"),
+    ("invoice", "receipt"),
+    ("depreciation", "amortization"),
+    ("inflation", "deflation"),
+    ("recession", "depression"),
+    ("bull market", "bear market"),
+    ("dividend", "capital gains"),
+    ("dividend yield", "dividend rate"),
+    ("realized gain", "unrealized gain"),
+    ("market cap", "enterprise value"),
+    ("savings account", "fixed deposit"),
+    ("checking account", "savings account"),
+    ("HSA", "FSA"),
+    ("tax deduction", "tax credit"),
+    ("standard deduction", "itemized deduction"),
+    ("W-2", "1099"),
+    ("gross pay", "take-home pay"),
+    ("mortgage", "personal loan"),
+    ("overdraft", "loan"),
+    ("line of credit", "loan"),
+    ("credit limit", "available credit"),
+    ("down payment", "deposit"),
+    ("escrow", "equity"),
+    ("refinance", "consolidation"),
+    ("term insurance", "whole life insurance"),
+    ("premium", "deductible"),
+    ("copay", "coinsurance"),
+    ("insurance", "assurance"),
+    ("annuity", "pension"),
+    ("leasing", "financing"),
+    ("wire transfer", "ACH transfer"),
+    ("chargeback", "refund"),
+    ("liquidity", "solvency"),
+    ("working capital", "fixed capital"),
+    ("budget", "forecast"),
+]
+
 CONFUSABLE_PAIRS = [
     ("loan", "debenture"), ("overdraft", "loan"),
     ("revenue", "profit"), ("gross profit", "net profit"),
@@ -72,8 +139,10 @@ CONFUSABLE_PAIRS = [
 
 SYSTEM_PROMPT = """You are an expert financial educator and content creator writing scripts for "The AI Dollar", a YouTube Shorts channel. Every video takes TWO real finance or accounting terms that people genuinely confuse with each other (you'll be given the pair, e.g. "loan" vs "debenture") and clearly differentiates them for a complete beginner — the way you'd explain it to a smart 10 year old, using simple real-world analogies, not a lecture. Explain any abbreviation in full the first time it appears.
 
+HARD LENGTH LIMIT — the "speech" text across ALL 7 slides combined must total 75 WORDS OR FEWER. This is the single most important constraint: at the channel's 1.15x delivery that lands the video at 25-28 seconds, which is where retention holds. Count the words before you answer. If you are over 75, cut adjectives and whole sentences until you are under — never pad to fill slides. A slide may be as short as four words.
+
 STRUCTURE — every video follows this arc across the 7 slides:
-1. Hook (first 3 seconds — this decides if they keep watching): open with a SHOCKING, high-stakes statement that stops the scroll, THEN name both terms and promise the fix. Do NOT open calmly ("Today we'll learn...", "Let's talk about..."). Open with the cost of confusing them, a bold claim, or a blunt callout — then the terms. Examples of the energy: "Confusing these two just cost someone $4,000." / "Ninety percent of people get these two backwards." / "One of these makes you money. The other quietly drains it." The last line of the hook must PROMISE the payoff is coming ("Here's the difference in 20 seconds"), so they stay to the end.
+1. Hook (first 4 seconds — this decides if they keep watching): open with a SHOCKING, high-stakes statement that stops the scroll, THEN name both terms and promise the fix. Do NOT open calmly ("Today we'll learn...", "Let's talk about..."). Open with the cost of confusing them, a bold claim, or a blunt callout — then the terms. Examples of the energy: "Confusing these two just cost someone $4,000." / "Ninety percent of people get these two backwards." / "One of these makes you money. The other quietly drains it." The last line of the hook must PROMISE the payoff is coming ("Here's the difference in 20 seconds"), so they stay to the end.
 2. Term A explained with its own simple analogy (a comparison to something everyday — an activity, a relationship, a situation, not necessarily a literal object).
 3. Term B explained with ITS OWN separate, different analogy — term B must NOT reuse term A's analogy, they need to feel like two distinct things.
 4. The direct differentiation: state in one crisp sentence exactly what separates them.
@@ -133,6 +202,16 @@ def _validate_topic(data):
     for slide in data["slides"]:
         if not all(k in slide and slide[k] for k in ("text", "speech", "img")):
             return False
+
+    # Enforce the script length limit rather than trusting the model to
+    # honour it — an over-long script pushes the video past the ~28s where
+    # retention drops off. A little slack over the stated 75 so we don't
+    # throw away otherwise-good scripts on a word or two.
+    words = sum(len(s["speech"].split()) for s in data["slides"])
+    if words > 85:
+        print(f"[WARN] Script too long ({words} words, limit 85) — regenerating")
+        return False
+
     if not data.get("keywords"):
         data["keywords"] = [data["title"].split()[0], "Personal Finance", "Money Tips"]
     return True
@@ -166,6 +245,14 @@ def sync_used_pairs_from_titles(titles):
 
 
 def _pick_unused_pair():
+    # Work through the 60-day curriculum in order first — early uploads
+    # should hit the highest-search-intent terms rather than a random pick —
+    # then fall back to the wider pool once the curriculum is exhausted.
+    for pair in CURRICULUM:
+        if pair not in _used_pairs:
+            _used_pairs.add(pair)
+            return pair
+
     remaining = [p for p in CONFUSABLE_PAIRS if p not in _used_pairs]
     if not remaining:            # whole pool exhausted -> start a fresh cycle
         _used_pairs.clear()
