@@ -2961,7 +2961,7 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         # is sampled at 30fps (genuinely smooth) while a settled character
         # emits ONE frame that simply holds — no cost, and nothing on screen
         # is moving during it anyway.
-        MOTION_STEP = 1.0 / 30.0
+        MOTION_STEP = 1.0 / 60.0   # matches the 60fps output exactly
 
         sub_frames = []   # (pose, phase, cx, chunk, tscale, dx, dy, dur)
         for ci in range(n_chunks):
