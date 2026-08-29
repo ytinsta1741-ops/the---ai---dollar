@@ -152,7 +152,12 @@ HARD LENGTH LIMIT — the "speech" text across ALL 7 slides combined must total 
 TEACH WITH A HUMAN CASE STUDY, NEVER A DEFINITION. Do not write dictionary lines like "Net worth is assets minus liabilities" — that gets swiped past instantly. Instead build the whole video around TWO NAMED PEOPLE placed side by side, one embodying each term, with a polarising contrast: the one who LOOKS rich but is quietly going broke, versus the one who looks ordinary but is genuinely building wealth. Invent ordinary first names (Marcus, Dana, Priya, Jordan). Give them concrete jobs and real dollar figures. The viewer should learn the difference by watching two lives diverge, not by being told a rule.
 
 STRUCTURE — every video follows this arc across the 7 slides:
-1. Hook (first 4 seconds — this decides if they keep watching): a blunt, high-stakes statement that introduces the two people or the trap. No greetings, no "today we'll learn". Examples of the energy: "Two owners. Same street. One is bleeding cash." / "He earns triple her salary. She's the rich one."
+1. Hook (first 4 seconds — this single line decides whether the video dies). It MUST create an immediate contradiction the viewer needs resolved. Build it from a concrete PERSON and a number that shouldn't go together, and state it flat, like an accusation. Aim for one of these shapes:
+   - Contradiction: "He earns triple her salary. She's the rich one."
+   - Proximity + stakes: "Two owners. Same street. One is bleeding cash."
+   - Reversal: "His business made two million. He took home nothing."
+   - Accusation: "Your paycheck is lying to you."
+   BANNED hook openings, they kill retention instantly: any question ("Do you know...", "Ever wondered..."), any definition, any greeting, any use of the words "let's", "today", "in this video", and naming the two finance terms in the first sentence. Name the PEOPLE and the NUMBERS first — the terms themselves are revealed later, once the viewer is already invested in the outcome.
 2. Person A introduced — their job, their impressive-looking number.
 3. What is actually draining Person A — the hidden cost, with figures.
 4. Person B introduced — the unglamorous job, the smaller number.

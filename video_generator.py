@@ -1665,7 +1665,7 @@ def generate_bg_music(output_path, duration):
             # slow tremolo gives it a little life
             v *= 0.85 + 0.15 * _math.sin(2 * _math.pi * 0.15 * t)
 
-            amp = 0.10                      # quiet bed, sits under narration
+            amp = 0.30                      # bed level; ducked under narration at mix
             if i < fade:
                 amp *= i / fade
             if i > total - fade:
@@ -2816,25 +2816,16 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         # Caption — SHORT and BIG: at most 2 lines so it's readable in a
         # single glance (long paragraphs killed readability). Flatten any
         # line breaks, then pick the largest font that fits in <=2 lines.
-        text = " ".join(slide['text'].split()).upper()
+        # Caption words come from the SPOKEN line, not the separate "text"
+        # field — those were written independently by the model, so the
+        # words on screen never matched what the narrator was saying. Using
+        # the speech verbatim and pacing the chunks across the slide's own
+        # audio duration keeps screen and voice in step.
+        text = " ".join(slide['speech'].split()).upper()
         bottom_zone_top = mascot_bottom + 40
         available_h = H - bottom_zone_top - 140
-        chosen = None
-        for size in [84, 76, 68, 60, 54, 48]:
-            f = get_font(size)
-            wrapped = wrap_line(text, f, draw, MAX_TW)
-            if len(wrapped) <= 2:
-                chosen = (f, wrapped, size)
-                break
-        if chosen is None:
-            # too long even small — keep the first 2 lines so it stays legible
-            f = get_font(48)
-            wrapped = wrap_line(text, f, draw, MAX_TW)[:2]
-            chosen = (f, wrapped, 48)
-        f, wrapped, size = chosen
-        line_h = size + 20
-        total_h = len(wrapped) * line_h
-        cap_y0 = bottom_zone_top + max(0, (available_h - total_h) // 2)
+        size = 96
+        cap_y0 = bottom_zone_top + max(0, (available_h - size) // 2)
 
         # Word-by-word caption: only one or two words are on screen at a
         # time, each chunk popping in as it is spoken. Because so little
@@ -2923,20 +2914,27 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                         int(prev_cx + (target_cx - prev_cx) * fr))
             return (settled_pose, 0.0, target_cx)
 
-        # Each word-chunk gets an equal share of the slide, and lands with a
-        # short scale overshoot so it visibly "jumps" onto the screen in
-        # time with the narration.
+        # Chunk timing is weighted by SYLLABLE-ish length (word characters)
+        # rather than split evenly, so a two-long-word chunk holds longer
+        # than a two-short-word chunk — that tracks natural speech pace and
+        # keeps the on-screen words with the voice instead of drifting.
         n_chunks = len(cap_chunks)
-        per_chunk = slide_dur / n_chunks
-        POP = [(0.55, 0.045), (1.18, 0.05), (1.0, 0.0)]   # last dur = remainder
+        weights = [max(1, sum(len(w) for w in c)) for c in cap_chunks]
+        w_total = sum(weights)
+        bounds, acc = [], 0.0
+        for wt in weights:
+            share = slide_dur * (wt / w_total)
+            bounds.append((acc, acc + share))
+            acc += share
+
+        POP = [(0.55, 0.04), (1.18, 0.045), (1.0, 0.0)]   # last dur = remainder
         JITTER = [(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1)]
-        JIT_STEP = 0.30
+        JIT_STEP = 0.12   # finer sampling so motion doesn't look choppy
 
         sub_frames = []   # (pose, phase, cx, chunk, tscale, dx, dy, dur)
         for ci in range(n_chunks):
-            c_start = ci * per_chunk
+            c_start, c_end = bounds[ci]
             t = c_start
-            c_end = c_start + per_chunk
             for tscale, dur in POP[:-1]:
                 if t >= c_end:
                     break
@@ -3023,23 +3021,21 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
             music_path = candidate
 
     if music_path:
-        # sidechaincompress ducks the music automatically whenever the
-        # narrator speaks, so the bed never fights the voice.
+        # No sidechain ducking. Two rounds of it (ratio 8 then 4) still left
+        # the bed inaudible, because narration is near-continuous in a 28s
+        # short so the compressor was holding the music down for essentially
+        # the whole video. A fixed, deliberately modest level is audible the
+        # entire time and cannot be pumped away; amix normalize=0 stops
+        # ffmpeg from halving both inputs when it sums them.
         filter_complex = (
-            f"[0:v]scale={res},fps=30[v];"
-            f"[1:a]{loudnorm},asplit=2[narr][key];"
-            # The bed is already synthesised at amp 0.10 (~-20dB), so an
-            # additional 0.22 here stacked to ~-33dB and was inaudible in
-            # the finished video. Near-unity gain leaves the quiet source
-            # level intact; the sidechain (softened from ratio 8/thr 0.02,
-            # which crushed it flat) does the ducking under narration.
-            f"[2:a]volume=0.85[bg];"
-            f"[bg][key]sidechaincompress=threshold=0.05:ratio=4:attack=5:release=250[duck];"
-            f"[narr][duck]amix=inputs=2:duration=first:dropout_transition=0[aout]"
+            f"[0:v]scale={res},fps=60[v];"
+            f"[1:a]{loudnorm}[narr];"
+            f"[2:a]volume=1.0[bg];"
+            f"[narr][bg]amix=inputs=2:duration=first:normalize=0[aout]"
         )
         inputs = ['-i', audio_file, '-i', music_path]
     else:
-        filter_complex = f"[0:v]scale={res},fps=30[v];[1:a]{loudnorm}[aout]"
+        filter_complex = f"[0:v]scale={res},fps=60[v];[1:a]{loudnorm}[aout]"
         inputs = ['-i', audio_file]
 
     cmd = [
@@ -3066,7 +3062,7 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
             FFMPEG, '-y',
             '-f', 'concat', '-safe', '0', '-i', concat_file,
             '-i', audio_file,
-            '-filter_complex', f"[0:v]scale={res},fps=30[v];[1:a]{loudnorm}[aout]",
+            '-filter_complex', f"[0:v]scale={res},fps=60[v];[1:a]{loudnorm}[aout]",
             '-map', '[v]', '-map', '[aout]',
             '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
             '-c:a', 'aac', '-b:a', '128k',
