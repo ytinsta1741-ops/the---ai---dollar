@@ -2714,16 +2714,24 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
 
     CHAR_SCALE = 1.35
 
-    def _stamp_mascot(img, pose, cx_frame, top_y, phase=0.0):
+    def _stamp_mascot(img, pose, cx_frame, top_y, phase=0.0, idle_t=None):
+        import math
         if pose == 'bounce':
-            import math
             bounce_amt = int(55 * abs(math.sin(phase * 2 * math.pi * 2.5)))
             return _draw_character(img, cx_frame, top_y - bounce_amt,
                                    scale=CHAR_SCALE, pose='point_both')
-        return _draw_character(img, cx_frame, top_y, scale=CHAR_SCALE,
+        # Idle breathing: a slow 1-2px rise and fall while the character is
+        # holding a pose. Without it a static slide renders 60 identical
+        # frames a second, so a correctly-encoded 60fps video still looks
+        # frozen. This makes every frame genuinely different.
+        off = 0
+        if idle_t is not None:
+            off = int(round(4.0 * math.sin(idle_t * 2 * math.pi * 0.5)))
+        return _draw_character(img, cx_frame, top_y - off, scale=CHAR_SCALE,
                                pose=pose, phase=phase)
 
     prev_cx = None
+    slide_start_t = 0.0    # absolute video time, so idle motion is continuous
 
     # Every slide shows both terms side by side with individual labels,
     # like the reference channel's comparison style — only when we
@@ -3037,35 +3045,41 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         # holds — nothing is moving during it, so extra frames buy nothing.
         MOTION_STEP = 1.0 / 60.0   # matches the 60fps output exactly
 
-        sub_frames = []   # (pose, phase, cx, word_idx, tscale, dx, dy, dur)
+        # Every slide is now sampled at the full output framerate, including
+        # holds, so no run of identical frames is ever emitted.
+        sub_frames = []   # (pose, phase, cx, word_idx, idle_t, dur)
         for ci in range(n_words):
             c_start, c_end = bounds[ci]
             t = c_start
             while t < c_end - 1e-3:
                 mp, mph, mcx = _mascot_at(t)
-                in_motion = mp in ('walk', 'bounce')
-                d = min(MOTION_STEP if in_motion else (c_end - t), c_end - t)
-                sub_frames.append((mp, mph, mcx, ci, 1.0, 0, 0, d))
+                d = min(MOTION_STEP, c_end - t)
+                idle_t = None if mp in ('walk', 'bounce') else (slide_start_t + t)
+                sub_frames.append((mp, mph, mcx, ci, idle_t, d))
                 t += d
 
-        # Identical frames are written once and simply referenced again in
-        # the concat list, which keeps disk and encode time down on Render.
+        # Frames are keyed on everything that can change; identical ones are
+        # written once and re-referenced in the concat list. With idle
+        # breathing active almost every frame is now distinct, so the cache
+        # mostly matters for the rare exact repeat.
         cache = {}
-        for k, (pose, phase, cx_frame, ci, tscale, dx, dy, dur) in enumerate(sub_frames):
-            key = (pose, round(phase, 3), cx_frame, ci, round(tscale, 3), dx, dy)
+        for k, (pose, phase, cx_frame, ci, idle_t, dur) in enumerate(sub_frames):
+            key = (pose, round(phase, 3), cx_frame, ci,
+                   None if idle_t is None else round(idle_t, 2))
             fp = cache.get(key)
             if fp is None:
                 frame = bg.copy()
-                _stamp_mascot(frame, pose, cx_frame, mascot_top, phase)
-                _draw_caption(frame, ci, tscale, dx, dy)
+                _stamp_mascot(frame, pose, cx_frame, mascot_top, phase, idle_t)
+                _draw_caption(frame, ci, 1.0, 0, 0)
                 fp = os.path.join(work_dir, f"info_{idx}_{k}.jpg")
-                frame.save(fp, "JPEG", quality=95)
+                frame.save(fp, "JPEG", quality=88)
                 del frame
                 cache[key] = fp
             frame_paths.append(fp)
             frame_durations.append(dur)
 
         prev_cx = target_cx
+        slide_start_t += slide_dur
         del bg
         gc.collect()
         print(f"  infographic slide {idx+1}/{len(slides)} ready "
@@ -3150,7 +3164,7 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
     ]
 
     import shutil
-    proc = _run_ffmpeg_hard_timeout(cmd, timeout=300)
+    proc = _run_ffmpeg_hard_timeout(cmd, timeout=600)
 
     if music_path and (proc is None or proc.returncode != 0):
         # Never let the optional music bed break the build — retry clean.
@@ -3168,7 +3182,7 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
             '-movflags', '+faststart',
             output_file
         ]
-        proc = _run_ffmpeg_hard_timeout(cmd, timeout=300)
+        proc = _run_ffmpeg_hard_timeout(cmd, timeout=600)
 
     if proc is None:
         shutil.rmtree(work_dir, ignore_errors=True)
