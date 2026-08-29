@@ -1158,21 +1158,58 @@ def _fetch_wikipedia_thumbnail(name, img_path):
     return False
 
 
-def fetch_term_hero_images(term_a, term_b, save_dir):
-    """Fetch one clean representative photo per confusable term, used for
-    the side-by-side comparison slides. Returns (path_a, path_b), either
-    may be None on failure. Never returns the same photo for both terms —
-    similar-sounding terms (e.g. "markup"/"margin") can otherwise return
-    identical top Pexels results."""
+def fetch_term_hero_images(term_a, term_b, save_dir, icon_a=None, icon_b=None):
+    """One clean, purpose-drawn ILLUSTRATION per confusable term for the
+    side-by-side panels.
+
+    These are generated as flat vector-style graphics rather than pulled
+    from stock photography. A Pexels search for "business finance markup"
+    returns an interchangeable office/laptop photo that doesn't depict the
+    concept at all — the two panels ended up looking near-identical and
+    taught the viewer nothing. A generated illustration of the specific
+    idea reads instantly and keeps the two sides visually distinct.
+    Stock photo search remains the fallback if generation is unavailable."""
     os.makedirs(save_dir, exist_ok=True)
     headers = {"Authorization": PEXELS_API_KEY} if PEXELS_API_KEY else {}
     results = []
     used_photo_ids = set()
+    icons = (icon_a, icon_b)
     for idx, term in enumerate((term_a, term_b)):
         img_path = os.path.join(save_dir, f"hero_{idx}.jpg")
         got = False
+
+        # Real people stay as real photographs.
         if term.strip().lower() in WELL_KNOWN_FIGURES:
             got = _fetch_wikipedia_thumbnail(term.strip(), img_path)
+
+        if not got:
+            # The subject must be a CONCRETE object supplied by the script
+            # writer. Prompting the generator with the bare finance term
+            # produced abstract grey blobs — it can't draw "revenue", but it
+            # can draw "a cash register overflowing with banknotes".
+            subject = (icons[idx] or "").strip()
+            if not subject:
+                subject = f"a bank building and coins representing {term}"
+            style = ("flat vector illustration, simple bold clean icon, "
+                     "minimal shapes, thick outlines, muted professional "
+                     "palette, centred single subject, plain light "
+                     "background, infographic style, no text, no words, "
+                     "no letters, no watermark")
+            prompt = f"{style}, {subject}"
+            encoded = urllib.parse.quote(prompt)
+            url = (f"https://image.pollinations.ai/prompt/{encoded}"
+                   f"?width=768&height=1024&nologo=true&seed={idx * 977 + 13}"
+                   f"&model=flux&enhance=true")
+            try:
+                resp = requests.get(url, timeout=90)
+                if resp.status_code == 200 and len(resp.content) > 5000:
+                    with open(img_path, 'wb') as f:
+                        f.write(resp.content)
+                    got = True
+                    print(f"  [ILLUS] {term}")
+            except Exception as e:
+                print(f"  [WARN] Illustration generation failed for {term}: {e}")
+
         if not got and PEXELS_API_KEY:
             try:
                 query = f"business finance {term}"
@@ -3248,7 +3285,9 @@ def generate_daily_video():
         term_b = topic.get('term_b')
         hero_images = (None, None)
         if term_a and term_b:
-            hero_images = fetch_term_hero_images(term_a, term_b, img_dir)
+            hero_images = fetch_term_hero_images(
+                term_a, term_b, img_dir,
+                icon_a=topic.get('icon_a'), icon_b=topic.get('icon_b'))
             print(f"[OK] Hero images: {term_a}={'yes' if hero_images[0] else 'no'}, {term_b}={'yes' if hero_images[1] else 'no'}")
 
         ok = False

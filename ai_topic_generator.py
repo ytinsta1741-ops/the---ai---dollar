@@ -198,8 +198,9 @@ Rules:
 - Use specific, believable numbers (dollar amounts, percentages, timeframes) in the real-number example — never vague claims.
 - Never mention any brand, bank, or app name that could be factually wrong or outdated; prefer generic terms like "a high-yield savings account".
 - Great tags: "keywords" should include both term names plus 3-4 strong searchable finance tags.
+- "icon_a" and "icon_b" name the CONCRETE OBJECT that will be illustrated on each side of the comparison panel — one for the first term, one for the second. These must be physical, drawable things, never abstractions: an image generator cannot draw "revenue" or "liquidity", but it can draw "a cash register overflowing with banknotes" or "a running tap pouring coins into an open hand". Pick objects that are instantly readable at a glance and clearly DIFFERENT from each other, so the two panels never look alike. Two or three plain words plus a short qualifier, e.g. "a stack of gold coins with an upward arrow" / "a red bill invoice with a chain and padlock". No text, letters or numbers in the described object.
 - Output JSON shape exactly:
-{"title": "...", "keywords": ["...", "...", "..."], "slides": [{"text": "...", "speech": "...", "img": "..."}, ... exactly 7 objects]}
+{"title": "...", "keywords": ["...", "...", "..."], "icon_a": "...", "icon_b": "...", "slides": [{"text": "...", "speech": "...", "img": "..."}, ... exactly 7 objects]}
 """
 
 
