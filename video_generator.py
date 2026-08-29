@@ -1217,10 +1217,12 @@ def _generate_cloudflare(prompt, img_path, width=768, height=1024, seed=13):
     is_flux = "flux" in CF_IMAGE_MODEL
 
     if is_flux:
+        # No seed: this endpoint rejects unknown properties outright, and
+        # sending one made every flux call 400 and silently fall through to
+        # the low-quality fallback generator.
         payload = {
             "prompt": f"{prompt}. {_GEN_STYLE}. {_GEN_NEGATIVE}"[:2048],
             "steps": 8,
-            "seed": seed,
         }
     else:
         payload = {
