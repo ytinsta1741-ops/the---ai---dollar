@@ -655,10 +655,20 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
             youtube_success = None
             _LAST_RUN["youtube"] = "skipped"
 
-        print(f"\n[STEP 3] Uploading to TikTok...")
-        _mark("uploading_tiktok")
-        tiktok_success = upload_to_tiktok(video_path, title, keywords=keywords)
-        _LAST_RUN["tiktok"] = bool(tiktok_success)
+        # TikTok is off until the app clears review. Without approval the
+        # Content Posting API can only publish as SELF_ONLY (private), which
+        # does nothing for growth and just burns build time. Gated on the
+        # same TIKTOK_AUDITED flag that unlocks public posting, so it
+        # resumes automatically the moment that's set.
+        if os.getenv("TIKTOK_AUDITED", "false").lower() == "true":
+            print(f"\n[STEP 3] Uploading to TikTok...")
+            _mark("uploading_tiktok")
+            tiktok_success = upload_to_tiktok(video_path, title, keywords=keywords)
+            _LAST_RUN["tiktok"] = bool(tiktok_success)
+        else:
+            print(f"\n[STEP 3] Skipping TikTok (unapproved app posts privately only)")
+            tiktok_success = None
+            _LAST_RUN["tiktok"] = "skipped"
 
         if post_instagram:
             print(f"\n[STEP 4] Uploading to Instagram...")
@@ -678,7 +688,8 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
         print(f"[DONE] POSTING COMPLETE")
         yt_status = "skipped (1/day)" if youtube_success is None else ("posted" if youtube_success else "FAILED")
         print(f"   YouTube:   {yt_status}")
-        print(f"   TikTok:    {'posted' if tiktok_success else 'FAILED'}")
+        tt_status = "skipped (not approved)" if tiktok_success is None else ("posted" if tiktok_success else "FAILED")
+        print(f"   TikTok:    {tt_status}")
         ig_status = "skipped (throttled)" if instagram_success is None else ("posted" if instagram_success else "FAILED")
         print(f"   Instagram: {ig_status}")
         print(f"{'='*50}\n")
@@ -913,15 +924,16 @@ def schedule_jobs():
     # The 20:00 slot posts to YouTube AND Instagram, so the day's strongest
     # video goes out on both. Splitting them onto separate slots meant the
     # two platforms never carried the same video at all.
-    schedule.every().day.at("15:30").do(                        # 11:30am ET — midday window
+    # With TikTok gated off, a slot that posts to neither YouTube nor
+    # Instagram would build a video and then discard it, so the old
+    # third (TikTok-only) slot is gone.
+    schedule.every().day.at("15:30").do(                        # 11:30am ET — Instagram
         _post_async, post_instagram=True, post_youtube=False)
     schedule.every().day.at("20:00").do(                        # 4:00pm ET — best hour: YT + IG
         _post_async, post_instagram=True, post_youtube=True)
-    schedule.every().day.at("23:30").do(                        # 7:30pm ET — TikTok only
-        _post_async, post_instagram=False, post_youtube=False)
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 1/day YouTube + 2/day Instagram (both at 20:00 UTC), 3/day TikTok")
+    print("[OK] Schedule: 1/day YouTube (20:00 UTC) + 2/day Instagram (15:30, 20:00). TikTok off.")
     print("[OK] Shorts = discovery engine for non-subscribers")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
@@ -937,18 +949,14 @@ def main():
 
     schedule_jobs()
 
-    # Startup post skips Instagram — otherwise every redeploy floods the IG
-    # feed with a new Reel (this was the "spam" cause). YouTube/TikTok tolerate
-    # the volume; Instagram only gets its scheduled 1/day slot.
-    print("\n[NOW] Posting first short on startup (YouTube + TikTok only)...\n")
-    # Runs in a background thread — the scheduler loop below starts immediately
-    # so keep-alive fires on time and the instance never spins down mid-build.
-    # TikTok only. Redeploys are frequent during development, and letting
-    # each one post to YouTube would spend the single daily upload at a
-    # random time instead of the scheduled 4pm ET slot.
-    _post_async(post_instagram=False, post_youtube=False)
+    # No startup post. It used to exist so a redeploy proved the pipeline
+    # end to end, but with TikTok gated off it would post to nothing —
+    # YouTube's single daily upload is reserved for the 20:00 slot and
+    # Instagram is capped at its two scheduled slots. Everything now runs
+    # purely on the schedule; use /post-now to trigger one on demand.
+    print("\n[NOW] Startup post disabled — posting runs on schedule only.\n")
 
-    print("\n[SCHED] Scheduler running (3/day YouTube+TikTok, 2/day Instagram + self-ping every 10 min)...")
+    print("\n[SCHED] Scheduler running (1/day YouTube, 2/day Instagram + self-ping every 10 min)...")
     try:
         while True:
             schedule.run_pending()
