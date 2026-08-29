@@ -2854,9 +2854,11 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
 
         # Caption entrance: overshoot past full size, then settle.
         POP = [(0.30, 0.05), (0.80, 0.05), (1.15, 0.06), (1.04, 0.05), (1.0, 0.05)]
-        # Then a small looping vibration so the type never sits dead still.
-        JITTER = [(0, 0), (3, -2), (-3, 2), (2, 3), (-2, -3)]
-        JIT_STEP = 0.10
+        # Then a very slight drift so the type isn't frozen. Deliberately
+        # subtle: a ±3px shake at 10Hz read as the text visibly "shaking"
+        # and was distracting to watch, so this is 1px on a slow cycle.
+        JITTER = [(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1)]
+        JIT_STEP = 0.30
 
         sub_frames = []   # (mascot_pose, mascot_phase, cx, tscale, dx, dy, dur)
         t = 0.0
@@ -2951,8 +2953,13 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
         filter_complex = (
             f"[0:v]scale={res},fps=30[v];"
             f"[1:a]{loudnorm},asplit=2[narr][key];"
-            f"[2:a]volume=0.22[bg];"
-            f"[bg][key]sidechaincompress=threshold=0.02:ratio=8:attack=5:release=350[duck];"
+            # The bed is already synthesised at amp 0.10 (~-20dB), so an
+            # additional 0.22 here stacked to ~-33dB and was inaudible in
+            # the finished video. Near-unity gain leaves the quiet source
+            # level intact; the sidechain (softened from ratio 8/thr 0.02,
+            # which crushed it flat) does the ducking under narration.
+            f"[2:a]volume=0.85[bg];"
+            f"[bg][key]sidechaincompress=threshold=0.05:ratio=4:attack=5:release=250[duck];"
             f"[narr][duck]amix=inputs=2:duration=first:dropout_transition=0[aout]"
         )
         inputs = ['-i', audio_file, '-i', music_path]
