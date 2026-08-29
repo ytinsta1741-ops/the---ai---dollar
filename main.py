@@ -289,12 +289,31 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
             ]
             # DESCRIPTION — leads with the real topic keyword inside the
             # first ~100 characters (what YouTube reads to classify a Short),
-            # then natural prose. Only 3 hashtags: current guidance is that
-            # 1-3 relevant hashtags outperform a 20-tag block, which reads
-            # as spam.
+            # then natural prose.
+            #
+            # HASHTAGS — 7, mixing the recommended layers: platform tag,
+            # niche tags, and one specific to this video. Deliberately
+            # EXCLUDED after reviewing what competing finance Shorts use:
+            #   #finance / #money   - hundreds of millions of posts; a small
+            #                         channel is buried instantly
+            #   #makemoneyonline    - get-rich-quick intent, wrong audience
+            #   #sidehustles        - we don't cover side hustles
+            #   #passiveincome      - wrong topic, attracts the wrong viewer
+            #   #moneymindset       - vague motivational, not educational
+            #   #stockmarketshorts  - we don't do stock picking
+            #   #crypto2025         - stale year tag, off-topic
             # Keep the keyword's own casing — .title() would turn an acronym
             # like "APR vs APY" into the unreadable "#AprVsApy".
             hashtag_kw = re.sub(r'[^A-Za-z0-9]', '', primary_kw) or "PersonalFinance"
+            yt_hashtags = " ".join([
+                "#Shorts",                 # platform tag: required for the Shorts feed
+                f"#{hashtag_kw}",          # this video's exact topic
+                "#PersonalFinance",        # core niche
+                "#FinancialLiteracy",      # matches "explaining terms" intent
+                "#MoneyTips",              # medium-competition, on-topic
+                "#FinanceShorts",          # niche + format, less saturated
+                "#FinanceForBeginners",    # matches our actual audience
+            ])
             yt_desc = (
                 f"{title}\n\n"
                 f"{primary_kw} explained in under a minute — the difference "
@@ -308,7 +327,7 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
                 f"Comment which one you always mixed up, and subscribe for a "
                 f"new money term explained daily:\n"
                 f"https://www.youtube.com/@TheAIDollar?sub_confirmation=1\n\n"
-                f"#Shorts #{hashtag_kw} #PersonalFinance"
+                f"{yt_hashtags}"
             )
             yt_tags.append("Shorts")
         else:
@@ -460,10 +479,16 @@ def upload_to_instagram(video_path, title, keywords=None):
         # than relying on tags. Hashtags are capped at 5 (Instagram's current
         # limit) and kept niche: broad tags like #Finance bury a small
         # account and add little ranking value now.
+        # NOTE: 5 is a HARD platform cap (rolled out Dec 2025) — Instagram
+        # strips extra tags or rejects the post, so this must not be raised
+        # even though YouTube now carries 7. Same vetting as YouTube: broad
+        # tags (#finance, #money) and off-intent ones (#makemoneyonline,
+        # #passiveincome, #sidehustles) are deliberately excluded.
         import re as _re
         kw_list = [k for k in (keywords or []) if k and len(k) <= 30][:2]
         kw_tags = [f"#{_re.sub(r'[^A-Za-z0-9]', '', k)}" for k in kw_list]
-        niche_tags = ["#MoneyTips", "#FinanceForBeginners", "#FinancialLiteracy"]
+        niche_tags = ["#PersonalFinance", "#FinancialLiteracy",
+                      "#MoneyTips", "#FinanceForBeginners"]
         tags = (kw_tags + [t for t in niche_tags if t.lower() not in
                            [x.lower() for x in kw_tags]])[:5]
 
