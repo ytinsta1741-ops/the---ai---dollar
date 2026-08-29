@@ -184,7 +184,8 @@ class HealthHandler(BaseHTTPRequestHandler):
                 "YOUTUBE_REFRESH_TOKEN_set": bool(os.getenv("YOUTUBE_REFRESH_TOKEN")),
                 "last_post": last_post,
                 "current_run": _LAST_RUN,
-                "schedule_utc": ["15:30 YT+TikTok", "21:00 YT+TikTok", "23:30 YT+TikTok+Instagram"],
+                "schedule_utc": ["15:30 Instagram", "20:00 YouTube+Instagram"],
+                "tiktok": "off until TIKTOK_AUDITED=true (app not approved)",
             }
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
