@@ -1075,24 +1075,36 @@ LONG_FORM_TOPICS = [
 
 
 def enhance_image(img_path, landscape=False):
-    """Upscale, sharpen, and enhance a downloaded AI image to HD quality"""
+    """Bring a generated image up to frame size and sharpen it.
+
+    Scales to COVER the target and centre-crops the overflow. The previous
+    version resized straight to the target dimensions, which stretched any
+    source that wasn't already 9:16 — a square 1024x1024 render pulled to
+    1080x1920 is squashed almost 2x horizontally, which on its own reads as
+    'melted'. Generators return square or near-square images often enough
+    that cropping rather than stretching is the only safe fit."""
     try:
         from PIL import Image, ImageEnhance, ImageFilter
         img = Image.open(img_path).convert("RGB")
         w, h = img.size
-        if landscape:
-            target_w, target_h = 1920, 1080
-            if w >= 1920 and h >= 1080 and abs(w/h - 16/9) < 0.05:
-                return
-        else:
-            target_w, target_h = 1080, 1920
-            if w >= 1080 and h >= 1920 and abs(w/h - 9/16) < 0.05:
-                return
-        img = img.resize((target_w, target_h), Image.LANCZOS)
-        img = img.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=3))
-        img = ImageEnhance.Contrast(img).enhance(1.15)
-        img = ImageEnhance.Color(img).enhance(1.1)
-        img.save(img_path, "JPEG", quality=92)
+        target_w, target_h = (1920, 1080) if landscape else (1080, 1920)
+
+        scale = max(target_w / w, target_h / h)
+        new_w, new_h = max(target_w, int(round(w * scale))), max(target_h, int(round(h * scale)))
+        img = img.resize((new_w, new_h), Image.LANCZOS)
+        left, top = (new_w - target_w) // 2, (new_h - target_h) // 2
+        img = img.crop((left, top, left + target_w, top + target_h))
+
+        # Sharpen in proportion to how much we had to enlarge: an image that
+        # was already near frame size only needs a light pass, while a small
+        # source upscaled 2x needs a strong one to stop looking soft.
+        percent = 120 if scale <= 1.2 else (165 if scale <= 1.8 else 200)
+        img = img.filter(ImageFilter.UnsharpMask(radius=2, percent=percent,
+                                                 threshold=3))
+        img = ImageEnhance.Contrast(img).enhance(1.12)
+        img = ImageEnhance.Color(img).enhance(1.08)
+        img = ImageEnhance.Sharpness(img).enhance(1.15)
+        img.save(img_path, "JPEG", quality=95)
     except Exception as e:
         print(f"  [WARN] Image enhance failed: {e}")
 
@@ -1164,7 +1176,13 @@ def _fetch_wikipedia_thumbnail(name, img_path):
 
 CF_ACCOUNT_ID = os.getenv("CF_ACCOUNT_ID", "").strip().strip('"').strip("'")
 CF_API_TOKEN = os.getenv("CF_API_TOKEN", "").strip().strip('"').strip("'")
-CF_IMAGE_MODEL = os.getenv("CF_IMAGE_MODEL", "@cf/black-forest-labs/flux-1-schnell")
+# SDXL is the default over flux-1-schnell because it renders NATIVE 9:16.
+# flux-schnell only returns a square, so a portrait frame has to be cut from
+# the middle and blown up ~1.9x, and that upscale is where most of the
+# softness comes from. SDXL at 896x1568 needs only ~1.2x. Override with
+# CF_IMAGE_MODEL to compare.
+CF_IMAGE_MODEL = os.getenv("CF_IMAGE_MODEL",
+                           "@cf/stabilityai/stable-diffusion-xl-base-1.0")
 
 # Appended to every generated prompt. Kept separate from the subject so the
 # subject stays the dominant part of the prompt.
@@ -1188,35 +1206,59 @@ def _generate_cloudflare(prompt, img_path, width=768, height=1024, seed=13):
     fix had to be a different model. Cloudflare's free tier covers roughly
     2,000 images a day against the ~14 this channel needs, with no card.
 
-    flux-1-schnell accepts only prompt/steps/seed and always returns a
-    square image; `width`/`height` are accepted for call-site symmetry but
-    ignored, and the frame prep step crops to 9:16 — which is why prompts
-    ask for a centred subject."""
+    The two models take different inputs and return different shapes, so
+    both are handled: SDXL accepts width/height/negative_prompt/num_steps
+    and streams raw image bytes, while flux-1-schnell accepts only
+    prompt/steps/seed and returns base64 JSON."""
     if not (CF_ACCOUNT_ID and CF_API_TOKEN):
         return False
     url = (f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT_ID}"
            f"/ai/run/{CF_IMAGE_MODEL}")
+    is_flux = "flux" in CF_IMAGE_MODEL
+
+    if is_flux:
+        payload = {
+            "prompt": f"{prompt}. {_GEN_STYLE}. {_GEN_NEGATIVE}"[:2048],
+            "steps": 8,
+            "seed": seed,
+        }
+    else:
+        payload = {
+            "prompt": f"{prompt}. {_GEN_STYLE}"[:2048],
+            "negative_prompt": _GEN_NEGATIVE,
+            # Multiples of 64 near the frame's 9:16. SDXL drifts into
+            # duplicated subjects well above its training size, so this
+            # stays close to 1024-equivalent area rather than maxing out.
+            "width": width,
+            "height": height,
+            "num_steps": 20,
+            "guidance": 7.5,
+            "seed": seed,
+        }
+
     try:
         resp = requests.post(
             url,
             headers={"Authorization": f"Bearer {CF_API_TOKEN}"},
-            json={"prompt": f"{prompt}. {_GEN_STYLE}. {_GEN_NEGATIVE}"[:2048],
-                  "steps": 8,
-                  "seed": seed},
-            timeout=120,
+            json=payload,
+            timeout=180,
         )
         if resp.status_code != 200:
             print(f"  [WARN] Cloudflare image {resp.status_code}: "
-                  f"{resp.text[:160]}")
+                  f"{resp.text[:200]}")
             return False
-        data = resp.json()
-        # flux-1-schnell returns base64 in result.image; other image models
-        # return raw bytes, so handle both rather than assuming one shape.
-        b64 = (data.get("result") or {}).get("image")
-        if not b64:
-            print(f"  [WARN] Cloudflare returned no image: {str(data)[:160]}")
-            return False
-        raw = base64.b64decode(b64)
+
+        ctype = resp.headers.get("Content-Type", "")
+        if "image" in ctype:
+            raw = resp.content
+        else:
+            b64 = (resp.json().get("result") or {}).get("image")
+            if not b64:
+                print(f"  [WARN] Cloudflare returned no image: "
+                      f"{resp.text[:200]}")
+                return False
+            raw = base64.b64decode(b64)
+
         if len(raw) < 5000:
             return False
         with open(img_path, "wb") as f:
@@ -1246,11 +1288,24 @@ def _generate_pollinations(prompt, img_path, width=768, height=1024, seed=13):
     return False
 
 
-def generate_image(prompt, img_path, width=768, height=1024, seed=13):
-    """Generate one image for `prompt`, best available generator first."""
-    if _generate_cloudflare(prompt, img_path, width, height, seed):
-        return True
-    return _generate_pollinations(prompt, img_path, width, height, seed)
+# Native 9:16 at close to SDXL's trained pixel budget. Bigger drifts into
+# duplicated subjects; smaller needs more upscaling and goes soft.
+GEN_PORTRAIT = (896, 1568)
+GEN_LANDSCAPE = (1568, 896)
+
+
+def generate_image(prompt, img_path, width=None, height=None, seed=13,
+                   landscape=False):
+    """Generate one image for `prompt`, best available generator first,
+    then scale-and-sharpen it to frame size."""
+    if width is None or height is None:
+        width, height = GEN_LANDSCAPE if landscape else GEN_PORTRAIT
+    ok = _generate_cloudflare(prompt, img_path, width, height, seed)
+    if not ok:
+        ok = _generate_pollinations(prompt, img_path, width, height, seed)
+    if ok:
+        enhance_image(img_path, landscape=landscape)
+    return ok
 
 
 def fetch_term_hero_images(term_a, term_b, save_dir, icon_a=None, icon_b=None):
@@ -1285,8 +1340,7 @@ def fetch_term_hero_images(term_a, term_b, save_dir, icon_a=None, icon_b=None):
             subject = (icons[idx] or "").strip()
             if not subject:
                 subject = f"a bank building and coins representing {term}"
-            if generate_image(subject, img_path, 768, 1024,
-                              seed=idx * 977 + 13):
+            if generate_image(subject, img_path, seed=idx * 977 + 13):
                 got = True
                 print(f"  [ILLUS] {term}")
 
@@ -1326,7 +1380,6 @@ def fetch_hd_images(slides, save_dir, landscape=False):
     images = []
     headers = {"Authorization": PEXELS_API_KEY} if PEXELS_API_KEY else {}
     orientation = "landscape" if landscape else "portrait"
-    img_w, img_h = (1920, 1080) if landscape else (1080, 1920)
 
     for i, slide in enumerate(slides):
         img_path = os.path.join(save_dir, f"slide_{i}.jpg")
@@ -1350,8 +1403,8 @@ def fetch_hd_images(slides, save_dir, landscape=False):
             # Same illustration style as the comparison panels so the whole
             # video looks like one designed piece rather than a mix of
             # stock photography and graphics.
-            if generate_image(desc, img_path, img_w, img_h,
-                              seed=i * 131 + 7):
+            if generate_image(desc, img_path, seed=i * 131 + 7,
+                              landscape=landscape):
                 images.append(img_path)
                 print(f"  [ILLUS] Slide {i+1}: {desc[:44]}")
                 got = True
