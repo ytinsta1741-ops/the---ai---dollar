@@ -909,15 +909,19 @@ def schedule_jobs():
     # uploads instead of concentrating first-hour velocity on one video.
     # TikTok keeps all 3 (it rewards volume); Instagram keeps 2 (its reach
     # degrades with more, and 5 hashtags/2 posts is the safe ceiling).
+    #
+    # The 20:00 slot posts to YouTube AND Instagram, so the day's strongest
+    # video goes out on both. Splitting them onto separate slots meant the
+    # two platforms never carried the same video at all.
     schedule.every().day.at("15:30").do(                        # 11:30am ET — midday window
         _post_async, post_instagram=True, post_youtube=False)
-    schedule.every().day.at("20:00").do(                        # 4:00pm ET — best-performing hour
-        _post_async, post_instagram=False, post_youtube=True)
-    schedule.every().day.at("23:30").do(                        # 7:30pm ET — evening window
-        _post_async, post_instagram=True, post_youtube=False)
+    schedule.every().day.at("20:00").do(                        # 4:00pm ET — best hour: YT + IG
+        _post_async, post_instagram=True, post_youtube=True)
+    schedule.every().day.at("23:30").do(                        # 7:30pm ET — TikTok only
+        _post_async, post_instagram=False, post_youtube=False)
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 1/day YouTube (20:00 UTC), 3/day TikTok, 2/day Instagram")
+    print("[OK] Schedule: 1/day YouTube + 2/day Instagram (both at 20:00 UTC), 3/day TikTok")
     print("[OK] Shorts = discovery engine for non-subscribers")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
