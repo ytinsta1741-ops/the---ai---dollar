@@ -5,6 +5,7 @@ Finance education Shorts with per-slide audio sync + zoom + crossfade + deep mal
 """
 
 import os
+import re
 import gc
 import base64
 import subprocess
@@ -1192,8 +1193,70 @@ _GEN_STYLE = ("professional editorial photograph, 50mm lens, natural soft "
               "photography quality")
 # flux-1-schnell takes no negative_prompt, so exclusions have to be worded
 # as part of the prompt itself.
-_GEN_NEGATIVE = ("No text, no words, no letters, no watermark, no logos. "
-                 "Not blurry, not distorted, not deformed.")
+_GEN_NEGATIVE = (
+    "people, person, human, man, woman, face, portrait, hands, hand, "
+    "fingers, arms, body, crowd, "
+    "extra fingers, fused hands, merged limbs, deformed hands, mutated, "
+    "disfigured, distorted, melted, warped, blurry, low detail, "
+    "text, words, letters, watermark, signature, logo"
+)
+
+# Words that pull a person into frame. Generated hands and faces come out
+# fused and melted often enough that the only reliable fix is to keep them
+# out of the picture entirely, so any subject mentioning one is rewritten
+# into the equivalent object-only scene before it reaches the generator.
+_PEOPLE_WORDS = (
+    "hand", "hands", "finger", "fingers", "palm", "arm", "arms",
+    "person", "people", "man", "men", "woman", "women", "guy", "lady",
+    "someone", "worker", "owner", "boss", "employee", "customer",
+    "shopper", "investor", "trader", "banker", "broker", "client",
+    "face", "faces", "portrait", "crowd", "team", "family", "couple",
+    "he", "she", "his", "her", "their", "holding", "signing", "counting",
+    "shaking", "pointing", "wearing", "smiling", "walking", "sitting",
+)
+
+
+def _deperson_subject(subject):
+    """Strip a human out of a described scene, keeping the objects.
+
+    Returns (subject, changed). The rewrite is deliberately blunt: it drops
+    the clause naming the person and appends an explicit empty-scene
+    instruction, which reads better than any attempt to describe a person
+    the generator cannot render correctly."""
+    words = re.findall(r"[a-zA-Z]+", subject.lower())
+    if not any(w in _PEOPLE_WORDS for w in words):
+        return subject, False
+
+    # Drop the person words themselves rather than truncating at the first
+    # one — truncating threw away the objects that came after it, turning
+    # "a restaurant owner counting cash at the till" into "a restaurant".
+    kept = [w for w in re.findall(r"[a-zA-Z]+", subject)
+            if w.lower() not in _PEOPLE_WORDS]
+
+    # Removing a word usually leaves a dangling article or preposition
+    # ("...into an open", "a a smartphone"), so collapse repeats and trim
+    # any trailing connective left pointing at nothing.
+    dangling = {"a", "an", "the", "of", "with", "into", "on", "in", "at",
+                "to", "for", "and", "by", "from", "open", "empty", "beside"}
+    cleaned = []
+    for w in kept:
+        if cleaned and w.lower() == cleaned[-1].lower():
+            continue
+        if cleaned and w.lower() in {"a", "an", "the"} \
+                and cleaned[-1].lower() in {"a", "an", "the"}:
+            cleaned[-1] = w
+            continue
+        cleaned.append(w)
+    while cleaned and cleaned[-1].lower() in dangling:
+        cleaned.pop()
+
+    base = " ".join(cleaned).strip(" ,.;:-")
+    if len(base.split()) < 2:
+        # Nothing usable survived — fall back to a neutral finance still
+        # life rather than sending a prompt that still names a person.
+        base = "banknotes, coins and a ledger on a desk"
+    return (f"{base}, empty scene with nobody present, "
+            f"no people, no hands visible"), True
 
 
 def _generate_cloudflare(prompt, img_path, width=768, height=1024, seed=13):
@@ -1302,6 +1365,9 @@ def generate_image(prompt, img_path, width=None, height=None, seed=13,
     then scale-and-sharpen it to frame size."""
     if width is None or height is None:
         width, height = GEN_LANDSCAPE if landscape else GEN_PORTRAIT
+    prompt, changed = _deperson_subject(prompt)
+    if changed:
+        print(f"  [IMG] removed people from subject -> {prompt[:60]}")
     ok = _generate_cloudflare(prompt, img_path, width, height, seed)
     if not ok:
         ok = _generate_pollinations(prompt, img_path, width, height, seed)
