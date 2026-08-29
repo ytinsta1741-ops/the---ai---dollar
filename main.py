@@ -609,7 +609,8 @@ def _mark(stage, title=""):
     print(f"[STAGE] {stage} {title}")
 
 
-def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=True, force=False):
+def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=True,
+               post_youtube=True, force=False):
     """Generate and post video to YouTube + TikTok (+ Instagram when
     post_instagram=True). Instagram Reels reach is hurt by over-posting —
     Meta's own creator guidance caps effective frequency around 1-2/day,
@@ -644,10 +645,15 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
         _mark("video_ready", title[:60])
         print(f"[OK] Video generated: {title}")
 
-        print(f"\n[STEP 2] Uploading to YouTube...")
-        _mark("uploading_youtube", title[:60])
-        youtube_success = upload_to_youtube(video_path, title, script, is_short=True, keywords=keywords)
-        _LAST_RUN["youtube"] = bool(youtube_success)
+        if post_youtube:
+            print(f"\n[STEP 2] Uploading to YouTube...")
+            _mark("uploading_youtube", title[:60])
+            youtube_success = upload_to_youtube(video_path, title, script, is_short=True, keywords=keywords)
+            _LAST_RUN["youtube"] = bool(youtube_success)
+        else:
+            print(f"\n[STEP 2] Skipping YouTube this slot (1 upload/day)")
+            youtube_success = None
+            _LAST_RUN["youtube"] = "skipped"
 
         print(f"\n[STEP 3] Uploading to TikTok...")
         _mark("uploading_tiktok")
@@ -670,7 +676,8 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
 
         print(f"\n{'='*50}")
         print(f"[DONE] POSTING COMPLETE")
-        print(f"   YouTube:   {'posted' if youtube_success else 'FAILED'}")
+        yt_status = "skipped (1/day)" if youtube_success is None else ("posted" if youtube_success else "FAILED")
+        print(f"   YouTube:   {yt_status}")
         print(f"   TikTok:    {'posted' if tiktok_success else 'FAILED'}")
         ig_status = "skipped (throttled)" if instagram_success is None else ("posted" if instagram_success else "FAILED")
         print(f"   Instagram: {ig_status}")
@@ -878,30 +885,39 @@ def upload_to_tiktok(video_path, title, keywords=None):
         return False
 
 
-def _post_async(post_instagram=True):
+def _post_async(post_instagram=True, post_youtube=True):
     """Kick off a post in a BACKGROUND thread so the scheduler loop and the
     keep-alive self-ping keep running. A video build takes several minutes;
     if it ran on the main/scheduler thread it would block the 10-min self-ping,
     Render would see no traffic, spin the instance down mid-build, and nothing
     would ever finish posting (root cause of 'last_post: never')."""
     threading.Thread(
-        target=lambda: post_video(post_instagram=post_instagram),
+        target=lambda: post_video(post_instagram=post_instagram,
+                                  post_youtube=post_youtube),
         daemon=True,
     ).start()
 
 
 def schedule_jobs():
-    # SHORTS ONLY — discovery engine for small channels.
-    # Times chosen for the US finance audience's peak scrolling windows.
-    # YouTube + TikTok post all 3 slots; Instagram posts the 2 strongest
-    # windows (midday + evening prime) = 2/day, spaced ~8h apart for reach.
-    # Posts run async so they never block the self-ping (see _post_async).
-    schedule.every().day.at("15:30").do(_post_async, post_instagram=True)   # US East 11:30am — lunch (Instagram)
-    schedule.every().day.at("21:00").do(_post_async, post_instagram=False)  # US East 5pm — evening commute
-    schedule.every().day.at("23:30").do(_post_async, post_instagram=True)   # US East 7:30pm — prime time (Instagram)
+    # Times are UTC; US East is UTC-4 (EDT). Slots sit inside the two windows
+    # that 2026 Shorts timing studies agree on — roughly 11am-2pm and 6-9pm
+    # ET — with the YouTube slot placed at 4pm ET, the single best-performing
+    # hour in Buffer's analysis.
+    #
+    # YouTube is capped at ONE upload per day and takes the strongest slot;
+    # posting the same channel 3x daily splits its own audience across
+    # uploads instead of concentrating first-hour velocity on one video.
+    # TikTok keeps all 3 (it rewards volume); Instagram keeps 2 (its reach
+    # degrades with more, and 5 hashtags/2 posts is the safe ceiling).
+    schedule.every().day.at("15:30").do(                        # 11:30am ET — midday window
+        _post_async, post_instagram=True, post_youtube=False)
+    schedule.every().day.at("20:00").do(                        # 4:00pm ET — best-performing hour
+        _post_async, post_instagram=False, post_youtube=True)
+    schedule.every().day.at("23:30").do(                        # 7:30pm ET — evening window
+        _post_async, post_instagram=True, post_youtube=False)
 
     schedule.every(10).minutes.do(keep_alive)
-    print("[OK] Schedule: 3/day YouTube + TikTok, 2/day Instagram (US peak times)")
+    print("[OK] Schedule: 1/day YouTube (20:00 UTC), 3/day TikTok, 2/day Instagram")
     print("[OK] Shorts = discovery engine for non-subscribers")
     print("[OK] Self-ping every 10 min to prevent Render spin-down")
 
@@ -923,7 +939,10 @@ def main():
     print("\n[NOW] Posting first short on startup (YouTube + TikTok only)...\n")
     # Runs in a background thread — the scheduler loop below starts immediately
     # so keep-alive fires on time and the instance never spins down mid-build.
-    _post_async(post_instagram=False)
+    # TikTok only. Redeploys are frequent during development, and letting
+    # each one post to YouTube would spend the single daily upload at a
+    # random time instead of the scheduled 4pm ET slot.
+    _post_async(post_instagram=False, post_youtube=False)
 
     print("\n[SCHED] Scheduler running (3/day YouTube+TikTok, 2/day Instagram + self-ping every 10 min)...")
     try:
