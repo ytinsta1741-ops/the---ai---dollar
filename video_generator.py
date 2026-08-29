@@ -1233,8 +1233,15 @@ def fetch_term_hero_images(term_a, term_b, save_dir, icon_a=None, icon_b=None):
 
 
 def fetch_hd_images(slides, save_dir, landscape=False):
-    """Fetch sharp HD images: Wikipedia for named public figures, Pexels
-    for everything else, Pollinations AI as final fallback."""
+    """Per-slide artwork: Wikipedia photos for named public figures, and
+    generated illustrations of the slide's own described scene for
+    everything else.
+
+    Generation is preferred over stock photo search because the search
+    query is derived from the slide text, so it returned generic office
+    imagery that matched the words but not the idea. The slide's "img"
+    field already describes the exact scene the script wants, which an
+    illustrator can draw directly. Stock search stays as the fallback."""
     os.makedirs(save_dir, exist_ok=True)
     images = []
     headers = {"Authorization": PEXELS_API_KEY} if PEXELS_API_KEY else {}
@@ -1259,6 +1266,30 @@ def fetch_hd_images(slides, save_dir, landscape=False):
                 print(f"  [WIKI] Slide {i+1}: {desc.strip()}")
                 got = True
 
+        if not got:
+            # Same illustration style as the comparison panels so the whole
+            # video looks like one designed piece rather than a mix of
+            # stock photography and graphics.
+            style = ("flat vector illustration, simple bold clean shapes, "
+                     "thick outlines, muted professional palette, centred "
+                     "subject, plain light background, infographic style, "
+                     "no text, no words, no letters, no watermark")
+            prompt = f"{style}, {desc}"
+            encoded = urllib.parse.quote(prompt)
+            url = (f"https://image.pollinations.ai/prompt/{encoded}"
+                   f"?width={img_w}&height={img_h}&nologo=true"
+                   f"&seed={i * 131 + 7}&model=flux&enhance=true")
+            try:
+                resp = requests.get(url, timeout=90)
+                if resp.status_code == 200 and len(resp.content) > 5000:
+                    with open(img_path, 'wb') as f:
+                        f.write(resp.content)
+                    images.append(img_path)
+                    print(f"  [ILLUS] Slide {i+1}: {desc[:44]}")
+                    got = True
+            except Exception as e:
+                print(f"  [WARN] Illustration gen failed slide {i+1}: {e}")
+
         if not got and PEXELS_API_KEY:
             try:
                 purl = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&orientation={orientation}&per_page=15"
@@ -1276,27 +1307,10 @@ def fetch_hd_images(slides, save_dir, landscape=False):
                             with open(img_path, 'wb') as f:
                                 f.write(img_resp.content)
                             images.append(img_path)
-                            print(f"  [HD] Slide {i+1}: {query}")
+                            print(f"  [HD] Slide {i+1}: {query} (photo fallback)")
                             got = True
             except Exception as e:
                 print(f"  [WARN] Pexels failed slide {i+1}: {e}")
-
-        if not got:
-            style = "cinematic photorealistic, sharp focus, dramatic lighting, no text no watermark"
-            prompt = f"{style}, {desc}"
-            encoded = urllib.parse.quote(prompt)
-            url = f"https://image.pollinations.ai/prompt/{encoded}?width={img_w}&height={img_h}&nologo=true&seed={i + 42}&model=flux&enhance=true"
-            try:
-                resp = requests.get(url, timeout=90)
-                if resp.status_code == 200 and len(resp.content) > 5000:
-                    with open(img_path, 'wb') as f:
-                        f.write(resp.content)
-                    enhance_image(img_path, landscape=landscape)
-                    images.append(img_path)
-                    print(f"  [AI] Slide {i+1}: {query} (fallback)")
-                    got = True
-            except Exception as e:
-                print(f"  [WARN] AI gen failed slide {i+1}: {e}")
 
         if not got:
             images.append(None)
@@ -1577,7 +1591,7 @@ def create_slide_audios(slides, work_dir):
         pitch_delta = 5 if is_energetic_beat else 0
 
         if use_fish:
-            ok = _run_fish_audio_tts(slide['speech'], audio_path, speed=(1.16 if is_energetic_beat else 1.08))
+            ok = _run_fish_audio_tts(slide['speech'], audio_path, speed=1.1)
             if not ok:
                 print(f"  [WARN] Fish Audio failed for slide {idx}, trying fallback")
         if not ok and use_piper:
