@@ -182,6 +182,16 @@ class HealthHandler(BaseHTTPRequestHandler):
                 "MAKE_INSTAGRAM_WEBHOOK_set": bool(os.getenv("MAKE_INSTAGRAM_WEBHOOK_URL")),
                 "GEMINI_API_KEY_set": bool(os.getenv("GEMINI_API_KEY")),
                 "YOUTUBE_REFRESH_TOKEN_set": bool(os.getenv("YOUTUBE_REFRESH_TOKEN")),
+                # Without both of these the image generator silently falls
+                # back to a low-quality model, which is invisible from the
+                # outside until a finished video looks wrong.
+                "CF_ACCOUNT_ID_set": bool(os.getenv("CF_ACCOUNT_ID")),
+                "CF_API_TOKEN_set": bool(os.getenv("CF_API_TOKEN")),
+                "image_generator": (
+                    "cloudflare-sdxl"
+                    if os.getenv("CF_ACCOUNT_ID") and os.getenv("CF_API_TOKEN")
+                    else "pollinations-sana (LOW QUALITY — set CF vars)"
+                ),
                 "last_post": last_post,
                 "current_run": _LAST_RUN,
                 "schedule_utc": ["15:30 Instagram", "20:00 YouTube+Instagram"],
