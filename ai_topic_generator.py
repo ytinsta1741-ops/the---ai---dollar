@@ -162,7 +162,7 @@ STRUCTURE — every video follows this arc across the 7 slides:
 3. What is actually draining Person A — the hidden cost, with figures.
 4. Person B introduced — the unglamorous job, the smaller number.
 5. What Person B actually keeps — the figures that reveal the truth.
-6. The one-line verdict naming both terms explicitly and which person has which.
+6. The one-line verdict naming both terms explicitly and which person has which. This slide must ALSO make the difference itself land in plain words — pair each term with what it actually MEASURES, using the story's own figures: "Revenue is what came in. Profit is what stayed." Never name the two terms and stop there; a viewer who had never heard either word before this video must be able to state the difference correctly the moment this slide ends.
 7. LOOP CLOSER: end MID-THOUGHT on a cliffhanger that runs straight back into the first words of slide 1, so the video loops seamlessly. End on "because…", "and that's when…", "which means…". NEVER end with "subscribe", "follow for more", or any sign-off — the app adds its own end card.
 
 FORBIDDEN: introductory phrases ("Hey guys", "Welcome back", "Let's talk about") and concluding phrases ("Subscribe", "Follow for more", "Thanks for watching"). Open cold on the hook, end mid-sentence on the loop.
@@ -175,6 +175,11 @@ FRAME THE TITLE around the confusion itself, not a flat definition. Real audienc
 - CONFUSION-CALLOUT: "You've Been Mixing Up [A] and [B] — Here's The Difference", "[A] vs [B]: The Difference Nobody Explains"
 - PERSONAL-STAKES QUESTION: "Do You Actually Know The Difference Between [A] and [B]?", "Is Confusing These Two Costing You Money?" — this style has been the single best-performing hook on this channel so far.
 - The title must always promise clarity on a real confusion — never a plain definition.
+
+THE CLARITY TEST — apply this before you answer. Assume the viewer has NEVER heard either term and knows no finance at all. Read your 7 slides back as one paragraph and ask: could that person now explain the difference to a friend in their own words? If not, the script fails, no matter how good the hook is. Three things this requires:
+- The first time each term is spoken, it must sit right next to the concrete thing it refers to in the story ("Ninety thousand came in. That's revenue."). Never let a term appear unanchored.
+- The two terms must be contrasted on the SAME dimension, so the difference is one clean swap and not two unrelated facts. Money in versus money kept. What you own versus what you owe. Not "revenue is sales" and "profit matters more".
+- Assume zero jargon. If explaining term A requires a THIRD finance word the viewer also doesn't know, you have failed — rewrite it using ordinary words. No unexplained "equity", "asset", "liability", "yield", "principal" as part of the explanation itself.
 
 VOICE: Explain it like you're talking to a smart 10 year old who's never heard either word before — not like you're reading a dictionary entry. Be VERY compact. Concretely:
 - REGISTER: write like a dark-mode investigative documentary narrator or a high-status financial investigator delivering a verdict — cold, authoritative, slightly ominous. Not chirpy, not a teacher, not a friend.

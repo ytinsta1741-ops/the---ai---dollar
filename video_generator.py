@@ -1187,10 +1187,16 @@ CF_IMAGE_MODEL = os.getenv("CF_IMAGE_MODEL",
 
 # Appended to every generated prompt. Kept separate from the subject so the
 # subject stays the dominant part of the prompt.
-_GEN_STYLE = ("professional editorial photograph, 50mm lens, natural soft "
-              "lighting, shallow depth of field, sharp focus, crisp fine "
-              "detail, high resolution, clean composition, commercial stock "
-              "photography quality")
+# Cinematic rather than plain-documentary: these compete against polished
+# finance Reels in the feed, so the still has to look deliberately shot.
+# Warm key light and a dark, uncluttered background also give the caption
+# overlay somewhere clean to sit.
+_GEN_STYLE = ("premium cinematic product photograph, 50mm lens, dramatic "
+              "warm key light with soft falloff, rich deep contrast, "
+              "shallow depth of field with creamy background blur, "
+              "single hero subject centred, dark uncluttered background, "
+              "immaculate styling, sharp focus, crisp fine detail, "
+              "high resolution, award-winning commercial photography")
 # flux-1-schnell takes no negative_prompt, so exclusions have to be worded
 # as part of the prompt itself.
 _GEN_NEGATIVE = (
