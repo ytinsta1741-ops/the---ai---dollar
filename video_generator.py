@@ -1414,9 +1414,17 @@ def fetch_term_hero_images(term_a, term_b, save_dir, icon_a=None, icon_b=None):
             subject = (icons[idx] or "").strip()
             if not subject:
                 subject = f"a bank building and coins representing {term}"
-            if generate_image(subject, img_path, seed=idx * 977 + 13):
-                got = True
-                print(f"  [ILLUS] {term}")
+            # Retried for the same reason as the per-slide images: these two
+            # panels carry the whole comparison, so a missing one is worse
+            # than a slow build.
+            for attempt in range(2):
+                if generate_image(subject, img_path,
+                                  seed=idx * 977 + 13 + attempt * 41):
+                    got = True
+                    print(f"  [ILLUS] {term}")
+                    break
+                if attempt == 0:
+                    print(f"  [RETRY] Hero image for {term}")
 
         if not got and PEXELS_API_KEY:
             try:
@@ -1477,11 +1485,18 @@ def fetch_hd_images(slides, save_dir, landscape=False):
             # Same illustration style as the comparison panels so the whole
             # video looks like one designed piece rather than a mix of
             # stock photography and graphics.
-            if generate_image(desc, img_path, seed=i * 131 + 7,
-                              landscape=landscape):
-                images.append(img_path)
-                print(f"  [ILLUS] Slide {i+1}: {desc[:44]}")
-                got = True
+            # Retry once with a different seed before giving up: a slide with
+            # no image of its own falls back to whatever is generic, which is
+            # exactly how an off-topic picture ends up in a video.
+            for attempt in range(2):
+                if generate_image(desc, img_path, seed=i * 131 + 7 + attempt * 53,
+                                  landscape=landscape):
+                    images.append(img_path)
+                    print(f"  [ILLUS] Slide {i+1}: {desc[:44]}")
+                    got = True
+                    break
+                if attempt == 0:
+                    print(f"  [RETRY] Slide {i+1} image generation")
 
         if not got and PEXELS_API_KEY:
             try:
