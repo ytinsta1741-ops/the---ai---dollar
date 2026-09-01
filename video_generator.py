@@ -2720,18 +2720,74 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         if kind == 'arc':
             d.ellipse([c[0] - r, c[1] - r, c[0] + r, c[1] + r],
                       outline=CHAR_OUTLINE, width=max(2, ow - 1))
-    eye_dx, eye_dy, eye_r = int(16 * s), int(6 * s), int(5 * s)
+    # --- face -------------------------------------------------------------
+    # Two solid dots and a thin arc read as a default emoticon, which is what
+    # made the character look generic next to the reference. The reference
+    # gets its personality from large open eyes with visible pupils, brows,
+    # an OPEN mouth, and hair — so all four are drawn here.
+    fw = max(2, ow - 1)                 # face line, a touch finer than the body
+
+    # Hair: a few overlapping lobes across the crown, clipped to the skull by
+    # drawing them as filled shapes that sit on the head's own arc.
+    hair_pts = []
+    for i, (ang, rr) in enumerate(((-58, 1.02), (-30, 1.10), (0, 1.14),
+                                   (30, 1.10), (58, 1.02))):
+        a = math.radians(ang - 90)
+        hair_pts.append((head_cx + math.cos(a) * head_r * rr,
+                         head_cy + math.sin(a) * head_r * rr))
+    for i, (px_, py_) in enumerate(hair_pts):
+        r = head_r * (0.30 if i in (0, 4) else 0.38)
+        d.ellipse([px_ - r, py_ - r, px_ + r, py_ + r], fill=CHAR_OUTLINE)
+    # Re-lay the lower half of the skull so the hair reads as a fringe sitting
+    # on top rather than a helmet swallowing the face.
+    d.chord([head_cx - head_r, head_cy - head_r,
+             head_cx + head_r, head_cy + head_r],
+            start=8, end=172, fill=CHAR_SKIN)
+    d.arc([head_cx - head_r, head_cy - head_r,
+           head_cx + head_r, head_cy + head_r],
+          start=8, end=172, fill=CHAR_OUTLINE, width=ow)
+
+    # Eyes: white almonds with a dark rim and a pupil that looks where the
+    # character is pointing, so the gesture and the gaze agree.
+    eye_dx = int(19 * s)
+    eye_cy = head_cy - int(3 * s)
+    eye_rx, eye_ry = int(13 * s), int(15 * s)
+    if pose in ('point_left', 'confused'):
+        gx, gy = -0.45, -0.35
+    elif pose == 'point_right':
+        gx, gy = 0.45, -0.35
+    elif pose == 'point_both':
+        gx, gy = 0.0, -0.45
+    else:
+        gx, gy = 0.0, 0.0
     for ex in (head_cx - eye_dx, head_cx + eye_dx):
-        d.ellipse([ex - eye_r, head_cy - eye_dy - eye_r, ex + eye_r, head_cy - eye_dy + eye_r],
-                  fill=CHAR_OUTLINE)
+        d.ellipse([ex - eye_rx, eye_cy - eye_ry, ex + eye_rx, eye_cy + eye_ry],
+                  fill=(255, 255, 255), outline=CHAR_OUTLINE, width=fw)
+        pr = int(6.5 * s)
+        pcx = ex + gx * (eye_rx - pr - int(1 * s))
+        pcy = eye_cy + gy * (eye_ry - pr - int(1 * s))
+        d.ellipse([pcx - pr, pcy - pr, pcx + pr, pcy + pr], fill=CHAR_OUTLINE)
+
+    # No separate brows: at this head size they land inside the hair fringe
+    # and read as stray scratches on the black. The fringe itself gives the
+    # eyes their top line.
+
+    # Mouth
+    mouth_cy = head_cy + int(20 * s)
     if pose == 'confused':
         mo = int(9 * s)
-        d.ellipse([head_cx - mo, head_cy + int(15 * s) - mo, head_cx + mo, head_cy + int(15 * s) + mo],
-                  outline=CHAR_OUTLINE, width=ow)
+        d.ellipse([head_cx - mo, mouth_cy - mo, head_cx + mo, mouth_cy + mo],
+                  outline=CHAR_OUTLINE, width=fw)
     else:
-        sm = int(20 * s)
-        d.arc([head_cx - sm, head_cy - int(2 * s), head_cx + sm, head_cy + sm + int(8 * s)],
-              start=20, end=160, fill=CHAR_OUTLINE, width=ow)
+        # Open smile: a dark chord with a tongue, which carries far more
+        # energy at Shorts size than a single thin arc.
+        mw, mh = int(21 * s), int(17 * s)
+        box = [head_cx - mw, mouth_cy - mh, head_cx + mw, mouth_cy + mh]
+        d.chord(box, start=0, end=180, fill=CHAR_OUTLINE)
+        tw, th = int(11 * s), int(8 * s)
+        d.chord([head_cx - tw, mouth_cy + mh - th * 2,
+                 head_cx + tw, mouth_cy + mh],
+                start=0, end=180, fill=(214, 108, 116))
 
     return foot_y + shoe_h + int(12 * s)
 
