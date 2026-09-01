@@ -2570,8 +2570,8 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     neck_y = neck_top + int(16 * s)          # where the collar sits
 
     shoulder_y = neck_y + int(6 * s)
-    torso_w = int(78 * s)        # slim tee, not a barrel chest
-    torso_h = int(128 * s)
+    torso_w = int(66 * s)        # compact egg, narrower than the head
+    torso_h = int(116 * s)
     hip_y = shoulder_y + torso_h
 
     leg_len = int(150 * s)
@@ -2589,10 +2589,11 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     # Legs: each stays on its own side (the sway is deliberately smaller than
     # the stance width so they can never scissor past each other, which looked
     # broken from this front-on view); the gait reads through knee-lift.
-    hip_dx = int(20 * s)
-    stance = int(32 * s)
+    # Thin, near-constant-width sticks per the reference, not tapered tubes.
+    hip_dx = int(9 * s)
+    stance = int(30 * s)
     sway = int(14 * s)
-    thigh_w, calf_w, ankle_w = int(34 * s), int(28 * s), int(22 * s)
+    thigh_w, calf_w, ankle_w = int(12 * s), int(11 * s), int(10 * s)
 
     legs, feet = [], []
     for sign, ph in ((-1, swing), (1, -swing)):
@@ -2605,14 +2606,16 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
                      (kneex, kneey), (footx, footy)])
         feet.append((sign, footx, footy))
 
-    shoe_w, shoe_h = int(38 * s), int(17 * s)
+    # Feet are flat solid ovals sitting under the legs, drawn dark after the
+    # silhouette rather than as white outlined shoes inside it.
+    shoe_w, shoe_h = int(30 * s), int(11 * s)
 
     def _arm_shapes(sign, mode, sw):
         """Return the limb chains making up one arm, so both passes draw
         exactly the same geometry."""
-        sx = cx + sign * (torso_w // 2 - int(10 * s))
-        sy = shoulder_y + int(20 * s)
-        upper_w, fore_w, wrist_w = int(30 * s), int(24 * s), int(18 * s)
+        sx = cx + sign * (torso_w // 2 - int(14 * s))
+        sy = shoulder_y + int(18 * s)
+        upper_w, fore_w, wrist_w = int(12 * s), int(11 * s), int(10 * s)
 
         if mode == 'point':
             # Matched to the reference: the elbow stays in close to the body
@@ -2643,29 +2646,28 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         px, py = -dy, dx
 
         if mode == 'point':
-            # A closed FIST with one finger out, per the reference — the
-            # earlier version was a wide palm with a long tapered spike,
-            # which read as a mitten with a thorn rather than a hand.
-            fist_c = (hx + dx * int(16 * s), hy + dy * int(16 * s))
-            fist_r = int(23 * s)
+            # Small hand on a thin forearm, matching the reference: the whole
+            # hand is only a little wider than the arm. A big fist looked
+            # like a boxing glove once the limbs became sticks.
+            fist_c = (hx + dx * int(11 * s), hy + dy * int(11 * s))
+            fist_r = int(14 * s)
             shapes.append(([fist_c, fist_c], [fist_r * 2, fist_r * 2]))
-            # Index finger: shorter and near parallel-sided with a rounded
-            # tip, starting inside the fist so it reads as growing out of it.
-            f0 = (fist_c[0] + dx * int(6 * s) - px * int(5 * s),
-                  fist_c[1] + dy * int(6 * s) - py * int(5 * s))
-            f1 = (fist_c[0] + dx * int(46 * s) - px * int(5 * s),
-                  fist_c[1] + dy * int(46 * s) - py * int(5 * s))
-            shapes.append(([f0, f1], [int(15 * s), int(13 * s)]))
-            # Thumb: a lobe merged into the fist silhouette, with no scored
-            # circle over it. The arc that used to separate it read as a
-            # stray ring stuck on the hand rather than as a curled thumb.
-            th_c = (fist_c[0] + px * int(14 * s) + dx * int(2 * s),
-                    fist_c[1] + py * int(14 * s) + dy * int(2 * s))
-            shapes.append(([th_c, th_c], [int(20 * s), int(20 * s)]))
+            # Index finger: thin, offset to the outer edge of the hand.
+            f0 = (fist_c[0] + dx * int(2 * s) - px * int(4 * s),
+                  fist_c[1] + dy * int(2 * s) - py * int(4 * s))
+            f1 = (fist_c[0] + dx * int(38 * s) - px * int(4 * s),
+                  fist_c[1] + dy * int(38 * s) - py * int(4 * s))
+            shapes.append(([f0, f1], [int(10 * s), int(9 * s)]))
+            # Folded fingers: a small curl scored on the inner side of the
+            # hand. At this size it reads as knuckles; the earlier version
+            # was scaled to a large fist and looked like a stray ring.
+            cu_c = (fist_c[0] + px * int(5 * s) + dx * int(3 * s),
+                    fist_c[1] + py * int(5 * s) + dy * int(3 * s))
+            details.append(('arc', cu_c, int(6 * s)))
         else:
-            # Relaxed poses keep the simple rounded hand.
-            palm_c = (hx + dx * int(10 * s), hy + dy * int(10 * s))
-            shapes.append(([wrist, palm_c], [wrist_w, int(30 * s)]))
+            # Relaxed poses: a small rounded hand, barely wider than the arm.
+            palm_c = (hx + dx * int(6 * s), hy + dy * int(6 * s))
+            shapes.append(([wrist, palm_c], [wrist_w, int(15 * s)]))
         return shapes, details
 
     if pose == 'point_both':
@@ -2692,20 +2694,13 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     def _body(colour, pad):
         for chain in legs:
             _limb(d, chain, [thigh_w, calf_w, ankle_w], colour, pad)
-        for sign, footx, footy in feet:
-            toe = int(12 * s) * sign
-            d.rounded_rectangle(
-                [min(footx - shoe_w // 2, footx - shoe_w // 2 + toe) - pad,
-                 footy - shoe_h // 2 - pad,
-                 max(footx + shoe_w // 2, footx + shoe_w // 2 + toe) + pad,
-                 footy + shoe_h + pad],
-                radius=int(8 * s) + pad, fill=colour)
         _limb(d, [(cx, neck_top), (cx, neck_y + int(10 * s))],
-              [int(26 * s), int(26 * s)], colour, pad)
-        d.rounded_rectangle(
+              [int(13 * s), int(13 * s)], colour, pad)
+        # Oval torso, not a rounded rectangle — the reference body is an
+        # egg shape that the stick limbs run out of.
+        d.ellipse(
             [cx - torso_w // 2 - pad, shoulder_y - pad,
-             cx + torso_w // 2 + pad, hip_y + int(4 * s) + pad],
-            radius=int(20 * s) + pad, fill=colour)
+             cx + torso_w // 2 + pad, hip_y + int(4 * s) + pad], fill=colour)
         for chain, widths in arms:
             _limb(d, chain, widths, colour, pad)
         d.ellipse([head_cx - head_r - pad, head_cy - head_r - pad,
@@ -2713,6 +2708,13 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
 
     _body(CHAR_OUTLINE, ow)
     _body(CHAR_SKIN, 0)
+
+    # Feet: flat solid ovals under the legs. Drawn after the silhouette so
+    # they stay dark instead of being filled white by the second pass.
+    for sign, footx, footy in feet:
+        d.ellipse([footx - shoe_w // 2, footy - shoe_h // 2,
+                   footx + shoe_w // 2, footy + shoe_h // 2],
+                  fill=CHAR_OUTLINE)
 
     # Hand detail scored on top of the finished silhouette — inside the fill,
     # so it has to come after both body passes or it would be painted over.
