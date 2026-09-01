@@ -2570,8 +2570,8 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     neck_y = neck_top + int(16 * s)          # where the collar sits
 
     shoulder_y = neck_y + int(6 * s)
-    torso_w = int(66 * s)        # compact egg, narrower than the head
-    torso_h = int(116 * s)
+    torso_w = int(52 * s)        # slim body, not a round belly
+    torso_h = int(124 * s)
     hip_y = shoulder_y + torso_h
 
     leg_len = int(150 * s)
@@ -2672,9 +2672,15 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
                     fist_c[1] + py * int(5 * s) + dy * int(3 * s))
             details.append(('arc', cu_c, int(6 * s)))
         else:
-            # Relaxed poses: a small rounded hand, barely wider than the arm.
-            palm_c = (hx + dx * int(6 * s), hy + dy * int(6 * s))
-            shapes.append(([wrist, palm_c], [wrist_w, int(15 * s)]))
+            # Relaxed poses: a hand, not a blob. A bare rounded cap was
+            # indistinguishable from the arm simply ending, so the same
+            # curled-fingers score used on the pointing hand goes here too —
+            # it is the only thing that makes it read as a hand at rest.
+            palm_c = (hx + dx * int(9 * s), hy + dy * int(9 * s))
+            shapes.append(([wrist, palm_c], [wrist_w, int(19 * s)]))
+            cu_c = (palm_c[0] + px * sign * int(3 * s) + dx * int(2 * s),
+                    palm_c[1] + py * sign * int(3 * s) + dy * int(2 * s))
+            details.append(('arc', cu_c, int(5 * s)))
         return shapes, details
 
     if pose == 'point_both':
