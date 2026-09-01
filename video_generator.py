@@ -2624,12 +2624,14 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         upper_w, fore_w, wrist_w = int(30 * s), int(24 * s), int(18 * s)
 
         if mode == 'point':
-            # Angled UP-and-out so the gesture actually lands on the photo
-            # panel above the character, instead of pointing horizontally
-            # into empty space beside it.
-            elbow = (cx + sign * int(66 * s), sy - int(26 * s))
-            wrist = (cx + sign * int(104 * s), sy - int(74 * s))
-            hand_dir = (sign * 0.55, -0.84)
+            # Matched to the reference: the elbow stays in close to the body
+            # and the forearm goes almost straight UP, so the hand clears the
+            # head and the finger reads as vertical. The previous version
+            # angled out at ~57 degrees, which put the hand beside the head
+            # and made the gesture read as a shrug rather than a point.
+            elbow = (cx + sign * int(62 * s), sy - int(30 * s))
+            wrist = (cx + sign * int(80 * s), sy - int(118 * s))
+            hand_dir = (sign * 0.20, -0.98)
         elif mode == 'up':
             elbow = (cx + sign * int(74 * s), sy - int(30 * s))
             wrist = (cx + sign * int(96 * s), sy - int(88 * s))
@@ -2653,9 +2655,12 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         palm_w = int(30 * s)
         _limb(d, [wrist, palm_c], [wrist_w, palm_w], CHAR_SKIN, ow)
         if mode == 'point':
+            # Longer and slightly tapered so the extended index finger is
+            # unmistakable at Shorts size, where a stubby one just looks
+            # like a mitten.
             f0 = (palm_c[0] + dx * int(12 * s), palm_c[1] + dy * int(12 * s))
-            f1 = (palm_c[0] + dx * int(42 * s), palm_c[1] + dy * int(42 * s))
-            _limb(d, [f0, f1], [int(15 * s), int(11 * s)], CHAR_SKIN, ow)
+            f1 = (palm_c[0] + dx * int(54 * s), palm_c[1] + dy * int(54 * s))
+            _limb(d, [f0, f1], [int(16 * s), int(10 * s)], CHAR_SKIN, ow)
 
     if pose == 'point_both':
         _arm(-1, 'point', 0); _arm(1, 'point', 0)
@@ -3043,7 +3048,11 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         # travels to whichever term is being explained, pointing once it
         # arrives) so the SAME background is reused for every sub-frame of
         # this slide instead of re-rendering photos/text repeatedly.
-        mascot_top = card_top + card_h + 70
+        # 100px, not 70: the raised pointing finger reaches 88px above the
+        # character's own top, so the old gap put the fingertip 18px inside
+        # the photo above it. This leaves it just clear, still reading as
+        # pointing right at the image.
+        mascot_top = card_top + card_h + 100
         is_last = (idx == len(slides) - 1)
         is_first = (idx == 0)
 
