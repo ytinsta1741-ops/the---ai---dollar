@@ -2632,23 +2632,42 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
             hand_dir = (0, 1)
 
         shapes = [([(sx, sy), elbow, wrist], [upper_w, fore_w, wrist_w])]
+        details = []
 
-        # Hand: a palm noticeably wider than the wrist so it reads as a hand
-        # rather than the arm just stopping, plus a clearly separated index
-        # finger on the pointing poses.
         hx, hy = wrist
         dx, dy = hand_dir
         norm = math.hypot(dx, dy) or 1.0
         dx, dy = dx / norm, dy / norm
-        palm_c = (hx + dx * int(10 * s), hy + dy * int(10 * s))
-        shapes.append(([wrist, palm_c], [wrist_w, int(30 * s)]))
+        # Perpendicular to the pointing direction, used to place the thumb
+        # off to one side of the fist.
+        px, py = -dy, dx
+
         if mode == 'point':
-            # Long enough that the extended finger is unmistakable at Shorts
-            # size, where a stubby one just looks like a mitten.
-            f0 = (palm_c[0] + dx * int(12 * s), palm_c[1] + dy * int(12 * s))
-            f1 = (palm_c[0] + dx * int(54 * s), palm_c[1] + dy * int(54 * s))
-            shapes.append(([f0, f1], [int(16 * s), int(10 * s)]))
-        return shapes
+            # A closed FIST with one finger out, per the reference — the
+            # earlier version was a wide palm with a long tapered spike,
+            # which read as a mitten with a thorn rather than a hand.
+            fist_c = (hx + dx * int(16 * s), hy + dy * int(16 * s))
+            fist_r = int(23 * s)
+            shapes.append(([fist_c, fist_c], [fist_r * 2, fist_r * 2]))
+            # Index finger: shorter and near parallel-sided with a rounded
+            # tip, starting inside the fist so it reads as growing out of it.
+            f0 = (fist_c[0] + dx * int(6 * s) - px * int(5 * s),
+                  fist_c[1] + dy * int(6 * s) - py * int(5 * s))
+            f1 = (fist_c[0] + dx * int(46 * s) - px * int(5 * s),
+                  fist_c[1] + dy * int(46 * s) - py * int(5 * s))
+            shapes.append(([f0, f1], [int(15 * s), int(13 * s)]))
+            # Curled thumb: a small lobe on the near side of the fist, then
+            # an arc scored over the fill to separate it. Without the arc the
+            # lobe just fattens the fist and the curl is invisible.
+            th_c = (fist_c[0] + px * int(15 * s) + dx * int(4 * s),
+                    fist_c[1] + py * int(15 * s) + dy * int(4 * s))
+            shapes.append(([th_c, th_c], [int(19 * s), int(19 * s)]))
+            details.append(('arc', th_c, int(11 * s)))
+        else:
+            # Relaxed poses keep the simple rounded hand.
+            palm_c = (hx + dx * int(10 * s), hy + dy * int(10 * s))
+            shapes.append(([wrist, palm_c], [wrist_w, int(30 * s)]))
+        return shapes, details
 
     if pose == 'point_both':
         arm_spec = ((-1, 'point', 0), (1, 'point', 0))
@@ -2661,7 +2680,11 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     else:  # calm / walk — arms swing opposite their same-side leg
         arm_spec = ((-1, 'down', swing), (1, 'down', -swing))
 
-    arms = [sh for spec in arm_spec for sh in _arm_shapes(*spec)]
+    arms, hand_details = [], []
+    for spec in arm_spec:
+        _shapes, _details = _arm_shapes(*spec)
+        arms.extend(_shapes)
+        hand_details.extend(_details)
 
     # --- body: drawn twice, inflated outline pass first, then the fill.
     # Outlining each part as it was drawn left internal seams, because a part
@@ -2691,6 +2714,13 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
 
     _body(CHAR_OUTLINE, ow)
     _body(CHAR_SKIN, 0)
+
+    # Hand detail scored on top of the finished silhouette — inside the fill,
+    # so it has to come after both body passes or it would be painted over.
+    for kind, c, r in hand_details:
+        if kind == 'arc':
+            d.ellipse([c[0] - r, c[1] - r, c[0] + r, c[1] + r],
+                      outline=CHAR_OUTLINE, width=max(2, ow - 1))
     eye_dx, eye_dy, eye_r = int(16 * s), int(6 * s), int(5 * s)
     for ex in (head_cx - eye_dx, head_cx + eye_dx):
         d.ellipse([ex - eye_r, head_cy - eye_dy - eye_r, ex + eye_r, head_cy - eye_dy + eye_r],
