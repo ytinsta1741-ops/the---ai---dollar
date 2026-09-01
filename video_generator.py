@@ -2590,7 +2590,10 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     # the stance width so they can never scissor past each other, which looked
     # broken from this front-on view); the gait reads through knee-lift.
     # Thin, near-constant-width sticks per the reference, not tapered tubes.
-    hip_dx = int(9 * s)
+    # Legs start wide enough apart, and high enough inside the oval, that the
+    # torso's bottom tip is hidden behind them instead of pinching to a point
+    # between two legs leaving a stray nub.
+    hip_dx = int(15 * s)
     stance = int(30 * s)
     sway = int(14 * s)
     thigh_w, calf_w, ankle_w = int(12 * s), int(11 * s), int(10 * s)
@@ -2602,7 +2605,7 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         footy = foot_y - int(30 * s) * lift
         kneex = cx + sign * stance + int(sway * ph * 0.6)
         kneey = hip_y + int(leg_len * 0.52) - int(20 * s) * lift
-        legs.append([(cx + sign * hip_dx, hip_y - int(6 * s)),
+        legs.append([(cx + sign * hip_dx, hip_y - int(22 * s)),
                      (kneex, kneey), (footx, footy)])
         feet.append((sign, footx, footy))
 
@@ -2613,8 +2616,11 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
     def _arm_shapes(sign, mode, sw):
         """Return the limb chains making up one arm, so both passes draw
         exactly the same geometry."""
-        sx = cx + sign * (torso_w // 2 - int(14 * s))
-        sy = shoulder_y + int(18 * s)
+        # Start the arm well inside the torso and low enough to be at the
+        # oval's wide part. Starting it near the top edge left the rounded
+        # cap poking out as a spur, with a sharp notch under it.
+        sx = cx + sign * (torso_w // 2 - int(22 * s))
+        sy = shoulder_y + int(20 * s)
         upper_w, fore_w, wrist_w = int(12 * s), int(11 * s), int(10 * s)
 
         if mode == 'point':
@@ -2629,9 +2635,10 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
             elbow = (cx + sign * int(74 * s), sy - int(30 * s))
             wrist = (cx + sign * int(96 * s), sy - int(88 * s))
             hand_dir = (sign * 0.4, -1)
-        else:  # relaxed at the side, swinging with the gait
-            elbow = (cx + sign * int(62 * s), sy + int(56 * s))
-            wrist = (cx + sign * int(70 * s), sy + int(112 * s) + int(24 * s) * sw)
+        else:  # relaxed at the side, swinging with the gait — kept close to
+            # the body rather than splayed out, per the reference
+            elbow = (cx + sign * int(46 * s), sy + int(62 * s))
+            wrist = (cx + sign * int(52 * s), sy + int(124 * s) + int(24 * s) * sw)
             hand_dir = (0, 1)
 
         shapes = [([(sx, sy), elbow, wrist], [upper_w, fore_w, wrist_w])]
