@@ -2500,11 +2500,14 @@ def _word_colour(word):
     return CAP_WHITE
 
 
+# The reference sketch is a single white silhouette in one dark outline —
+# no shirt, trousers or shoes. Every body fill is therefore the same white,
+# and only the outline carries the drawing.
 CHAR_OUTLINE = (38, 38, 42)
-CHAR_SKIN    = (248, 248, 248)
-CHAR_SHIRT   = (168, 168, 172)
-CHAR_PANTS   = (92, 92, 96)
-CHAR_SHOE    = (58, 58, 62)
+CHAR_SKIN    = (250, 250, 250)
+CHAR_SHIRT   = CHAR_SKIN
+CHAR_PANTS   = CHAR_SKIN
+CHAR_SHOE    = CHAR_SKIN
 
 
 def _seg_quad(p0, p1, w0, w1):
@@ -2522,19 +2525,23 @@ def _seg_quad(p0, p1, w0, w1):
     ]
 
 
-def _limb(draw, pts, widths, fill, ow):
-    """A tapered, rounded, outlined limb through a chain of points — the
-    look of the reference sketch (solid shapes with a clean dark outline)
-    rather than thin sticks. Drawn as an oversized outline pass followed by
-    the fill pass so joints merge seamlessly with no internal seams."""
-    for colour, pad in ((CHAR_OUTLINE, ow), (fill, 0)):
-        for i in range(len(pts) - 1):
-            draw.polygon(_seg_quad(pts[i], pts[i + 1],
-                                   widths[i] + pad * 2, widths[i + 1] + pad * 2),
-                         fill=colour)
-        for p, w in zip(pts, widths):
-            r = (w + pad * 2) / 2
-            draw.ellipse([p[0] - r, p[1] - r, p[0] + r, p[1] + r], fill=colour)
+def _limb(draw, pts, widths, colour, pad):
+    """One tapered, rounded limb through a chain of points, drawn as a single
+    flat shape inflated by `pad`.
+
+    Callers draw the WHOLE body once with pad=outline_width in the outline
+    colour and again with pad=0 in the fill colour. Doing it that way round
+    gives the reference sketch's look — one continuous silhouette in a single
+    dark line. Outlining each part individually instead left internal seams,
+    because a part drawn later painted its own outline across the fill of the
+    part before it."""
+    for i in range(len(pts) - 1):
+        draw.polygon(_seg_quad(pts[i], pts[i + 1],
+                               widths[i] + pad * 2, widths[i + 1] + pad * 2),
+                     fill=colour)
+    for p, w in zip(pts, widths):
+        r = (w + pad * 2) / 2
+        draw.ellipse([p[0] - r, p[1] - r, p[0] + r, p[1] + r], fill=colour)
 
 
 def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
@@ -2578,47 +2585,31 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
                cx + sh_w, foot_y + int(10 * s) + sh_h // 2],
               fill=(230, 230, 228))
 
-    # --- legs: solid tapered trousers from a shared hip. Each leg stays on
-    # its own side (the sway is deliberately smaller than the stance width
-    # so they can never scissor past each other, which looked broken from
-    # this front-on view); the gait reads through alternating knee-lift. ---
+    # --- geometry shared by both passes ---
+    # Legs: each stays on its own side (the sway is deliberately smaller than
+    # the stance width so they can never scissor past each other, which looked
+    # broken from this front-on view); the gait reads through knee-lift.
     hip_dx = int(20 * s)
-    stance = int(32 * s)     # wide enough that the trouser legs read as two
+    stance = int(32 * s)
     sway = int(14 * s)
     thigh_w, calf_w, ankle_w = int(34 * s), int(28 * s), int(22 * s)
 
-    feet = []
+    legs, feet = [], []
     for sign, ph in ((-1, swing), (1, -swing)):
         lift = max(0.0, ph)                      # this leg is mid-step
         footx = cx + sign * stance + int(sway * ph)
         footy = foot_y - int(30 * s) * lift
         kneex = cx + sign * stance + int(sway * ph * 0.6)
         kneey = hip_y + int(leg_len * 0.52) - int(20 * s) * lift
-        _limb(d, [(cx + sign * hip_dx, hip_y - int(6 * s)), (kneex, kneey), (footx, footy)],
-              [thigh_w, calf_w, ankle_w], CHAR_PANTS, ow)
+        legs.append([(cx + sign * hip_dx, hip_y - int(6 * s)),
+                     (kneex, kneey), (footx, footy)])
         feet.append((sign, footx, footy))
 
-    # --- shoes ---
     shoe_w, shoe_h = int(38 * s), int(17 * s)
-    for sign, footx, footy in feet:
-        toe = int(12 * s) * sign
-        d.rounded_rectangle(
-            [min(footx - shoe_w // 2, footx - shoe_w // 2 + toe), footy - shoe_h // 2,
-             max(footx + shoe_w // 2, footx + shoe_w // 2 + toe), footy + shoe_h],
-            radius=int(8 * s), fill=CHAR_SHOE, outline=CHAR_OUTLINE, width=ow)
 
-    # --- neck (tucks under both head and collar) ---
-    _limb(d, [(cx, neck_top), (cx, neck_y + int(10 * s))],
-          [int(26 * s), int(26 * s)], CHAR_SKIN, ow)
-
-    # --- torso / t-shirt ---
-    d.rounded_rectangle(
-        [cx - torso_w // 2, shoulder_y, cx + torso_w // 2, hip_y + int(4 * s)],
-        radius=int(20 * s), fill=CHAR_SHIRT, outline=CHAR_OUTLINE, width=ow)
-
-    # --- arms: upper arm + forearm, tapering to a wrist, ending in a hand
-    # with an extended index finger when pointing ---
-    def _arm(sign, mode, sw):
+    def _arm_shapes(sign, mode, sw):
+        """Return the limb chains making up one arm, so both passes draw
+        exactly the same geometry."""
         sx = cx + sign * (torso_w // 2 - int(10 * s))
         sy = shoulder_y + int(20 * s)
         upper_w, fore_w, wrist_w = int(30 * s), int(24 * s), int(18 * s)
@@ -2626,9 +2617,8 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         if mode == 'point':
             # Matched to the reference: the elbow stays in close to the body
             # and the forearm goes almost straight UP, so the hand clears the
-            # head and the finger reads as vertical. The previous version
-            # angled out at ~57 degrees, which put the hand beside the head
-            # and made the gesture read as a shrug rather than a point.
+            # head and the finger reads as vertical. Angling it out at ~57
+            # degrees put the hand beside the head and read as a shrug.
             elbow = (cx + sign * int(62 * s), sy - int(30 * s))
             wrist = (cx + sign * int(80 * s), sy - int(118 * s))
             hand_dir = (sign * 0.20, -0.98)
@@ -2641,41 +2631,66 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
             wrist = (cx + sign * int(70 * s), sy + int(112 * s) + int(24 * s) * sw)
             hand_dir = (0, 1)
 
-        _limb(d, [(sx, sy), elbow, wrist],
-              [upper_w, fore_w, wrist_w], CHAR_SKIN, ow)
+        shapes = [([(sx, sy), elbow, wrist], [upper_w, fore_w, wrist_w])]
 
-        # --- hand: a palm noticeably wider than the wrist so it actually
-        # reads as a hand rather than the arm just stopping, plus a clearly
-        # separated index finger on the pointing poses.
+        # Hand: a palm noticeably wider than the wrist so it reads as a hand
+        # rather than the arm just stopping, plus a clearly separated index
+        # finger on the pointing poses.
         hx, hy = wrist
         dx, dy = hand_dir
         norm = math.hypot(dx, dy) or 1.0
         dx, dy = dx / norm, dy / norm
         palm_c = (hx + dx * int(10 * s), hy + dy * int(10 * s))
-        palm_w = int(30 * s)
-        _limb(d, [wrist, palm_c], [wrist_w, palm_w], CHAR_SKIN, ow)
+        shapes.append(([wrist, palm_c], [wrist_w, int(30 * s)]))
         if mode == 'point':
-            # Longer and slightly tapered so the extended index finger is
-            # unmistakable at Shorts size, where a stubby one just looks
-            # like a mitten.
+            # Long enough that the extended finger is unmistakable at Shorts
+            # size, where a stubby one just looks like a mitten.
             f0 = (palm_c[0] + dx * int(12 * s), palm_c[1] + dy * int(12 * s))
             f1 = (palm_c[0] + dx * int(54 * s), palm_c[1] + dy * int(54 * s))
-            _limb(d, [f0, f1], [int(16 * s), int(10 * s)], CHAR_SKIN, ow)
+            shapes.append(([f0, f1], [int(16 * s), int(10 * s)]))
+        return shapes
 
     if pose == 'point_both':
-        _arm(-1, 'point', 0); _arm(1, 'point', 0)
+        arm_spec = ((-1, 'point', 0), (1, 'point', 0))
     elif pose == 'point_left':
-        _arm(-1, 'point', 0); _arm(1, 'down', 0)
+        arm_spec = ((-1, 'point', 0), (1, 'down', 0))
     elif pose == 'point_right':
-        _arm(-1, 'down', 0); _arm(1, 'point', 0)
+        arm_spec = ((-1, 'down', 0), (1, 'point', 0))
     elif pose == 'confused':
-        _arm(-1, 'up', 0); _arm(1, 'up', 0)
+        arm_spec = ((-1, 'up', 0), (1, 'up', 0))
     else:  # calm / walk — arms swing opposite their same-side leg
-        _arm(-1, 'down', swing); _arm(1, 'down', -swing)
+        arm_spec = ((-1, 'down', swing), (1, 'down', -swing))
 
-    # --- head ---
-    d.ellipse([head_cx - head_r, head_cy - head_r, head_cx + head_r, head_cy + head_r],
-              fill=CHAR_SKIN, outline=CHAR_OUTLINE, width=ow)
+    arms = [sh for spec in arm_spec for sh in _arm_shapes(*spec)]
+
+    # --- body: drawn twice, inflated outline pass first, then the fill.
+    # Outlining each part as it was drawn left internal seams, because a part
+    # drawn later painted its outline across the fill of the part before it.
+    # The reference sketch is one continuous silhouette in a single line.
+    def _body(colour, pad):
+        for chain in legs:
+            _limb(d, chain, [thigh_w, calf_w, ankle_w], colour, pad)
+        for sign, footx, footy in feet:
+            toe = int(12 * s) * sign
+            d.rounded_rectangle(
+                [min(footx - shoe_w // 2, footx - shoe_w // 2 + toe) - pad,
+                 footy - shoe_h // 2 - pad,
+                 max(footx + shoe_w // 2, footx + shoe_w // 2 + toe) + pad,
+                 footy + shoe_h + pad],
+                radius=int(8 * s) + pad, fill=colour)
+        _limb(d, [(cx, neck_top), (cx, neck_y + int(10 * s))],
+              [int(26 * s), int(26 * s)], colour, pad)
+        d.rounded_rectangle(
+            [cx - torso_w // 2 - pad, shoulder_y - pad,
+             cx + torso_w // 2 + pad, hip_y + int(4 * s) + pad],
+            radius=int(20 * s) + pad, fill=colour)
+        for chain, widths in arms:
+            _limb(d, chain, widths, colour, pad)
+        d.ellipse([head_cx - head_r - pad, head_cy - head_r - pad,
+                   head_cx + head_r + pad, head_cy + head_r + pad], fill=colour)
+
+    _body(CHAR_OUTLINE, ow)
+    _body(CHAR_SKIN, 0)
     eye_dx, eye_dy, eye_r = int(16 * s), int(6 * s), int(5 * s)
     for ex in (head_cx - eye_dx, head_cx + eye_dx):
         d.ellipse([ex - eye_r, head_cy - eye_dy - eye_r, ex + eye_r, head_cy - eye_dy + eye_r],
