@@ -2656,13 +2656,12 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
             f1 = (fist_c[0] + dx * int(46 * s) - px * int(5 * s),
                   fist_c[1] + dy * int(46 * s) - py * int(5 * s))
             shapes.append(([f0, f1], [int(15 * s), int(13 * s)]))
-            # Curled thumb: a small lobe on the near side of the fist, then
-            # an arc scored over the fill to separate it. Without the arc the
-            # lobe just fattens the fist and the curl is invisible.
-            th_c = (fist_c[0] + px * int(15 * s) + dx * int(4 * s),
-                    fist_c[1] + py * int(15 * s) + dy * int(4 * s))
-            shapes.append(([th_c, th_c], [int(19 * s), int(19 * s)]))
-            details.append(('arc', th_c, int(11 * s)))
+            # Thumb: a lobe merged into the fist silhouette, with no scored
+            # circle over it. The arc that used to separate it read as a
+            # stray ring stuck on the hand rather than as a curled thumb.
+            th_c = (fist_c[0] + px * int(14 * s) + dx * int(2 * s),
+                    fist_c[1] + py * int(14 * s) + dy * int(2 * s))
+            shapes.append(([th_c, th_c], [int(20 * s), int(20 * s)]))
         else:
             # Relaxed poses keep the simple rounded hand.
             palm_c = (hx + dx * int(10 * s), hy + dy * int(10 * s))
