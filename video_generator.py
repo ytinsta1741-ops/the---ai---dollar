@@ -3064,24 +3064,37 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
     prev_cx = None
     slide_start_t = 0.0    # absolute video time, so idle motion is continuous
 
-    # Every slide shows both terms side by side with individual labels,
-    # like the reference channel's comparison style — only when we
-    # actually have both hero images to show. The SYSTEM_PROMPT's 7-slide
-    # arc puts Term A's own explanation at index 1 and Term B's at index
-    # 2, so those slides swap in that slide's own fetched image on their
-    # side while the other side keeps showing its most recent photo.
+    # Every slide shows both terms side by side with individual labels, like
+    # the reference channel's comparison style — only when we actually have
+    # both hero images to show.
+    #
+    # Which side a slide updates follows the SYSTEM_PROMPT's 7-slide arc:
+    #   0 hook | 1-2 Person A / Term A | 3-4 Person B / Term B
+    #   5 verdict | 6 loop closer
+    # This previously treated slide 1 as Term A and slide 2 as Term B, which
+    # is not the arc. Slide 2 is still Person A, so its photo — the costs
+    # draining Marcus — was being pasted under the PROFIT label, and slides
+    # 3 and 4 updated nothing at all, leaving the same frozen pair on screen
+    # for most of the video.
     have_heroes = bool(term_a and term_b and hero_images[0] and hero_images[1])
     left_by_idx, right_by_idx, side_by_idx = [], [], []
     if have_heroes:
         cur_left, cur_right = hero_images[0], hero_images[1]
         for i in range(total_slides):
-            if i == 1 and i < len(images) and images[i]:
-                cur_left = images[i]
+            own = images[i] if i < len(images) and images[i] else None
+            if i in (1, 2):
+                if own:
+                    cur_left = own
                 side = 'A'
-            elif i == 2 and i < len(images) and images[i]:
-                cur_right = images[i]
+            elif i in (3, 4):
+                if own:
+                    cur_right = own
                 side = 'B'
             else:
+                # Verdict and loop slides go back to the two hero panels, so
+                # the comparison the viewer is asked to remember is the pair
+                # that represents each term rather than a mid-story shot.
+                cur_left, cur_right = hero_images[0], hero_images[1]
                 side = 'both'
             left_by_idx.append(cur_left)
             right_by_idx.append(cur_right)
@@ -3146,9 +3159,12 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         if is_dual:
             label_h = 46
             card_top = 150 + label_h
-            card_h = int(H * 0.30)
-            gap = 44
-            card_w = (int(W * 0.82) - gap) // 2
+            # 0.30 -> 0.36 and a wider spread: at the smaller size the two
+            # photos read as thumbnails on a phone, and the leftover height
+            # opened a dead white band between the character and the caption.
+            card_h = int(H * 0.36)
+            gap = 36
+            card_w = (int(W * 0.92) - gap) // 2
             left_x = (W - (card_w * 2 + gap)) // 2
             right_x = left_x + card_w + gap
             panel_left_cx = left_x + card_w // 2
