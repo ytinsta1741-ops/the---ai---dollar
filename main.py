@@ -512,14 +512,24 @@ def upload_to_instagram(video_path, title, keywords=None):
             "Which one did you get wrong? Tell me below 👇",
         ]
         topic_line = ", ".join(kw_list) if kw_list else "personal finance basics"
+        # Read the handle from config rather than hardcoding it: the literal
+        # "@theaidollar" used here was not this account (the real one is
+        # theaidollar1741), so every follow prompt shipped so far was a live
+        # link pointing at somebody else's profile.
+        handle = os.getenv("INSTAGRAM_USERNAME", "theaidollar1741").strip().strip('"')
+        # ORDER MATTERS: Instagram truncates behind "... more" at roughly 125
+        # characters and almost nobody expands it. The asks that drive reach
+        # — comment, save, follow — therefore come FIRST, while the
+        # description and hashtags go below the fold where being unseen
+        # costs nothing. Previously the title and a two-line description ate
+        # the visible half and every ask sat in the hidden part.
         caption = (
+            f"{random.choice(comment_bait)}\n"
+            f"💾 Save it · ➕ Follow @{handle} for one money term a day\n\n"
             f"{title}\n\n"
             f"{topic_line} explained simply — what each one actually means, "
             f"how to tell them apart in seconds, and what confusing them "
             f"costs you in real money.\n\n"
-            f"{random.choice(comment_bait)}\n\n"
-            f"💾 Save this so you don't forget it.\n"
-            f"➕ Follow @theaidollar — one money term explained simply, every day.\n\n"
             + " ".join(tags)
         )
 

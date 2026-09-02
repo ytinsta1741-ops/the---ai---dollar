@@ -2704,7 +2704,10 @@ def _draw_character(img, cx, top_y, scale=1.0, pose='calm', phase=0.0,
         arm_spec = ((-1, 'point', 0), (1, 'down', 0))
     elif pose == 'point_right':
         arm_spec = ((-1, 'down', 0), (1, 'point', 0))
-    elif pose == 'confused':
+    elif pose in ('confused', 'cheer'):
+        # Both arms raised with OPEN hands. Distinct from point_both, which
+        # raises two index fingers — read as jabbing at nothing on the hook
+        # slide, where the gesture is celebration rather than pointing.
         arm_spec = ((-1, 'up', 0), (1, 'up', 0))
     else:  # calm / walk — arms swing opposite their same-side leg
         arm_spec = ((-1, 'down', swing), (1, 'down', -swing))
@@ -3047,7 +3050,7 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         if pose == 'bounce':
             bounce_amt = int(55 * abs(math.sin(phase * 2 * math.pi * 2.5)))
             return _draw_character(img, cx_frame, top_y - bounce_amt,
-                                   scale=CHAR_SCALE, pose='point_both')
+                                   scale=CHAR_SCALE, pose='cheer')
         # Idle breathing: a slow 1-2px rise and fall while the character is
         # holding a pose. Without it a static slide renders 60 identical
         # frames a second, so a correctly-encoded 60fps video still looks
@@ -3103,7 +3106,14 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         draw.rectangle([PAD, bar_y, W - PAD, bar_y + 4], fill=(230, 228, 222))
         draw.rectangle([PAD, bar_y, PAD + int((W - PAD * 2) * progress), bar_y + 4], fill=ACCENT)
 
-        is_dual = have_heroes
+        # The hook slide gets ONE big image, not the side-by-side panels.
+        # Two reasons. Editorially it names people and numbers, not the two
+        # terms, so a comparison layout is wrong there. Practically, Instagram
+        # takes the Reel cover from frame 1 — with every video opening on the
+        # same VS grid, the profile was 36 identical tiles and a visitor had
+        # no reason to open any particular one. A single topic photo makes
+        # each cover different for free.
+        is_dual = have_heroes and idx != 0
         is_diff_slide = (idx == 3 and is_dual)
         side = side_by_idx[idx] if is_dual else 'both'
 
@@ -3168,8 +3178,11 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         else:
             img_src = images[idx] if idx < len(images) else None
             card_top = 150
-            card_h = int(H * 0.34)
-            card_w = int(W * 0.78)
+            # Bigger on the hook so the Reel cover has real presence in a
+            # feed; 0.38 rather than 0.34 keeps the character and caption
+            # their room below (feet land ~1530 of 1920).
+            card_h = int(H * (0.38 if idx == 0 else 0.34))
+            card_w = int(W * (0.86 if idx == 0 else 0.78))
             card_x = (W - card_w) // 2
             _paste_card(card_x, card_top, card_w, card_h, img_src)
 
