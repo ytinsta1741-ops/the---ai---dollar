@@ -3307,8 +3307,21 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             _n += len(r)
 
         def _draw_caption(img, word_idx, tscale=1.0, dx=0, dy=0):
-            """Draw the full line with the active word highlighted. tscale
-            scales only the active word, giving it a small pop as it lands."""
+            """Draw the line with the active word highlighted. tscale scales
+            only the active word, giving it a small pop as it lands.
+
+            On the HOOK slide, words that have not been spoken yet are not
+            drawn at all. Everywhere else the full line stays visible, which
+            is the normal auto-highlight look and is easier to read.
+
+            The hook is the exception because it is the one line whose whole
+            job is to withhold something. Rendering it complete at frame 0
+            put the payoff — "he took home nothing" — on screen before the
+            first syllable, so a viewer got the entire idea in about a second
+            and had no reason left to stay. Channel average watch time was
+            5.3s on a 32s video, i.e. almost everyone leaving inside this
+            slide."""
+            reveal_only = is_first
             dd = ImageDraw.Draw(img)
             ff = get_font(_cap_fs)
             stroke = max(3, int(_cap_fs * 0.13))
@@ -3326,6 +3339,9 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                 xx = (W - total_w) // 2 + dx
                 for wi, (w, wd) in enumerate(zip(row, widths)):
                     gi = _row_starts[ri] + wi
+                    if reveal_only and gi > word_idx:
+                        xx += wd + space          # keep the layout stable
+                        continue
                     if gi == word_idx:
                         # highlight pill behind the word being spoken
                         pad_x, pad_y = int(_cap_fs * 0.16), int(_cap_fs * 0.10)
@@ -3516,8 +3532,20 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
         *inputs,
         '-filter_complex', filter_complex,
         '-map', '[v]', '-map', '[aout]',
-        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
-        '-c:a', 'aac', '-b:a', '128k',
+        # 'ultrafast' is x264's worst quality-per-bit setting: at 1080x1920p60
+        # it was landing around 2.5 Mbps, well under what YouTube and
+        # Instagram want for this resolution, so both re-encoded soft, blocky
+        # video. 'veryfast' at CRF 20 with a bitrate floor produces a much
+        # cleaner master for perhaps 2x the encode time on a step that is a
+        # minority of the build.
+        '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20',
+        '-maxrate', '16M', '-bufsize', '24M',
+        '-profile:v', 'high', '-level', '4.2',
+        # Closed GOP of 2s: the platforms' own transcoders handle a regular
+        # keyframe interval better, and it helps the first frame decode
+        # cleanly when a viewer lands mid-scroll.
+        '-g', '120', '-keyint_min', '120', '-sc_threshold', '0',
+        '-c:a', 'aac', '-b:a', '192k', '-ar', '48000',
         '-pix_fmt', 'yuv420p',
         '-shortest',
         '-movflags', '+faststart',
@@ -3525,7 +3553,7 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
     ]
 
     import shutil
-    proc = _run_ffmpeg_hard_timeout(cmd, timeout=600)
+    proc = _run_ffmpeg_hard_timeout(cmd, timeout=900)
 
     if music_path and (proc is None or proc.returncode != 0):
         # Never let the optional music bed break the build — retry clean.
