@@ -3567,13 +3567,34 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
         # ffmpeg from halving both inputs when it sums them.
         filter_complex = (
             f"[0:v]scale={res},fps=60[v];"
-            f"[1:a]{loudnorm}[narr];"
-            f"[2:a]volume=1.0[bg];"
-            f"[narr][bg]amix=inputs=2:duration=first:normalize=0[aout]"
+            # Narration is normalised with headroom to spare, the music is
+            # normalised to a FIXED quiet level, and a limiter guards the sum.
+            #
+            # Two problems this fixes. The mix was measuring +0.1 dBTP —
+            # over digital zero — because loudnorm gave the narration its
+            # -1.5 dBTP ceiling and then music was summed on top with
+            # normalize=0, so AAC was encoding a clipped signal and the voice
+            # lost the clarity it has on its own.
+            #
+            # And `volume=1.0` only sounded right because the synthesised bed
+            # is quiet by construction. A real produced track from ./music is
+            # mastered ~20 dB louder and at 1.0 would bury the narration
+            # completely; normalising it to a target instead means any track
+            # sits at the same level whatever it came in at.
+            f"[1:a]{loudnorm},highpass=f=85[narr];"
+            # TP must stay within loudnorm's -9..0 range; -12 is rejected and
+            # takes the whole filter graph down with it.
+            f"[2:a]loudnorm=I=-34:TP=-9:LRA=7[bg];"
+            f"[narr][bg]amix=inputs=2:duration=first:normalize=0,"
+            f"alimiter=level_in=1:level_out=0.9:limit=0.89[aout]"
         )
         inputs = ['-i', audio_file, '-i', music_path]
     else:
-        filter_complex = f"[0:v]scale={res},fps=60[v];[1:a]{loudnorm}[aout]"
+        # Same limiter on the no-music path so the ceiling is guaranteed
+        # either way.
+        filter_complex = (f"[0:v]scale={res},fps=60[v];"
+                          f"[1:a]{loudnorm},highpass=f=85,"
+                          f"alimiter=level_in=1:level_out=0.9:limit=0.89[aout]")
         inputs = ['-i', audio_file]
 
     cmd = [
