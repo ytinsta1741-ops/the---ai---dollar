@@ -19,6 +19,16 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from video_generator import generate_daily_video, generate_long_video
 
+# Subscribe link built from the CHANNEL ID, not a handle. The description
+# previously pointed at "@TheAIDollar" — this channel is @TheAIDollar-1741,
+# and @TheAIDollar is a real, different channel, so every subscribe link
+# published so far sent viewers to somebody else. A channel id cannot be
+# taken by anyone else and never changes when a handle is edited.
+YOUTUBE_CHANNEL_ID = os.getenv(
+    "YOUTUBE_CHANNEL_ID", "UC7RIXToEFJrQOKjI0tAdZeA").strip().strip('"')
+SUBSCRIBE_URL = (f"https://www.youtube.com/channel/{YOUTUBE_CHANNEL_ID}"
+                 f"?sub_confirmation=1")
+
 
 PRIVACY_POLICY_HTML = b"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Privacy Policy - The AI Dollar</title>
@@ -337,7 +347,7 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
                 f"Covered here: {kw_line}.\n\n"
                 f"Comment which one you always mixed up, and subscribe for a "
                 f"new money term explained daily:\n"
-                f"https://www.youtube.com/@TheAIDollar?sub_confirmation=1\n\n"
+                f"{SUBSCRIBE_URL}\n\n"
                 f"{yt_hashtags}"
             )
             yt_tags.append("Shorts")
@@ -381,7 +391,7 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
                 f"RELATED TOPICS: {kw_line}, personal finance for beginners, "
                 f"how to invest money, budgeting tips, wealth building strategies, "
                 f"financial literacy 2026, money management, passive income ideas\n\n"
-                f"Subscribe: https://www.youtube.com/@TheAIDollar?sub_confirmation=1\n\n"
+                f"Subscribe: {SUBSCRIBE_URL}\n\n"
                 f"#Finance #Money #PersonalFinance #Investing #WealthBuilding "
                 f"#FinancialFreedom #MoneyTips #FinancialLiteracy "
                 f"#HowToGetRich #StockMarket #PassiveIncome #DebtFree "
