@@ -8,6 +8,7 @@ import os
 import re
 import gc
 import base64
+import random
 import subprocess
 import asyncio
 import requests
@@ -1880,6 +1881,48 @@ def create_audio(text, output_path):
     raise Exception("All TTS methods failed")
 
 
+MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "music")
+
+
+def _use_track_from_library(output_path, duration):
+    """Use a real produced track from ./music if any are present.
+
+    Preferred over the synthesised bed, which is original but obviously
+    synthetic. Tracks must be LICENSED for commercial use — YouTube Audio
+    Library, Pixabay, Uppbeat and similar. Copyrighted chart music is not an
+    option here: Content ID claims or blocks the upload, and Instagram mutes
+    copyrighted audio in an uploaded file, so it would cost the channel
+    rather than help it. The legitimate route to an actual trending song is
+    Instagram's own in-app audio picker, which licenses it at the platform.
+
+    Returns True if a track was prepared."""
+    try:
+        if not os.path.isdir(MUSIC_DIR):
+            return False
+        tracks = [f for f in sorted(os.listdir(MUSIC_DIR))
+                  if f.lower().endswith((".mp3", ".wav", ".m4a", ".aac",
+                                         ".ogg", ".flac"))]
+        if not tracks:
+            return False
+        pick = os.path.join(MUSIC_DIR, random.choice(tracks))
+        # Loop to cover the video, trim to length, and fade both ends so a
+        # track that was not written for 30 seconds still ends cleanly.
+        proc = subprocess.run(
+            [FFMPEG, "-y", "-stream_loop", "-1", "-i", pick,
+             "-t", f"{duration:.2f}",
+             "-af", f"afade=t=in:st=0:d=0.8,"
+                    f"afade=t=out:st={max(duration - 1.2, 0):.2f}:d=1.2",
+             "-ac", "1", "-ar", "44100", output_path],
+            capture_output=True, timeout=180)
+        if proc.returncode == 0 and os.path.exists(output_path) \
+                and os.path.getsize(output_path) > 5000:
+            print(f"  [MUSIC] {os.path.basename(pick)}")
+            return True
+    except Exception as e:
+        print(f"  [WARN] Music library track failed: {e}")
+    return False
+
+
 def generate_bg_music(output_path, duration):
     """Write an original, gentle background music bed: a soft four-chord pad
     progression that moves every couple of bars so the track breathes with
@@ -1889,10 +1932,17 @@ def generate_bg_music(output_path, duration):
     than a big ffmpeg lavfi filter graph — an earlier amix-based version was
     the suspected cause of ffmpeg hangs on Render, and this needs no extra
     dependencies and cannot hang. Fully original audio, so there are no
-    music-licensing or Content-ID problems on YouTube/TikTok/Instagram."""
+    music-licensing or Content-ID problems on YouTube/TikTok/Instagram.
+
+    Used only as the FALLBACK: if ./music holds any licensed tracks, one of
+    those is used instead, because a real produced track sounds better than
+    anything synthesised here."""
     import wave
     import array as _array
     import math as _math
+
+    if _use_track_from_library(output_path, duration):
+        return True
 
     try:
         sr = 44100
