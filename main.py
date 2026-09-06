@@ -805,7 +805,11 @@ def last_youtube_upload_utc_date():
             token=None, refresh_token=refresh_token,
             token_uri="https://oauth2.googleapis.com/token",
             client_id=client_id, client_secret=client_secret,
-            scopes=["https://www.googleapis.com/auth/youtube.readonly",
+            # Exactly the scopes the stored refresh token was granted (the
+            # same pair topic_generator.py uses). Asking for youtube.readonly
+            # as well made the refresh fail on a scope mismatch, so the
+            # history read returned nothing and catch-up skipped itself.
+            scopes=["https://www.googleapis.com/auth/youtube.upload",
                     "https://www.googleapis.com/auth/youtube"],
         )
         youtube = build("youtube", "v3", credentials=creds)
