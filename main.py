@@ -195,6 +195,11 @@ class HealthHandler(BaseHTTPRequestHandler):
                 # Without both of these the image generator silently falls
                 # back to a low-quality model, which is invisible from the
                 # outside until a finished video looks wrong.
+                # last_post below only reflects THIS process; the instance
+                # restarts constantly on the free tier, so it reads "never"
+                # even when videos went out. This is the real answer.
+                "last_youtube_upload_utc": last_youtube_upload_utc_date() or "unknown",
+                "catch_up_ran_this_process": _CATCHUP_DONE,
                 "CF_ACCOUNT_ID_set": bool(os.getenv("CF_ACCOUNT_ID")),
                 "CF_API_TOKEN_set": bool(os.getenv("CF_API_TOKEN")),
                 "image_generator": (
@@ -782,6 +787,91 @@ def keep_alive():
         pass
 
 
+def last_youtube_upload_utc_date():
+    """Date (UTC) of the most recent upload on the channel, or None.
+
+    Read straight from YouTube rather than from a local file because
+    Render's disk is ephemeral: anything written locally is gone on the next
+    restart, and restarts are exactly the situation this needs to survive."""
+    try:
+        refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "").strip().strip('"')
+        client_id = os.getenv("YOUTUBE_CLIENT_ID", "").strip().strip('"')
+        client_secret = os.getenv("YOUTUBE_CLIENT_SECRET", "").strip().strip('"')
+        if not (refresh_token and client_id and client_secret):
+            return None
+        from google.oauth2.credentials import Credentials
+        from googleapiclient.discovery import build
+        creds = Credentials(
+            token=None, refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=client_id, client_secret=client_secret,
+            scopes=["https://www.googleapis.com/auth/youtube.readonly",
+                    "https://www.googleapis.com/auth/youtube"],
+        )
+        youtube = build("youtube", "v3", credentials=creds)
+        ch = youtube.channels().list(part="contentDetails", mine=True).execute()
+        items = ch.get("items", [])
+        if not items:
+            return None
+        pl = items[0]["contentDetails"]["relatedPlaylists"]["uploads"]
+        resp = youtube.playlistItems().list(
+            part="snippet", playlistId=pl, maxResults=1).execute()
+        vids = resp.get("items", [])
+        if not vids:
+            return None
+        published = vids[0]["snippet"]["publishedAt"]      # e.g. 2026-09-03T...
+        return published[:10]
+    except Exception as e:
+        print(f"[WARN] Could not read last upload date: {e}")
+        return None
+
+
+_CATCHUP_DONE = False
+
+
+def catch_up_missed_slot():
+    """Run today's post if its slot has already passed and nothing went out.
+
+    schedule.every().day.at() computes next_run from the moment the job is
+    registered, so a slot that passes while the process is down is skipped
+    permanently — it is never retried. On Render's free tier the instance
+    spins down whenever traffic stops, and every deploy restarts it, so a
+    slot is missed easily. The channel's last upload was 2026-09-03 with the
+    service reporting posting_active and stage idle four days later: the
+    schedule was simply re-armed for tomorrow each time it woke.
+
+    Checked against YouTube's own upload history so a restart cannot cause a
+    double post, and guarded to run at most once per process."""
+    global _CATCHUP_DONE
+    if _CATCHUP_DONE:
+        return
+    _CATCHUP_DONE = True
+
+    if os.getenv("PAUSE_POSTING", "").lower() == "true":
+        print("[CATCHUP] PAUSE_POSTING set — skipping")
+        return
+
+    now = datetime.utcnow()
+    today = now.strftime("%Y-%m-%d")
+    # Only the 20:00 slot is caught up: it is the one that carries YouTube,
+    # so it both guarantees a post a day and is the one we can verify.
+    if now.hour < 20:
+        print(f"[CATCHUP] {now:%H:%M} UTC is before the 20:00 slot — nothing missed")
+        return
+
+    last = last_youtube_upload_utc_date()
+    if last is None:
+        print("[CATCHUP] Could not read upload history — skipping to stay safe")
+        return
+    if last >= today:
+        print(f"[CATCHUP] Already posted today (last upload {last})")
+        return
+
+    print(f"[CATCHUP] Last upload was {last}, today is {today} and the "
+          f"20:00 slot has passed — posting now")
+    _post_async(post_instagram=True, post_youtube=True)
+
+
 def upload_to_tiktok(video_path, title, keywords=None):
     """Upload video to TikTok using the official Content Posting API."""
     client_key = os.getenv("TIKTOK_CLIENT_KEY", "").strip()
@@ -986,6 +1076,11 @@ def main():
     # Instagram is capped at its two scheduled slots. Everything now runs
     # purely on the schedule; use /post-now to trigger one on demand.
     print("\n[NOW] Startup post disabled — posting runs on schedule only.\n")
+
+    # ...except for a slot that already passed today with nothing posted.
+    # Run on a thread so a slow YouTube history call cannot delay the
+    # scheduler loop or the health server coming up.
+    threading.Thread(target=catch_up_missed_slot, daemon=True).start()
 
     print("\n[SCHED] Scheduler running (1/day YouTube, 2/day Instagram + self-ping every 10 min)...")
     try:
