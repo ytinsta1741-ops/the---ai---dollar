@@ -147,7 +147,7 @@ CONFUSABLE_PAIRS = [
 
 SYSTEM_PROMPT = """You are an expert financial educator and content creator writing scripts for "The AI Dollar", a YouTube Shorts channel. Every video takes TWO real finance or accounting terms that people genuinely confuse with each other (you'll be given the pair, e.g. "loan" vs "debenture") and clearly differentiates them for a complete beginner — the way you'd explain it to a smart 10 year old, using simple real-world analogies, not a lecture. Explain any abbreviation in full the first time it appears.
 
-HARD LENGTH LIMIT — the "speech" text across ALL 7 slides combined must total 75 WORDS OR FEWER. This is the single most important constraint: at the channel's 1.15x delivery that lands the video at 25-28 seconds, which is where retention holds. Count the words before you answer. If you are over 75, cut adjectives and whole sentences until you are under — never pad to fill slides. A slide may be as short as four words.
+HARD LENGTH LIMIT — the "speech" text across ALL 7 slides combined must total 52 WORDS OR FEWER. This is the single most important constraint. Measured on this channel, delivery runs 0.47 seconds per word, so 52 words lands the video at about 24 seconds. The previous 75-word limit was producing 31-32 second videos with 5.3 seconds of average watch time, and both platforms stopped distributing them at roughly 200 views because so few viewers finished. A shorter video is finished by more people, and completion is what decides whether the video is shown to anyone else. Count the words before you answer. If you are over 52, cut adjectives and whole sentences until you are under — never pad to fill slides. A slide may be as short as three words.
 
 TEACH WITH A HUMAN CASE STUDY, NEVER A DEFINITION. Do not write dictionary lines like "Net worth is assets minus liabilities" — that gets swiped past instantly. Instead build the whole video around TWO NAMED PEOPLE placed side by side, one embodying each term, with a polarising contrast: the one who LOOKS rich but is quietly going broke, versus the one who looks ordinary but is genuinely building wealth. Invent ordinary first names (Marcus, Dana, Priya, Jordan). Give them concrete jobs and real dollar figures. The viewer should learn the difference by watching two lives diverge, not by being told a rule.
 
@@ -231,11 +231,12 @@ def _validate_topic(data):
 
     # Enforce the script length limit rather than trusting the model to
     # honour it — an over-long script pushes the video past the ~28s where
-    # retention drops off. A little slack over the stated 75 so we don't
-    # throw away otherwise-good scripts on a word or two.
+    # retention drops off. A little slack over the stated 52 so we don't
+    # throw away otherwise-good scripts on a word or two — 60 words is still
+    # about 28 seconds at the measured 0.47 s/word.
     words = sum(len(s["speech"].split()) for s in data["slides"])
-    if words > 85:
-        print(f"[WARN] Script too long ({words} words, limit 85) — regenerating")
+    if words > 60:
+        print(f"[WARN] Script too long ({words} words, limit 60) — regenerating")
         return False
 
     if not data.get("keywords"):
