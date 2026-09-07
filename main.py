@@ -784,6 +784,44 @@ def post_long_video():
         traceback.print_exc()
 
 
+def clean_stale_build_files():
+    """Delete leftovers from builds that were killed before they finished.
+
+    Cleanup only runs at the end of a SUCCESSFUL build, so every killed one
+    strands its frames: roughly 200MB of JPEGs each, plus per-run image and
+    audio directories. The instance has been killed and restarted ten-plus
+    times mid-build, so that compounds into gigabytes and makes each later
+    attempt likelier to fail than the last."""
+    import glob
+    import shutil
+    freed = 0
+    patterns = ["./videos/*_infowork", "./videos/*_kbwork", "./videos/*_work",
+                "./videos/imgs_*", "./videos/imgs_long_*", "./videos/audio_*"]
+    for pat in patterns:
+        for path in glob.glob(pat):
+            try:
+                size = sum(os.path.getsize(os.path.join(r, f))
+                           for r, _, fs in os.walk(path) for f in fs)
+                shutil.rmtree(path, ignore_errors=True)
+                freed += size
+            except Exception:
+                pass
+    # Keep only the few most recent renders; older ones are already uploaded
+    # and are just holding disk.
+    try:
+        vids = sorted(glob.glob("./videos/*.mp4"), key=os.path.getmtime,
+                      reverse=True)
+        for old in vids[3:]:
+            freed += os.path.getsize(old)
+            os.remove(old)
+    except Exception:
+        pass
+    if freed:
+        print(f"[CLEAN] Removed {freed / 1e6:.0f} MB of stale build files")
+    else:
+        print("[CLEAN] No stale build files")
+
+
 def keep_alive():
     """Self-ping to prevent Render free tier from spinning down"""
     try:
@@ -1089,6 +1127,10 @@ def main():
 
     health_thread = threading.Thread(target=start_health_server, daemon=True)
     health_thread.start()
+
+    # Before anything else: reclaim disk from builds that were killed
+    # part-way through, so a retry is not starting on a full filesystem.
+    clean_stale_build_files()
 
     schedule_jobs()
 
