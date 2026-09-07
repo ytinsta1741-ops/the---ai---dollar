@@ -9,6 +9,7 @@ import re
 import gc
 import base64
 import random
+import time
 import subprocess
 import asyncio
 import requests
@@ -1959,6 +1960,11 @@ def generate_bg_music(output_path, duration):
 
         fade = int(sr * 1.5)
         for i in range(total):
+            # Same GIL hand-off as the frame loop: this is ~1.3M iterations
+            # of pure-Python maths on a background thread, long enough on
+            # its own to leave a health check unanswered.
+            if (i & 0x1FFFF) == 0:
+                time.sleep(0.002)
             t = i / sr
             ci = int(t / bar) % len(chords)
             # crossfade between chords so changes are smooth, not clicky
@@ -3514,6 +3520,17 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                 frame.save(fp, "JPEG", quality=88)
                 del frame
                 cache[key] = fp
+                # Hand the GIL to the health server every few frames.
+                # Rendering is CPU-bound Python running on a background
+                # thread, so without this it starves the HTTP thread: the
+                # platform health check goes unanswered, the instance is
+                # declared dead and killed mid-build, and the post never
+                # completes. Observed as ten kill/restart cycles at a mean
+                # of 7.5 minutes each, with /status unreachable before every
+                # one. A 5ms yield every 12 frames costs about 0.4s per
+                # video.
+                if (k & 0x0F) == 0:
+                    time.sleep(0.005)
             frame_paths.append(fp)
             frame_durations.append(dur)
 

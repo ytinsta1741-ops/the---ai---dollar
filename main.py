@@ -11,7 +11,7 @@ import time
 import random
 import threading
 from datetime import datetime
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import schedule
 import requests
 
@@ -240,7 +240,12 @@ class HealthHandler(BaseHTTPRequestHandler):
 
 def start_health_server():
     port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    # Threading, not the plain single-threaded HTTPServer: one slow request
+    # (a /status that reads YouTube history, say) otherwise blocks every
+    # other request, including the platform health check that decides
+    # whether this instance is killed.
+    server = ThreadingHTTPServer(("0.0.0.0", port), HealthHandler)
+    server.daemon_threads = True
     print(f"[OK] Health server running on port {port}")
     server.serve_forever()
 
