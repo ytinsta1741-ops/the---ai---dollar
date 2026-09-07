@@ -20,7 +20,11 @@ GEMINI_MODEL_CANDIDATES = [
     os.getenv("GEMINI_MODEL"),  # optional manual override, tried first if set
     "gemini-3.5-flash-lite",
     "gemini-3-flash-preview",
-    "gemini-2.5-flash-lite",
+    # gemini-2.5-flash-lite removed: it is still listed by models.list but
+    # every call returns 404 "no longer available to new users", so it only
+    # ever burned a slot in the chain.
+    "gemini-3.1-flash-lite",
+    "gemini-3.6-flash",
     "gemini-flash-lite-latest",
 ]
 GEMINI_MODEL_CANDIDATES = [m for m in GEMINI_MODEL_CANDIDATES if m]
@@ -218,7 +222,11 @@ def _extract_json(raw_text):
     return json.loads(raw_text)
 
 
-def _validate_topic(data):
+WORD_LIMIT = 60
+
+
+def _validate_shape(data):
+    """Structural check only — is this a usable 7-slide topic at all?"""
     if not isinstance(data, dict):
         return False
     if not data.get("title") or not isinstance(data.get("slides"), list):
@@ -228,20 +236,19 @@ def _validate_topic(data):
     for slide in data["slides"]:
         if not all(k in slide and slide[k] for k in ("text", "speech", "img")):
             return False
-
-    # Enforce the script length limit rather than trusting the model to
-    # honour it — an over-long script pushes the video past the ~28s where
-    # retention drops off. A little slack over the stated 52 so we don't
-    # throw away otherwise-good scripts on a word or two — 60 words is still
-    # about 28 seconds at the measured 0.47 s/word.
-    words = sum(len(s["speech"].split()) for s in data["slides"])
-    if words > 60:
-        print(f"[WARN] Script too long ({words} words, limit 60) — regenerating")
-        return False
-
     if not data.get("keywords"):
         data["keywords"] = [data["title"].split()[0], "Personal Finance", "Money Tips"]
     return True
+
+
+def _script_words(data):
+    return sum(len(s["speech"].split()) for s in data["slides"])
+
+
+def _validate_topic(data):
+    """Shape AND length. Length is enforced rather than trusted because an
+    over-long script pushes the video past the ~28s where retention drops."""
+    return _validate_shape(data) and _script_words(data) <= WORD_LIMIT
 
 
 # Pairs already used — cycles through the whole pool before any pair repeats.
@@ -310,13 +317,16 @@ def generate_ai_topic(existing_titles_hint=""):
         },
     }
 
+    best_effort = None          # shortest over-limit script seen, used last
     for model in GEMINI_MODEL_CANDIDATES:
         try:
             resp = requests.post(
                 _gemini_url(model),
                 params={"key": GEMINI_API_KEY},
                 json=payload,
-                timeout=45,
+                # 45s was tripping on gemini-3-flash-preview and burning a
+                # slot in the chain for what was only a slow response.
+                timeout=90,
             )
             if resp.status_code != 200:
                 print(f"[WARN] Gemini API error {resp.status_code} on {model}: {resp.text[:200]}")
@@ -326,8 +336,25 @@ def generate_ai_topic(existing_titles_hint=""):
             raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
             topic = _extract_json(raw_text)
 
-            if not _validate_topic(topic):
+            if not _validate_shape(topic):
                 print(f"[WARN] Gemini ({model}) returned malformed topic")
+                continue
+
+            words = _script_words(topic)
+            if words > WORD_LIMIT:
+                # Keep it as a fallback instead of discarding it. Each model
+                # is tried once, so rejecting outright meant a run of
+                # slightly-long scripts exhausted the whole chain and the
+                # build produced nothing — which is how a tightened word
+                # limit turned into a day with no post at all. A 31-second
+                # video is worse than a 27-second one and far better than
+                # none.
+                print(f"[WARN] Script long ({words} words > {WORD_LIMIT}) on "
+                      f"{model} — trying another model, keeping as fallback")
+                if best_effort is None or words < _script_words(best_effort):
+                    topic["term_a"] = term_a
+                    topic["term_b"] = term_b
+                    best_effort = topic
                 continue
 
             topic["term_a"] = term_a
@@ -338,4 +365,8 @@ def generate_ai_topic(existing_titles_hint=""):
             print(f"[WARN] Gemini generation failed on {model}: {e}")
             continue
 
+    if best_effort is not None:
+        print(f"[OK] Using the shortest over-limit script "
+              f"({_script_words(best_effort)} words) rather than skipping the post")
+        return best_effort
     return None

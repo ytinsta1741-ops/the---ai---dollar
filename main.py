@@ -857,11 +857,6 @@ def catch_up_missed_slot():
 
     now = datetime.utcnow()
     today = now.strftime("%Y-%m-%d")
-    # Only the 20:00 slot is caught up: it is the one that carries YouTube,
-    # so it both guarantees a post a day and is the one we can verify.
-    if now.hour < 20:
-        print(f"[CATCHUP] {now:%H:%M} UTC is before the 20:00 slot — nothing missed")
-        return
 
     last = last_youtube_upload_utc_date()
     if last is None:
@@ -871,8 +866,26 @@ def catch_up_missed_slot():
         print(f"[CATCHUP] Already posted today (last upload {last})")
         return
 
-    print(f"[CATCHUP] Last upload was {last}, today is {today} and the "
-          f"20:00 slot has passed — posting now")
+    try:
+        days_behind = (now.date() - datetime.strptime(last, "%Y-%m-%d").date()).days
+    except Exception:
+        days_behind = 1
+
+    # Two ways to be owed a post. Normally: today's slot has passed and
+    # nothing went out. But if the channel is more than a day behind it is
+    # already dark — waiting for tonight's slot would just extend the
+    # outage, and the first version of this check did exactly that, skipping
+    # at 10:44 UTC while the last upload was four days old.
+    slot_passed = (now.hour, now.minute) >= (15, 30)
+    if not (slot_passed or days_behind > 1):
+        print(f"[CATCHUP] {now:%H:%M} UTC, last upload {last} "
+              f"({days_behind}d) — waiting for today's slot")
+        return
+
+    print(f"[CATCHUP] Last upload {last} ({days_behind} day(s) behind), "
+          f"now {now:%H:%M} UTC — posting")
+    # YouTube only when the day's single upload has not gone out; that is
+    # exactly the condition already checked above.
     _post_async(post_instagram=True, post_youtube=True)
 
 
