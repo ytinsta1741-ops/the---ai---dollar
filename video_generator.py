@@ -3470,7 +3470,19 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         # character's walk at the output framerate keeps it genuinely
         # smooth, while a settled character emits ONE frame that simply
         # holds — nothing is moving during it, so extra frames buy nothing.
-        MOTION_STEP = 1.0 / 60.0   # matches the 60fps output exactly
+        # Distinct frames are rendered at 30/s and each is held for two of
+        # the 60fps output frames. Output stays 60fps; what halves is how
+        # many frames get drawn and written.
+        #
+        # At 1/60 a 27s video meant ~1950 PIL renders and ~400MB of JPEGs on
+        # Render's small ephemeral disk, and the instance was being killed
+        # and restarted mid-build: the stage timestamp kept resetting to a
+        # couple of minutes old while the build never finished, so catch-up
+        # relaunched it and it died again. Nothing published for four days
+        # because of it. Half the frames is the difference between a build
+        # that completes and one that does not, and motion at 30 distinct
+        # frames a second still reads as smooth.
+        MOTION_STEP = 1.0 / 30.0
 
         # Every slide is now sampled at the full output framerate, including
         # holds, so no run of identical frames is ever emitted.
