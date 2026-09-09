@@ -18,6 +18,7 @@ import requests
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from video_generator import generate_daily_video, generate_long_video
+from video_hosting import publish_video_url
 
 # Subscribe link built from the CHANNEL ID, not a handle. The description
 # previously pointed at "@TheAIDollar" — this channel is @TheAIDollar-1741,
@@ -553,7 +554,15 @@ def upload_to_instagram(video_path, title, keywords=None):
             + " ".join(tags)
         )
 
-        video_url = f"{PUBLIC_BASE_URL}/media/{os.path.basename(video_path)}"
+        # Chooses GitHub Releases when running on Actions (GH_RELEASE_UPLOAD
+        # set by the workflow) and falls back to the historical Render
+        # static path otherwise, so the same code works in both hosts.
+        try:
+            video_url = publish_video_url(video_path,
+                                          public_base_url=PUBLIC_BASE_URL)
+        except Exception as e:
+            print(f"[ERR] Instagram: could not publish video URL: {e}")
+            return False
         print(f"[Instagram] Notifying Make.com: {video_url}")
 
         resp = requests.post(
@@ -1155,5 +1164,27 @@ def main():
         print("\n[STOP] Stopped")
 
 
+def post_once(post_instagram, post_youtube):
+    """Single-shot entry for CI runners: run one post to the requested
+    platforms and exit. No health server, no scheduler, no keep-alive — a
+    scheduled workflow (GitHub Actions cron) already provides all three."""
+    print("[POST-ONCE] instagram=%s youtube=%s" %
+          (post_instagram, post_youtube))
+    ok = post_video(post_instagram=post_instagram, post_youtube=post_youtube)
+    if not ok:
+        print("[POST-ONCE] Failed")
+        sys.exit(1)
+    print("[POST-ONCE] Done")
+
+
 if __name__ == "__main__":
-    main()
+    # --post-once runs one full post and exits, which is what a scheduled
+    # workflow calls. Without any flag we still fall through to the classic
+    # long-lived main() so nothing changes for the Render deployment while
+    # the switchover is in progress.
+    if "--post-once" in sys.argv:
+        ig = "--no-instagram" not in sys.argv
+        yt = "--no-youtube" not in sys.argv
+        post_once(post_instagram=ig, post_youtube=yt)
+    else:
+        main()

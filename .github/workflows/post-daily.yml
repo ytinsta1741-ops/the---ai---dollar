@@ -1,0 +1,125 @@
+name: Daily post
+
+# Two scheduled runs a day, matching the historical Render schedule:
+#   15:30 UTC -> Instagram only
+#   20:00 UTC -> YouTube + Instagram (the day's YouTube upload)
+# Also runnable manually from the Actions tab, which is how the first run
+# after switchover is verified.
+on:
+  schedule:
+    - cron: "30 15 * * *"           # 15:30 UTC — Instagram only
+    - cron: "0 20 * * *"            # 20:00 UTC — YouTube + Instagram
+  workflow_dispatch:
+    inputs:
+      instagram:
+        description: "Post to Instagram"
+        required: false
+        default: "true"
+      youtube:
+        description: "Post to YouTube"
+        required: false
+        default: "true"
+
+# Never run two builds in parallel: they would fight over the same YouTube
+# API quota and end up publishing near-duplicates. Any queued run waits for
+# the current one to finish, and the current one is NOT cancelled — a
+# midnight post half-built is worth waiting for.
+concurrency:
+  group: post-daily
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25            # a full build locally is ~5-8 min; 25 is
+                                   # generous headroom without going wild.
+
+    permissions:
+      contents: write              # required to create a Release and upload
+                                   # the video asset that Make.com fetches.
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+
+      - name: Install Python dependencies
+        # imageio-ffmpeg would download its own binary at import time; we
+        # already have the system one and it is faster, so skip that step.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install google-auth  # runtime dep google-api-python-client
+                                   # pulls in transitively but pin explicit.
+
+      - name: Decide which platforms this run posts to
+        id: decide
+        # cron event carries the schedule; workflow_dispatch carries manual
+        # inputs. Both funnel down to two booleans the post step reads.
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ig="${{ github.event.inputs.instagram }}"
+            yt="${{ github.event.inputs.youtube }}"
+          elif [ "${{ github.event.schedule }}" = "0 20 * * *" ]; then
+            ig="true"; yt="true"           # 20:00 UTC — full slot
+          else
+            ig="true"; yt="false"          # 15:30 UTC — Instagram only
+          fi
+          echo "instagram=$ig" >> "$GITHUB_OUTPUT"
+          echo "youtube=$yt"   >> "$GITHUB_OUTPUT"
+          echo "This run: instagram=$ig youtube=$yt"
+
+      - name: Run one post
+        env:
+          # Every secret the pipeline touches. Paste values into repo
+          # Settings -> Secrets and variables -> Actions.
+          GEMINI_API_KEY:           ${{ secrets.GEMINI_API_KEY }}
+          FISH_AUDIO_API_KEY:       ${{ secrets.FISH_AUDIO_API_KEY }}
+          CF_ACCOUNT_ID:            ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN:             ${{ secrets.CF_API_TOKEN }}
+          YOUTUBE_CLIENT_ID:        ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET:    ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN:    ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_CHANNEL_ID:       ${{ secrets.YOUTUBE_CHANNEL_ID }}
+          MAKE_INSTAGRAM_WEBHOOK_URL: ${{ secrets.MAKE_INSTAGRAM_WEBHOOK_URL }}
+          INSTAGRAM_USERNAME:       ${{ secrets.INSTAGRAM_USERNAME }}
+          PEXELS_API_KEY:           ${{ secrets.PEXELS_API_KEY }}
+          # Flag read by video_hosting.publish_video_url() — pick the
+          # GitHub Release backend rather than the historical Render host.
+          GH_RELEASE_UPLOAD: "true"
+          # gh needs a token to create the release and upload the asset;
+          # GITHUB_TOKEN is provided automatically by Actions.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          args="--post-once"
+          if [ "${{ steps.decide.outputs.instagram }}" != "true" ]; then
+            args="$args --no-instagram"
+          fi
+          if [ "${{ steps.decide.outputs.youtube }}" != "true" ]; then
+            args="$args --no-youtube"
+          fi
+          echo "Running: python main.py $args"
+          python main.py $args
+
+      - name: Prune old releases
+        # Every run creates a release. Keep the ten most recent and delete
+        # older ones so the repo does not accumulate unbounded video assets.
+        # `continue-on-error` because pruning is best-effort — a delete
+        # failure must not fail the whole workflow.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release list --limit 200 --json tagName,createdAt \
+            --jq 'sort_by(.createdAt) | reverse | .[10:] | .[] | .tagName' \
+            | while read -r tag; do
+                [ -n "$tag" ] && gh release delete "$tag" --yes --cleanup-tag
+              done
