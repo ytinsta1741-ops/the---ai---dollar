@@ -744,11 +744,22 @@ def post_video(is_series_part=False, series_name="", part_num=0, post_instagram=
         print(f"   Instagram: {ig_status}")
         print(f"{'='*50}\n")
 
+        # If at least one platform we ASKED to post to actually posted, the
+        # run succeeded. Skipped platforms do not count against success —
+        # TikTok is always skipped and would otherwise mark every run failed.
+        # Without this return the function fell through to None, my
+        # post_once() treated that as failure, and every green post from the
+        # workflow's point of view showed red.
+        results = [r for r in (youtube_success, instagram_success, tiktok_success)
+                   if r is not None]
+        return bool(results) and any(results)
+
     except Exception as e:
         _mark("ERROR_exception", str(e)[:120])
         print(f"[ERR] Error in post_video: {e}")
         import traceback
         traceback.print_exc()
+        return False
 
 
 def post_long_video():
