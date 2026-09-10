@@ -45,15 +45,26 @@ def _github_release_upload(video_path):
          "--notes", "Automated upload for Instagram fetch by Make.com."],
         check=True, capture_output=True, text=True,
     )
-    # Upload the file as an asset with a fixed name so the URL is
-    # predictable per-tag.
-    asset_name = "video.mp4"
+    # Upload the file. `path#label` on gh sets the DISPLAY LABEL, not the
+    # URL basename — the download URL keeps the source file's real
+    # basename. Instagram/Make.com then hit the constructed
+    # /video.mp4 URL and got a 404 while the real asset sat one path
+    # component away. Read the actual URL back from the API instead.
     subprocess.run(
-        ["gh", "release", "upload", tag,
-         f"{video_path}#{asset_name}"],
+        ["gh", "release", "upload", tag, video_path],
         check=True, capture_output=True, text=True,
     )
-    return f"https://github.com/{repo}/releases/download/{tag}/{asset_name}"
+    view = subprocess.run(
+        ["gh", "release", "view", tag, "--repo", repo,
+         "--json", "assets"],
+        check=True, capture_output=True, text=True,
+    )
+    import json
+    data = json.loads(view.stdout)
+    assets = data.get("assets") or []
+    if not assets:
+        raise RuntimeError(f"Release {tag} has no assets after upload")
+    return assets[0]["url"]
 
 
 def publish_video_url(video_path, public_base_url=None):
