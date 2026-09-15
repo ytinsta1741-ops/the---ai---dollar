@@ -2,6 +2,7 @@ import random
 import hashlib
 import json
 import os
+import requests
 from datetime import datetime
 
 from ai_topic_generator import generate_ai_topic
@@ -675,11 +676,12 @@ def _prime_hashes_from_youtube():
     the local disk on every code push."""
     global _generated_title_hashes
 
-    refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "")
-    client_id = os.getenv("YOUTUBE_CLIENT_ID", "")
-    client_secret = os.getenv("YOUTUBE_CLIENT_SECRET", "")
+    refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "").strip().strip('"')
+    client_id = os.getenv("YOUTUBE_CLIENT_ID", "").strip().strip('"')
+    client_secret = os.getenv("YOUTUBE_CLIENT_SECRET", "").strip().strip('"')
     if not refresh_token or not client_id or not client_secret:
-        print("[WARN] YouTube credentials not set, skipping title history sync")
+        print("[WARN] YouTube credentials not set, using RSS fallback")
+        _prime_hashes_from_rss()
         return
 
     try:
@@ -746,6 +748,55 @@ def _prime_hashes_from_youtube():
 
     except Exception as e:
         print(f"[WARN] Could not sync title history from YouTube: {e}")
+        _prime_hashes_from_rss()
+
+
+def _prime_hashes_from_rss():
+    """Fallback when OAuth fails: read the channel's public Atom feed.
+
+    On GitHub Actions the OAuth read path was failing with invalid_scope —
+    Google was refusing "youtube" alongside "youtube.upload" because the
+    stored refresh token was never granted the second one — and the dedup
+    list stayed empty. Result: the pipeline picked curriculum day 1
+    ("Revenue vs Profit") three days in a row, which is the fast path to a
+    spam flag on YouTube.
+
+    The RSS feed needs no auth and returns the ~15 most recent uploads,
+    which is enough to detect any curriculum pair that has been posted
+    recently — that's all a "don't repeat what you just posted" check needs
+    to do."""
+    global _generated_title_hashes
+    try:
+        channel_id = (os.getenv("YOUTUBE_CHANNEL_ID", "").strip().strip('"')
+                      or "UC7RIXToEFJrQOKjI0tAdZeA")
+        resp = requests.get(
+            f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}",
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            print(f"[WARN] RSS fallback: {resp.status_code}")
+            return
+        # <title>...</title> tags — the first is the channel title, the rest
+        # are video titles. Drop the first; keep everything else.
+        import re
+        raw_titles = re.findall(r"<title>(.*?)</title>", resp.text, re.DOTALL)
+        titles = [t.strip() for t in raw_titles[1:] if t.strip()]
+
+        added = 0
+        for title in titles:
+            h = _hash_title(title)
+            if h not in _generated_title_hashes:
+                _generated_title_hashes.add(h)
+                added += 1
+        print(f"[OK] RSS fallback: synced {len(titles)} titles, {added} new")
+
+        try:
+            from ai_topic_generator import sync_used_pairs_from_titles
+            sync_used_pairs_from_titles(titles)
+        except Exception as e:
+            print(f"[WARN] RSS fallback: could not sync used pairs: {e}")
+    except Exception as e:
+        print(f"[WARN] RSS fallback failed: {e}")
 
 
 _prime_hashes_from_youtube()

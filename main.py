@@ -419,15 +419,34 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
                     "title": yt_title,
                     "description": yt_desc,
                     "tags": tags,
-                    "categoryId": "22",
+                    # 27 = Education. 22 was "People & Blogs" — wrong signal
+                    # for a finance-explanation channel, and the wrong
+                    # category costs discovery reach on Shorts.
+                    "categoryId": "27",
+                    # Explicit language tags — recommended in the channel
+                    # optimisation checklist. Without them YouTube guesses
+                    # from title/description, and a wrong guess can push the
+                    # video toward the wrong regional feed.
+                    "defaultLanguage": "en",
+                    "defaultAudioLanguage": "en",
                 },
                 "status": {
                     "privacyStatus": "public",
                     "selfDeclaredMadeForKids": False,
+                    # The pipeline is fully AI-generated. Declaring it up
+                    # front is what YouTube's altered-content policy asks
+                    # for; failing to disclose is what triggers penalties.
+                    "containsSyntheticMedia": True,
                 },
             }
             media = MediaFileUpload(video_path, chunksize=-1, resumable=True)
-            request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
+            # notifySubscribers is a REQUEST PARAM on videos.insert, not a
+            # field on the resource — putting it in body is silently ignored.
+            # False so scheduled uploads don't spam the ~2/day subscribers.
+            request = youtube.videos().insert(
+                part="snippet,status", body=body, media_body=media,
+                notifySubscribers=False,
+            )
             response = None
             while response is None:
                 status, response = request.next_chunk()
