@@ -39,73 +39,81 @@ def _gemini_url(model):
 # signal that random topic order produces. Falls through to the wider pool
 # below once all 60 are used.
 CURRICULUM = [
-    # Days 1-10 — Corporate Wealth & Business Mistakes
+    # Ranked by consumer search intent, not by subject theme. The original
+    # theme grouping put "revenue vs profit" first — a small-business topic
+    # — while parking the personal money questions with the strongest
+    # organic search (credit score, retirement accounts, W-2 vs 1099,
+    # HSA vs FSA) in the middle of the 60 days. On a channel already under
+    # algorithmic suppression from six duplicate posts, buried high-intent
+    # topics behind low-intent ones was doubling the recovery time. This
+    # ordering leads with the pairs the largest audience actively searches
+    # for, so the first fresh video after the fix has the best possible
+    # chance of catching a click.
+    #
+    # Days 1-10 — Tier 1: highest-search personal money questions
+    ("credit score", "credit report"),
+    ("Roth IRA", "Traditional IRA"),
+    ("401k", "IRA"),
+    ("APR", "APY"),
+    ("debit card", "credit card"),
+    ("simple interest", "compound interest"),
+    ("W-2", "1099"),
+    ("HSA", "FSA"),
+    ("gross income", "net income"),
+    ("mortgage", "personal loan"),
+    # Days 11-20 — Tier 2: investing and small-business basics
+    ("ETF", "mutual fund"),
+    ("stocks", "shares"),
+    ("bonds", "stocks"),
+    ("inflation", "deflation"),
+    ("tax deduction", "tax credit"),
+    ("standard deduction", "itemized deduction"),
     ("revenue", "profit"),
     ("gross profit", "net profit"),
-    ("cash flow", "profit"),
+    ("term insurance", "whole life insurance"),
+    ("fixed rate", "variable rate"),
+    # Days 21-40 — Tier 3: medium relevance
+    ("bull market", "bear market"),
+    ("index fund", "mutual fund"),
+    ("principal", "interest"),
+    ("down payment", "deposit"),
+    ("leasing", "financing"),
+    ("secured loan", "unsecured loan"),
+    ("gross pay", "take-home pay"),
+    ("dividend", "capital gains"),
+    ("checking account", "savings account"),
+    ("premium", "deductible"),
+    ("escrow", "equity"),
+    ("hard inquiry", "soft inquiry"),
+    ("credit limit", "available credit"),
+    ("recession", "depression"),
+    ("annuity", "pension"),
+    ("prequalified", "preapproved"),
     ("markup", "margin"),
+    ("cash flow", "profit"),
+    ("cash flow", "net worth"),
+    ("net worth", "net income"),
+    # Days 41-60 — Tier 4: niche / technical, tail
+    ("interest rate", "APR"),
     ("gross margin", "net margin"),
+    ("IPO", "direct listing"),
+    ("depreciation", "amortization"),
+    ("capital expenditure", "operating expenditure"),
+    ("private equity", "venture capital"),
+    ("commodity", "security"),
+    ("overdraft", "loan"),
+    ("realized gain", "unrealized gain"),
+    ("wire transfer", "ACH transfer"),
+    ("dividend yield", "dividend rate"),
+    ("stock split", "reverse split"),
+    ("wholesale price", "retail price"),
     ("fixed cost", "variable cost"),
+    ("market cap", "enterprise value"),
     ("assets", "revenue"),
     ("liability", "expense"),
     ("working capital", "fixed capital"),
     ("liquidity", "solvency"),
-    # Days 11-20 — Investing & The Stock Market Mechanics
-    ("stocks", "shares"),
-    ("bonds", "stocks"),
-    ("ETF", "mutual fund"),
-    ("index fund", "mutual fund"),
-    ("dividend", "capital gains"),
-    ("realized gain", "unrealized gain"),
-    ("market cap", "enterprise value"),
-    ("bull market", "bear market"),
-    ("dividend yield", "dividend rate"),
-    ("stock split", "reverse split"),
-    # Days 21-30 — Personal Finance & Banking Survival
-    ("APR", "APY"),
-    ("debit card", "credit card"),
-    ("credit score", "credit report"),
-    ("hard inquiry", "soft inquiry"),
-    ("simple interest", "compound interest"),
-    ("secured loan", "unsecured loan"),
-    ("overdraft", "loan"),
-    ("credit limit", "available credit"),
-    ("checking account", "savings account"),
-    ("prequalified", "preapproved"),
-    # Days 31-40 — Macroeconomics & Global Systems
-    ("inflation", "deflation"),
-    ("recession", "depression"),
-    ("fixed rate", "variable rate"),
     ("nominal value", "market value"),
-    ("wholesale price", "retail price"),
-    ("interest rate", "APR"),
-    ("wire transfer", "ACH transfer"),
-    ("commodity", "security"),
-    ("private equity", "venture capital"),
-    ("IPO", "direct listing"),
-    # Days 41-50 — Tax Strategies & Corporate Secrets
-    ("tax deduction", "tax credit"),
-    ("standard deduction", "itemized deduction"),
-    ("W-2", "1099"),
-    ("gross pay", "take-home pay"),
-    ("gross income", "net income"),
-    ("depreciation", "amortization"),
-    ("capital expenditure", "operating expenditure"),
-    ("HSA", "FSA"),
-    ("401k", "IRA"),
-    ("Roth IRA", "Traditional IRA"),
-    # Days 51-60 — Highest-search recap set (the concepts with the
-    # strongest standing search demand, revisited to consolidate ranking)
-    ("net worth", "net income"),
-    ("cash flow", "net worth"),
-    ("principal", "interest"),
-    ("mortgage", "personal loan"),
-    ("down payment", "deposit"),
-    ("escrow", "equity"),
-    ("term insurance", "whole life insurance"),
-    ("premium", "deductible"),
-    ("annuity", "pension"),
-    ("leasing", "financing"),
 ]
 
 CONFUSABLE_PAIRS = [
