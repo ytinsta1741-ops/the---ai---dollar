@@ -544,14 +544,21 @@ def upload_to_instagram(video_path, title, keywords=None):
                            [x.lower() for x in kw_tags]])[:5]
 
         # Reach to non-followers is driven mostly by SAVES and COMMENTS, so
-        # the caption asks a one-word question and prompts a save.
-        comment_bait = [
-            "Which one always confused you? 👇",
-            "Did you know the difference? Comment yes or no 👇",
-            "Be honest — did you mix these up? 👇",
-            "Which one did you get wrong? Tell me below 👇",
-        ]
+        # the caption asks a one-word question and prompts a save. The FIRST
+        # line is the only one visible in the feed preview (~40-50 chars),
+        # and Sep 18 insights showed the generic comment-bait wasn't
+        # converting — 2,732 viewers, 21 engagements, 0.3% follower share.
+        # These openers name the specific confusion instead of asking a
+        # generic question, which reads as more useful in the preview strip.
         topic_line = ", ".join(kw_list) if kw_list else "personal finance basics"
+        specific_topic = kw_list[0] if kw_list else "these two"
+        comment_bait = [
+            f"90% get {specific_topic} wrong. Do you? 👇",
+            f"Quick test: which one is {specific_topic}? 👇",
+            f"This mix-up costs people money 👇",
+            f"Be honest — did you know this? 👇",
+            f"Save this before you forget 💾",
+        ]
         # Read the handle from config rather than hardcoding it: the literal
         # "@theaidollar" used here was not this account (the real one is
         # theaidollar1741), so every follow prompt shipped so far was a live

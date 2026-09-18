@@ -304,6 +304,18 @@ def _pick_unused_pair():
     return pair
 
 
+def peek_next_pair():
+    """Return the pair that _pick_unused_pair would choose NEXT, without
+    marking it used. Used by the video builder to tease tomorrow's topic on
+    the outro slide so viewers have a concrete reason to follow rather than
+    a generic 'follow for more' ask."""
+    for pair in CURRICULUM:
+        if pair not in _used_pairs:
+            return pair
+    remaining = [p for p in CONFUSABLE_PAIRS if p not in _used_pairs]
+    return remaining[0] if remaining else None
+
+
 def generate_ai_topic(existing_titles_hint=""):
     """Ask Gemini for one complete 7-slide short-form topic. Returns None on any failure."""
     if not GEMINI_API_KEY:

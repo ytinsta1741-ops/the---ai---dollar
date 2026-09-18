@@ -3022,7 +3022,7 @@ def _draw_mascot_walk_frame(img, cx, top_y, scale, color, phase):
 
 def prep_infographic_slides(images, slides, work_dir, landscape=False,
                              term_a=None, term_b=None, hero_images=(None, None),
-                             durations=None):
+                             durations=None, next_pair=None):
     """Clean white-background infographic style: bold headline, a boxed
     photo card, and a recurring original mascot character for brand
     identity — inspired by high-performing comparison-style Shorts.
@@ -3081,11 +3081,24 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
     PAD = 60
     MAX_TW = W - PAD * 2
 
-    BG = (250, 249, 246)
+    # Rotate palette by day-of-year so the feed grid on Instagram/YouTube
+    # doesn't show the same cream+green thumbnail every day. Account insights
+    # (Sep 18 2026) showed every top thumbnail looked identical — same stick
+    # figure, same background — which suppresses tap-through. Five palettes
+    # keeps each theme running for a stretch (still coherent) while varying
+    # the grid every ~day. Accent stays a deep, warm, trustworthy hue on all
+    # of them so the highlight pill still reads as money/finance, never neon.
+    _PALETTES = [
+        ((250, 249, 246), ( 21,  87,  61), (225, 223, 216)),  # cream / money green
+        ((245, 246, 250), (185,  40,  55), (222, 224, 232)),  # cool white / confident red
+        ((252, 247, 238), ( 30,  75, 150), (232, 226, 214)),  # warm cream / navy
+        ((246, 250, 246), (175,  85,  30), (220, 228, 220)),  # mint white / burnt orange
+        ((248, 246, 252), ( 95,  50, 150), (226, 222, 234)),  # lavender / royal purple
+    ]
+    _pal_idx = datetime.now().timetuple().tm_yday % len(_PALETTES)
+    BG, ACCENT, CARD_BORDER = _PALETTES[_pal_idx]
     INK = (20, 20, 24)
     MUTED = (110, 110, 118)
-    ACCENT = (21, 87, 61)  # deep money-green
-    CARD_BORDER = (225, 223, 216)
 
     font_brand = get_font(34)
     font_counter = get_font(24, bold=False)
@@ -3415,7 +3428,19 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                 yy += line_h
 
         if is_first:
-            hook = "WATCH TIL THE END"
+            # Rotate the hook line so the first frame isn't visually identical
+            # to every previous video's first frame. Same trust-building tone
+            # (never clickbait), varied words. Six-way rotation on day-of-year
+            # so a viewer scrolling the feed sees a different opener each day.
+            _HOOKS = [
+                "WATCH TIL THE END",
+                "MOST GET THIS WRONG",
+                "DON'T SKIP THIS ONE",
+                "THIS COSTS YOU MONEY",
+                "STAY UNTIL THE VERDICT",
+                "SAVE THIS FOR LATER",
+            ]
+            hook = _HOOKS[datetime.now().timetuple().tm_yday % len(_HOOKS)]
             hb = draw.textbbox((0, 0), hook, font=font_sub)
             hw = hb[2] - hb[0]
             hx = (W - hw) // 2
@@ -3424,13 +3449,43 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             draw.text((hx, hy), hook, font=font_sub, fill=(255, 255, 255))
 
         if is_last:
-            cta = "FOLLOW FOR MORE"
-            cb2 = draw.textbbox((0, 0), cta, font=font_cta)
-            cw = cb2[2] - cb2[0]
-            cx2 = (W - cw) // 2
-            cy2 = H - 100
-            draw.rounded_rectangle([cx2 - 30, cy2 - 16, cx2 + cw + 30, cy2 + 46], radius=16, fill=ACCENT)
-            draw.text((cx2, cy2), cta, font=font_cta, fill=(255, 255, 255))
+            # Instead of a generic "FOLLOW FOR MORE" — which converted at
+            # roughly zero on the last 30 uploads — tease tomorrow's specific
+            # topic. Gives the viewer a concrete reason to follow: "if I
+            # follow now, I get a real thing tomorrow." Falls back to a
+            # cadence promise when the curriculum is exhausted mid-cycle.
+            if next_pair and len(next_pair) == 2:
+                na, nb = next_pair
+                tomorrow_line = f"TOMORROW: {na.upper()} vs {nb.upper()}"
+            else:
+                tomorrow_line = "1 MONEY TERM EVERY DAY"
+            follow_line = "FOLLOW SO YOU DON'T MISS IT"
+
+            # Fit the tomorrow line: shrink font until it fits within padding.
+            tf_size = 42
+            while tf_size > 24:
+                _tf = get_font(tf_size)
+                _bb = draw.textbbox((0, 0), tomorrow_line, font=_tf)
+                if (_bb[2] - _bb[0]) <= W - PAD * 2 - 60:
+                    break
+                tf_size -= 2
+            font_tomorrow = get_font(tf_size)
+            font_follow = get_font(30)
+
+            tb = draw.textbbox((0, 0), tomorrow_line, font=font_tomorrow)
+            tw = tb[2] - tb[0]
+            tx = (W - tw) // 2
+            ty = H - 170
+            draw.rounded_rectangle(
+                [tx - 30, ty - 16, tx + tw + 30, ty + tf_size + 20],
+                radius=16, fill=ACCENT)
+            draw.text((tx, ty), tomorrow_line, font=font_tomorrow, fill=(255, 255, 255))
+
+            fb = draw.textbbox((0, 0), follow_line, font=font_follow)
+            fw = fb[2] - fb[0]
+            fx = (W - fw) // 2
+            fy = H - 100
+            draw.text((fx, fy), follow_line, font=font_follow, fill=INK)
 
         # `bg` is now the finished background (photos/text/badges), mascot
         # NOT yet drawn. Build this slide's animation sub-frames: bounce on
@@ -3545,7 +3600,8 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
 
 
 def create_video_infographic(slides, images, audio_file, durations, output_file, landscape=False,
-                              term_a=None, term_b=None, hero_images=(None, None)):
+                              term_a=None, term_b=None, hero_images=(None, None),
+                              next_pair=None):
     """Single-pass build (lightweight, matches the original static-slide
     pipeline's memory profile) using the new white-background layout. The
     mascot (running between panels, pointing once it arrives, bouncing on
@@ -3561,7 +3617,7 @@ def create_video_infographic(slides, images, audio_file, durations, output_file,
     frame_paths, frame_durations = prep_infographic_slides(
         images, slides, work_dir, landscape=landscape,
         term_a=term_a, term_b=term_b, hero_images=hero_images,
-        durations=durations,
+        durations=durations, next_pair=next_pair,
     )
     n = len(frame_paths)
 
@@ -3822,12 +3878,26 @@ def generate_daily_video():
                 icon_a=topic.get('icon_a'), icon_b=topic.get('icon_b'))
             print(f"[OK] Hero images: {term_a}={'yes' if hero_images[0] else 'no'}, {term_b}={'yes' if hero_images[1] else 'no'}")
 
+        # Peek at tomorrow's curriculum pair so the outro can tease a
+        # specific topic instead of a generic "follow for more" ask. The
+        # current pair has already been marked used by generate_short_topic,
+        # so peek returns the NEXT one in curriculum order.
+        next_pair = None
+        try:
+            from ai_topic_generator import peek_next_pair as _peek_next
+            next_pair = _peek_next()
+            if next_pair:
+                print(f"[OK] Tomorrow teaser: {next_pair[0]} vs {next_pair[1]}")
+        except Exception as _e:
+            print(f"[WARN] Could not peek tomorrow's pair: {_e}")
+
         ok = False
         if os.getenv("USE_INFOGRAPHIC_STYLE", "true").lower() != "false":
             print("[VIDEO] Creating video with infographic style...")
             ok = create_video_infographic(
                 slides, images, audio_file, durations, output_file,
                 term_a=term_a, term_b=term_b, hero_images=hero_images,
+                next_pair=next_pair,
             )
             if not ok:
                 print("[WARN] Infographic build failed, falling back to Ken Burns...")
