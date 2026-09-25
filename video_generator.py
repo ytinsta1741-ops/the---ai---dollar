@@ -1187,18 +1187,24 @@ CF_API_TOKEN = os.getenv("CF_API_TOKEN", "").strip().strip('"').strip("'")
 CF_IMAGE_MODEL = os.getenv("CF_IMAGE_MODEL",
                            "@cf/stabilityai/stable-diffusion-xl-base-1.0")
 
-# Appended to every generated prompt. Kept separate from the subject so the
-# subject stays the dominant part of the prompt.
-# Cinematic rather than plain-documentary: these compete against polished
-# finance Reels in the feed, so the still has to look deliberately shot.
-# Warm key light and a dark, uncluttered background also give the caption
-# overlay somewhere clean to sit.
-_GEN_STYLE = ("premium cinematic product photograph, 50mm lens, dramatic "
-              "warm key light with soft falloff, rich deep contrast, "
-              "shallow depth of field with creamy background blur, "
-              "single hero subject centred, dark uncluttered background, "
-              "immaculate styling, sharp focus, crisp fine detail, "
-              "high resolution, award-winning commercial photography")
+# Sketch / whiteboard illustration look, inspired by high-retention finance
+# creators who animate hand-drawn doodles across the frame while narrating.
+# The previous cinematic-product-photo look competed head-on with polished
+# lifestyle reels on the feed, and the account plateaued at ~20 views/video
+# because a still photo of a car or a bank vault does not stop a scroll on
+# a feed that already shows a hundred better ones. A hand-drawn sketch on
+# off-white paper reads as ORIGINAL and INFORMATIONAL at first glance,
+# earns curiosity instead of comparison, and — critically — pairs with the
+# progressive draw-in reveal animation in prep_infographic_slides so the
+# viewer's eye tracks the line being drawn rather than swipes past.
+_GEN_STYLE = ("hand-drawn pen and ink sketch illustration, bold black ink "
+              "outlines on warm off-white paper background, editorial "
+              "newspaper doodle style, single hero subject centred, "
+              "clean confident line work, minimal cross-hatching for shade, "
+              "no colour fills, no colour wash, monochrome black ink only, "
+              "white paper background, uncluttered composition, "
+              "high contrast lineart, crisp sharp lines, negative space "
+              "around the subject, illustrative, drawn by hand")
 # flux-1-schnell takes no negative_prompt, so exclusions have to be worded
 # as part of the prompt itself.
 _GEN_NEGATIVE = (
@@ -3199,8 +3205,16 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         is_diff_slide = (idx == 3 and is_dual)
         side = side_by_idx[idx] if is_dual else 'both'
 
+        # Rects populated by _paste_card so the per-frame loop can progressively
+        # reveal them, matching the "hand drawing the illustration in as the
+        # voice-over explains it" style users see on high-retention whiteboard
+        # finance channels. Rect stored as (x, y, w, h, radius) so the reveal
+        # mask can round its corners the same way the card does.
+        hero_rects_this = []
+
         def _paste_card(cx0, ctop, cw, ch, src):
             radius = 26
+            hero_rects_this.append((cx0, ctop, cw, ch, radius))
             # Soft drop-shadow so the panels read as floating cards (premium
             # depth). Drawn on a padded RGBA layer, blurred once, then
             # composited slightly below the card.
@@ -3547,7 +3561,7 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
 
         # Every slide is now sampled at the full output framerate, including
         # holds, so no run of identical frames is ever emitted.
-        sub_frames = []   # (pose, phase, cx, word_idx, idle_t, dur)
+        sub_frames = []   # (pose, phase, cx, word_idx, idle_t, dur, t_local)
         for ci in range(n_words):
             c_start, c_end = bounds[ci]
             t = c_start
@@ -3555,20 +3569,62 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
                 mp, mph, mcx = _mascot_at(t)
                 d = min(MOTION_STEP, c_end - t)
                 idle_t = None if mp in ('walk', 'bounce') else (slide_start_t + t)
-                sub_frames.append((mp, mph, mcx, ci, idle_t, d))
+                sub_frames.append((mp, mph, mcx, ci, idle_t, d, t))
                 t += d
 
+        def _apply_draw_reveal(frame_img, rects, frac):
+            """Paint BG over the un-drawn portion of each hero card so the
+            illustration appears to be drawn on progressively as the narrator
+            speaks — top-down sweep, matching how a hand drawing on paper
+            actually works. A small ACCENT dot rides the wavefront to sell
+            the illusion that a pen is doing the work. Skipped once the card
+            is fully revealed, so the last third of each slide is a still
+            frame the viewer can read cleanly."""
+            if frac >= 1.0 or not rects:
+                return
+            d = ImageDraw.Draw(frame_img)
+            for (rx, ry, rw, rh, radius) in rects:
+                revealed_h = int(rh * frac)
+                if revealed_h >= rh:
+                    continue
+                cover_y0 = ry + revealed_h
+                cover_y1 = ry + rh
+                # Cover un-drawn area. Use BG (same as page background),
+                # rounded on the bottom corners to match the card shape.
+                d.rectangle([rx, cover_y0, rx + rw, cover_y1], fill=BG)
+                # Round the card's bottom corners back into shape by masking
+                # tiny corner squares outside the rounded region. Only matters
+                # when the reveal has already passed those corners.
+                if revealed_h < rh - radius:
+                    pass  # top-covered case: nothing extra needed
+                # Pen tip riding the wavefront: a solid dot in the accent
+                # colour so it reads as "the pen currently drawing".
+                tip_x = rx + rw - 30
+                tip_r = 9
+                d.ellipse([tip_x - tip_r, cover_y0 - tip_r,
+                           tip_x + tip_r, cover_y0 + tip_r], fill=ACCENT)
+                # Faint horizontal guide line right at the wavefront so the
+                # eye follows the pen. Thin, low-contrast — a hint, not a bar.
+                d.line([(rx + 6, cover_y0), (rx + rw - 6, cover_y0)],
+                       fill=MUTED, width=1)
+
         # Frames are keyed on everything that can change; identical ones are
-        # written once and re-referenced in the concat list. With idle
-        # breathing active almost every frame is now distinct, so the cache
-        # mostly matters for the rare exact repeat.
+        # written once and re-referenced in the concat list. Reveal frac makes
+        # nearly every frame distinct so the cache mostly matters for the
+        # rare exact repeat once drawing is done.
         cache = {}
-        for k, (pose, phase, cx_frame, ci, idle_t, dur) in enumerate(sub_frames):
+        # Draw finishes at 78% of the slide, leaving a short hold so the
+        # completed illustration is legible before the slide cuts.
+        REVEAL_END_FRAC = 0.78
+        for k, (pose, phase, cx_frame, ci, idle_t, dur, t_local) in enumerate(sub_frames):
+            reveal_frac = min(1.0, (t_local / max(slide_dur * REVEAL_END_FRAC, 0.01)))
             key = (pose, round(phase, 3), cx_frame, ci,
-                   None if idle_t is None else round(idle_t, 2))
+                   None if idle_t is None else round(idle_t, 2),
+                   round(reveal_frac, 2))
             fp = cache.get(key)
             if fp is None:
                 frame = bg.copy()
+                _apply_draw_reveal(frame, hero_rects_this, reveal_frac)
                 _stamp_mascot(frame, pose, cx_frame, mascot_top, phase, idle_t)
                 _draw_caption(frame, ci, 1.0, 0, 0)
                 fp = os.path.join(work_dir, f"info_{idx}_{k}.jpg")

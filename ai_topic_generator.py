@@ -183,10 +183,12 @@ IMAGES MUST DIFFERENTIATE THE TWO TERMS. Slides about Term A need a DIFFERENT im
 
 When a slide's example or analogy naturally involves a well-known finance/business figure (e.g. explaining equity/investing with Warren Buffett, the Federal Reserve with Jerome Powell, entrepreneurship with Elon Musk or Jeff Bezos), you may set "img" to just that person's exact full name instead of a scene description — the app will fetch an appropriately licensed photo. Only use figures from this safe list: Warren Buffett, Jerome Powell, Elon Musk, Jeff Bezos, Bill Gates, Mark Cuban, Janet Yellen, Ray Dalio, Charlie Munger. Do not invent other names.
 
-FRAME THE TITLE around the confusion itself, not a flat definition. Real audience data on this channel confirms two hook styles clearly outperform plain "What is X" videos:
-- CONFUSION-CALLOUT: "You've Been Mixing Up [A] and [B] — Here's The Difference", "[A] vs [B]: The Difference Nobody Explains"
-- PERSONAL-STAKES QUESTION: "Do You Actually Know The Difference Between [A] and [B]?", "Is Confusing These Two Costing You Money?" — this style has been the single best-performing hook on this channel so far.
-- The title must always promise clarity on a real confusion — never a plain definition.
+FRAME THE TITLE around ONE OF THE TWO PEOPLE and a specific dollar outcome — never around the two abstract terms. On this channel every "You've Been Mixing Up X and Y" title flatlined at 16-25 views because the abstract pair reads as a lecture in the feed strip. Titles that lead with a named person and a number get scrolled less. Build the title from ONE of these shapes, always ending with the pair in parentheses so the search-intent for the terms is still captured:
+- LOSS TITLE: "How Marcus Lost $47,000 In One Year (Revenue vs Profit)"
+- WIN TITLE: "How Priya Made $180,000 Doing Nothing (Roth IRA vs Traditional IRA)"
+- CONTRADICTION TITLE: "He Earns 3x Her Salary. She's The Rich One. (Gross vs Net Income)"
+- BROKE-LOOKING TITLE: "This Restaurant Made $2M And Went Bankrupt (Revenue vs Profit)"
+The name, the dollar figure, and the outcome must match the person and figures actually used in the 7-slide script. The parenthetical pair at the end is mandatory — that's what YouTube search matches against.
 
 THE CLARITY TEST — apply this before you answer. Assume the viewer has NEVER heard either term and knows no finance at all. Read your 7 slides back as one paragraph and ask: could that person now explain the difference to a friend in their own words? If not, the script fails, no matter how good the hook is. Three things this requires:
 - The first time each term is spoken, it must sit right next to the concrete thing it refers to in the story ("Ninety thousand came in. That's revenue."). Never let a term appear unanchored.
