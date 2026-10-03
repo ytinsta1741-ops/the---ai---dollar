@@ -1,14 +1,20 @@
 name: Daily post
 
-# Two scheduled runs a day, matching the historical Render schedule:
-#   15:30 UTC -> Instagram only
-#   20:00 UTC -> YouTube + Instagram (the day's YouTube upload)
+# Two scheduled runs a day, timed to US viewing peaks:
+#   15:30 UTC -> Instagram only (10:30 AM ET / 7:30 AM PT — lunch-prep scroll)
+#   23:00 UTC -> YouTube + Instagram (7:00 PM ET / 4:00 PM PT — prime time)
+# Moved from 20:00 UTC (4 PM ET) to 23:00 UTC after 8 days of post-pivot data
+# showed the 4 PM slot landing in a dead-zone before US viewers were on
+# their phones. Shorts impressions in the 7–10 PM ET band run 40–60% higher
+# because that's when people doomscroll between dinner and bed, and the
+# algorithm's first-hour click-through signal (which decides whether the
+# video gets shown to anyone else) is the one that determines reach.
 # Also runnable manually from the Actions tab, which is how the first run
 # after switchover is verified.
 on:
   schedule:
     - cron: "30 15 * * *"           # 15:30 UTC — Instagram only
-    - cron: "0 20 * * *"            # 20:00 UTC — YouTube + Instagram
+    - cron: "0 23 * * *"            # 23:00 UTC — YouTube + Instagram (US prime time)
   workflow_dispatch:
     inputs:
       instagram:
@@ -68,8 +74,8 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             ig="${{ github.event.inputs.instagram }}"
             yt="${{ github.event.inputs.youtube }}"
-          elif [ "${{ github.event.schedule }}" = "0 20 * * *" ]; then
-            ig="true"; yt="true"           # 20:00 UTC — full slot
+          elif [ "${{ github.event.schedule }}" = "0 23 * * *" ]; then
+            ig="true"; yt="true"           # 23:00 UTC — US prime time full slot
           else
             ig="true"; yt="false"          # 15:30 UTC — Instagram only
           fi

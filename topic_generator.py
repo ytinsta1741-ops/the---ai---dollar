@@ -795,6 +795,26 @@ def _prime_hashes_from_rss():
             sync_used_pairs_from_titles(titles)
         except Exception as e:
             print(f"[WARN] RSS fallback: could not sync used pairs: {e}")
+
+        # Persist the RSS titles to disk so _recent_titles_hint() has
+        # something to feed the AI on GitHub Actions (where the file would
+        # otherwise be empty on every ephemeral run). Without this the model
+        # keeps picking the same character names — "Marcus" turned up in 5
+        # of 8 recent uploads — because it never sees what it just posted.
+        try:
+            existing = []
+            if os.path.exists(_HISTORY_TITLES_FILE):
+                with open(_HISTORY_TITLES_FILE, "r") as f:
+                    existing = json.load(f)
+            # Prepend RSS titles that aren't already in the file, oldest-first
+            # order preserved; cap at 200 to match _remember_title.
+            seen = set(existing)
+            merged = existing + [t for t in reversed(titles) if t not in seen]
+            merged = merged[-200:]
+            with open(_HISTORY_TITLES_FILE, "w") as f:
+                json.dump(merged, f)
+        except Exception as e:
+            print(f"[WARN] RSS fallback: could not persist title text: {e}")
     except Exception as e:
         print(f"[WARN] RSS fallback failed: {e}")
 
