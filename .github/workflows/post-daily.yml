@@ -101,6 +101,12 @@ jobs:
           # Flag read by video_hosting.publish_video_url() — pick the
           # GitHub Release backend rather than the historical Render host.
           GH_RELEASE_UPLOAD: "true"
+          # Cinematic story mode: dialogue-tagged scripts, Flux-Schnell
+          # images, multi-voice edge-tts (narrator + up to 4 characters),
+          # Ken Burns full-bleed layout. Flip to "false" to roll back to
+          # the sketch infographic style on the next run — no code change
+          # needed, just change this one line.
+          USE_CINEMATIC_STORY_MODE: "true"
           # gh needs a token to create the release and upload the asset;
           # GITHUB_TOKEN is provided automatically by Actions.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

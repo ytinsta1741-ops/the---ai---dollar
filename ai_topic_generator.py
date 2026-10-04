@@ -320,6 +320,35 @@ def peek_next_pair():
     return remaining[0] if remaining else None
 
 
+CINEMATIC_SYSTEM_PROMPT_EXTRA = """
+
+CINEMATIC STORY MODE IS ACTIVE. The engine now routes each line to a DIFFERENT voice based on who is speaking, so your script MUST include spoken character lines in addition to the narrator's story. A video without a single character line will sound exactly like every other video and the whole mode is wasted.
+
+HARD REQUIREMENT: at least THREE of the seven slides must contain at least one line of direct quoted dialogue from a NAMED CHARACTER in the story. "Dialogue" means first-person speech the character says out loud, inside double quotes, embedded in the "speech" field. Example: `Aisha stared at the balance. "I'm never going to afford a house." She was wrong.` Slide 1 (the hook) should open on a quoted line whenever possible — a character blurting the premise in a human voice stops the scroll harder than a narrator stating a fact.
+
+Voice tagging is OPTIONAL — the engine auto-tags quoted lines to a female or male voice based on the surrounding pronouns and the named person. You can still write explicit tags if you want full control:
+- [N] narrator (default for all unquoted sentences)
+- [MA] male character A — the primary male (e.g. Marcus, Darius, Mateo, Chen)
+- [MB] male character B — a secondary male (a boss, uncle, friend)
+- [WA] female character A — the primary female (e.g. Priya, Zara, Aisha, Noa)
+- [WB] female character B — a secondary female (a mother, sister, boss)
+
+What dialogue sounds like in this format — a few seed lines you may paraphrase or riff on, never copy verbatim: "I thought I was doing everything right." / "My paycheck says I'm rich." / "Why is my account empty?" / "The fees are eating me alive." / "Nobody told me this." / "She's the one who figured it out." Short, declarative, first-person, no finance jargon in the dialogue itself. The narrator still carries the explanation; the characters supply the emotional punch.
+
+Rules:
+- Quotes use STRAIGHT double quotes " not curly “ ” — the engine's splitter looks for straight quotes.
+- Keep narrator (unquoted) text at least 60% of total words — characters interject, they don't lecture.
+- Dialogue counts toward the 60-word total just like narration.
+- The on-screen "text" caption still has NO quotes and NO tags — just the 3-6 punchiest words.
+"""
+
+
+def _system_prompt_for_mode():
+    if os.getenv("USE_CINEMATIC_STORY_MODE", "false").strip().lower() == "true":
+        return SYSTEM_PROMPT + CINEMATIC_SYSTEM_PROMPT_EXTRA
+    return SYSTEM_PROMPT
+
+
 def generate_ai_topic(existing_titles_hint=""):
     """Ask Gemini for one complete 7-slide short-form topic. Returns None on any failure."""
     if not GEMINI_API_KEY:
@@ -333,7 +362,7 @@ def generate_ai_topic(existing_titles_hint=""):
 
     payload = {
         "contents": [{"parts": [{"text": user_prompt}]}],
-        "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+        "systemInstruction": {"parts": [{"text": _system_prompt_for_mode()}]},
         "generationConfig": {
             "temperature": 1.1,
             "maxOutputTokens": 3000,

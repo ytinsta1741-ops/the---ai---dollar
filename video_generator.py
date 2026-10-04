@@ -1187,24 +1187,41 @@ CF_API_TOKEN = os.getenv("CF_API_TOKEN", "").strip().strip('"').strip("'")
 CF_IMAGE_MODEL = os.getenv("CF_IMAGE_MODEL",
                            "@cf/stabilityai/stable-diffusion-xl-base-1.0")
 
-# Sketch / whiteboard illustration look, inspired by high-retention finance
-# creators who animate hand-drawn doodles across the frame while narrating.
-# The previous cinematic-product-photo look competed head-on with polished
-# lifestyle reels on the feed, and the account plateaued at ~20 views/video
-# because a still photo of a car or a bank vault does not stop a scroll on
-# a feed that already shows a hundred better ones. A hand-drawn sketch on
-# off-white paper reads as ORIGINAL and INFORMATIONAL at first glance,
-# earns curiosity instead of comparison, and — critically — pairs with the
-# progressive draw-in reveal animation in prep_infographic_slides so the
-# viewer's eye tracks the line being drawn rather than swipes past.
-_GEN_STYLE = ("hand-drawn pen and ink sketch illustration, bold black ink "
-              "outlines on warm off-white paper background, editorial "
-              "newspaper doodle style, single hero subject centred, "
-              "clean confident line work, minimal cross-hatching for shade, "
-              "no colour fills, no colour wash, monochrome black ink only, "
-              "white paper background, uncluttered composition, "
-              "high contrast lineart, crisp sharp lines, negative space "
-              "around the subject, illustrative, drawn by hand")
+# Cinematic story mode switches the image generator to Flux-1-Schnell, which
+# is noticeably sharper than SDXL — closer to the Midjourney-grade stills
+# the reference TikTok (@preshycinematicvibes) is using. Flux-Schnell is on
+# Cloudflare's free tier too, so no billing. The model selection is read
+# live inside _generate_cloudflare_ai so a mode flip takes effect without a
+# restart. Honour an explicit CF_IMAGE_MODEL env override regardless.
+if os.getenv("USE_CINEMATIC_STORY_MODE", "false").strip().lower() == "true" \
+        and not os.getenv("CF_IMAGE_MODEL"):
+    CF_IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell"
+
+# Two style presets. Sketch is the default (last working style, 8 days of
+# post-pivot data). Cinematic is activated by USE_CINEMATIC_STORY_MODE=true
+# — a moody warm/amber documentary look that reads as a Netflix-style story
+# still, matched to the dialogue-tagged script and multi-voice narration.
+_SKETCH_STYLE = ("hand-drawn pen and ink sketch illustration, bold black ink "
+                 "outlines on warm off-white paper background, editorial "
+                 "newspaper doodle style, single hero subject centred, "
+                 "clean confident line work, minimal cross-hatching for shade, "
+                 "no colour fills, no colour wash, monochrome black ink only, "
+                 "white paper background, uncluttered composition, "
+                 "high contrast lineart, crisp sharp lines, negative space "
+                 "around the subject, illustrative, drawn by hand")
+_CINEMATIC_STYLE = ("cinematic film still, moody documentary lighting, "
+                    "warm amber key light with deep shadow falloff, "
+                    "shallow depth of field, 35mm lens, dramatic composition, "
+                    "muted desaturated palette with amber and teal accents, "
+                    "atmospheric fog, visible film grain, high contrast, "
+                    "editorial photography, Netflix documentary aesthetic, "
+                    "single clear subject centred, uncluttered background, "
+                    "sharp focus on subject, crisp detail, 8k resolution")
+
+if os.getenv("USE_CINEMATIC_STORY_MODE", "false").strip().lower() == "true":
+    _GEN_STYLE = _CINEMATIC_STYLE
+else:
+    _GEN_STYLE = _SKETCH_STYLE
 # flux-1-schnell takes no negative_prompt, so exclusions have to be worded
 # as part of the prompt itself.
 _GEN_NEGATIVE = (
@@ -1708,6 +1725,141 @@ VOICE_LIST = [
     ("en-US-DavisNeural", "+6%", "-2Hz"),
 ]
 
+# Cinematic story mode uses distinct edge-tts voices per character role.
+# Each role maps to (voice, rate, pitch) tuples — rate/pitch set to give
+# each voice its own cadence instead of all voices sounding like the same
+# narrator at different pitches. Picked for maximum perceived difference
+# between adjacent roles so dialogue switches read as different people.
+CINEMATIC_VOICE_MAP = {
+    "N":  ("en-US-ChristopherNeural", "+2%", "-4Hz"),  # Narrator — deep, grounded, documentary
+    "MA": ("en-US-GuyNeural",         "+4%", "+0Hz"),  # Male A — brighter, mid pitch
+    "MB": ("en-GB-RyanNeural",        "+0%", "-2Hz"),  # Male B — British, differentiates
+    "WA": ("en-US-AriaNeural",        "+4%", "+2Hz"),  # Female A — warm, expressive
+    "WB": ("en-US-JennyNeural",       "+2%", "+4Hz"),  # Female B — brighter, higher
+}
+
+_VOICE_TAG_RE = re.compile(r"\[(N|MA|MB|WA|WB)\]\s*")
+# Both straight and curly double quotes — Gemini mixes them unpredictably.
+_QUOTED_RE = re.compile(r'[“"]([^“”"]+)[”"]')
+
+
+def _auto_tag_quoted_dialogue(text, prefer_role="WA"):
+    """If a speech fragment has quoted dialogue but no explicit voice tags,
+    turn the quoted parts into character fragments. Gemini keeps writing
+    "She said..." with the dialogue in quotes instead of using the [MA]/[WA]
+    markers from the system prompt, so without this the whole slide reads
+    in narrator voice and the multi-voice feature stays silent. The quoted
+    sections rotate between prefer_role and its opposite-gender counterpart
+    to simulate a two-sided dialogue when one isn't explicit."""
+    if _VOICE_TAG_RE.search(text):
+        return text
+    if '"' not in text and '“' not in text:
+        return text
+    alt = {"WA": "MA", "MA": "WA", "WB": "MB", "MB": "WB"}.get(prefer_role, "MA")
+    roles = [prefer_role, alt]
+    role_idx = [0]
+
+    def _wrap(m):
+        role = roles[role_idx[0] % 2]
+        role_idx[0] += 1
+        return f' [{role}] "{m.group(1).strip()}" [N] '
+
+    tagged = _QUOTED_RE.sub(_wrap, text)
+    # Ensure the whole thing opens with [N] when there was leading narration
+    # before the first quote (which there almost always is).
+    if not tagged.lstrip().startswith("["):
+        tagged = "[N] " + tagged
+    return tagged
+
+
+def _detect_prefer_role(text):
+    """Guess whether the dialogue's primary speaker is female or male from
+    pronouns / common finance-story names, so the auto-tagger routes the
+    first quoted line to the right voice. Defaults to female (WA) because
+    the current story pool skews female-primary (Priya, Zara, Aisha)."""
+    low = (text or "").lower()
+    female_cues = (" she ", " her ", " aisha", " priya", " zara", " dana",
+                   " leila", " nia", " sofia", " yuki", " imani", " noa",
+                   " elena", " juno", " kiran")
+    male_cues = (" he ", " his ", " him ", " marcus", " darius", " mateo",
+                 " jordan", " ravi", " tomas", " chen", " omar", " kwame",
+                 " noah", " leo")
+    f = sum(1 for c in female_cues if c in " " + low + " ")
+    m = sum(1 for c in male_cues if c in " " + low + " ")
+    return "MA" if m > f else "WA"
+
+
+def _split_cinematic_speech(text):
+    """Split a voice-tagged speech string into [(role, text), ...]. Fragments
+    without a leading tag inherit the previous tag (or default to N). Auto-
+    tags quoted dialogue first so a Gemini output that uses "..." instead of
+    the [MA]/[WA] markers still gets character voices."""
+    if not text:
+        return [("N", "")]
+    text = _auto_tag_quoted_dialogue(text, prefer_role=_detect_prefer_role(text))
+    out = []
+    pos = 0
+    cur_role = "N"
+    cur_buf = []
+    for m in _VOICE_TAG_RE.finditer(text):
+        chunk = text[pos:m.start()].strip()
+        if chunk:
+            cur_buf.append(chunk)
+        if cur_buf:
+            out.append((cur_role, " ".join(cur_buf).strip()))
+            cur_buf = []
+        cur_role = m.group(1)
+        pos = m.end()
+    tail = text[pos:].strip()
+    if tail:
+        cur_buf.append(tail)
+    if cur_buf:
+        out.append((cur_role, " ".join(cur_buf).strip()))
+    out = [(r, t) for (r, t) in out if t]
+    if not out:
+        clean = _VOICE_TAG_RE.sub("", text).strip()
+        return [("N", clean)] if clean else [("N", "")]
+    return out
+
+
+def _synth_cinematic_slide_audio(speech_text, audio_path, work_dir, idx):
+    """Render a slide of voice-tagged speech by generating one edge-tts clip
+    per fragment and concatenating them with ffmpeg. Returns True on success,
+    False if any fragment failed and we should fall back to single-voice."""
+    try:
+        import edge_tts  # noqa: F401
+    except ImportError:
+        return False
+    fragments = _split_cinematic_speech(speech_text)
+    if not fragments:
+        return False
+    frag_paths = []
+    for i, (role, chunk) in enumerate(fragments):
+        voice, rate, pitch = CINEMATIC_VOICE_MAP.get(role, CINEMATIC_VOICE_MAP["N"])
+        fp = os.path.join(work_dir, f"frag_{idx}_{i}.mp3")
+        if not _run_edge_tts(chunk, fp, voice, rate, pitch):
+            return False
+        frag_paths.append(fp)
+    if len(frag_paths) == 1:
+        try:
+            import shutil
+            shutil.move(frag_paths[0], audio_path)
+        except Exception:
+            return False
+        return True
+    concat_list = os.path.join(work_dir, f"frag_concat_{idx}.txt")
+    with open(concat_list, "w") as f:
+        for fp in frag_paths:
+            f.write(f"file '{os.path.basename(fp)}'\n")
+    cmd = [FFMPEG, "-y", "-f", "concat", "-safe", "0", "-i", concat_list,
+           "-c:a", "libmp3lame", "-b:a", "128k", audio_path]
+    try:
+        r = subprocess.run(cmd, capture_output=True, timeout=30)
+        return r.returncode == 0 and os.path.exists(audio_path) and os.path.getsize(audio_path) > 500
+    except Exception as e:
+        print(f"  [WARN] cinematic multi-voice concat failed slide {idx}: {e}")
+        return False
+
 
 def create_slide_audios(slides, work_dir):
     """Generate audio for each slide's speech separately, measure exact duration per slide.
@@ -1797,6 +1949,8 @@ def create_slide_audios(slides, work_dir):
     durations = []
     total_slides = len(slides)
 
+    cinematic_mode = os.getenv("USE_CINEMATIC_STORY_MODE", "false").strip().lower() == "true"
+
     for idx, slide in enumerate(slides):
         audio_path = os.path.join(work_dir, f"speech_{idx}.mp3")
         ok = False
@@ -1807,17 +1961,32 @@ def create_slide_audios(slides, work_dir):
         energy_delta = 13 if is_energetic_beat else 0
         pitch_delta = 5 if is_energetic_beat else 0
 
-        if use_fish:
-            ok = _run_fish_audio_tts(slide['speech'], audio_path, speed=1.1)
+        # Cinematic story mode uses tagged dialogue routed to per-character
+        # edge-tts voices. It takes precedence over Fish Audio because the
+        # single-voice Fish narration cannot do character differentiation,
+        # which is the whole point of the mode. Falls through to the normal
+        # engines (with tags stripped) if multi-voice synth fails.
+        if cinematic_mode:
+            ok = _synth_cinematic_slide_audio(slide['speech'], audio_path, work_dir, idx)
+            if not ok:
+                print(f"  [WARN] cinematic multi-voice failed slide {idx}, falling back")
+
+        # When the next fallback engines are used, voice tags would be read
+        # aloud by TTS ("open bracket N close bracket..."), which is terrible.
+        # Strip them before any non-cinematic engine sees the text.
+        speech_for_single_voice = _VOICE_TAG_RE.sub("", slide['speech']) if cinematic_mode else slide['speech']
+
+        if not ok and use_fish:
+            ok = _run_fish_audio_tts(speech_for_single_voice, audio_path, speed=1.1)
             if not ok:
                 print(f"  [WARN] Fish Audio failed for slide {idx}, trying fallback")
         if not ok and use_piper:
-            ok = _run_piper_tts(slide['speech'], audio_path, length_scale=(1.0 if is_energetic_beat else 1.15))
+            ok = _run_piper_tts(speech_for_single_voice, audio_path, length_scale=(1.0 if is_energetic_beat else 1.15))
             if not ok:
                 print(f"  [WARN] Piper failed for slide {idx}, trying fallback")
         if not ok and use_google:
             ok = _run_google_tts(
-                slide['speech'], audio_path,
+                speech_for_single_voice, audio_path,
                 speaking_rate=(1.0 if is_energetic_beat else 0.9),
             )
             if not ok:
@@ -1831,7 +2000,7 @@ def create_slide_audios(slides, work_dir):
                 import edge_tts  # noqa: F401
                 voice, rate, pitch = working_voice or VOICE_LIST[0]
                 ok = _run_edge_tts(
-                    slide['speech'], audio_path, voice,
+                    speech_for_single_voice, audio_path, voice,
                     _adjust_rate(rate, energy_delta), _adjust_pitch(pitch, pitch_delta),
                 )
             except ImportError:
@@ -3947,8 +4116,24 @@ def generate_daily_video():
         except Exception as _e:
             print(f"[WARN] Could not peek tomorrow's pair: {_e}")
 
+        # Cinematic story mode leaves voice tags in slide['speech'] for the
+        # TTS splitter — but the on-screen captions must not show "[N]" or
+        # "[WA]". Strip them from a working copy that every slide-renderer
+        # downstream reads for 'text'/'speech'. Keep the original speech
+        # untouched for the TTS layer which has already run.
+        if os.getenv("USE_CINEMATIC_STORY_MODE", "false").strip().lower() == "true":
+            for _s in slides:
+                _s['text'] = _VOICE_TAG_RE.sub("", _s.get('text', '')).strip()
+                _s['speech'] = _VOICE_TAG_RE.sub("", _s.get('speech', '')).strip()
+
         ok = False
-        if os.getenv("USE_INFOGRAPHIC_STYLE", "true").lower() != "false":
+        # Cinematic story mode forces the Ken Burns full-bleed layout — the
+        # stick-figure / VS-panel infographic layout doesn't suit a dialogue
+        # story and gets suppressed by the mode flag regardless of
+        # USE_INFOGRAPHIC_STYLE. Honour the explicit flag otherwise.
+        cinematic_on = os.getenv("USE_CINEMATIC_STORY_MODE", "false").strip().lower() == "true"
+        use_infographic = (not cinematic_on) and os.getenv("USE_INFOGRAPHIC_STYLE", "true").lower() != "false"
+        if use_infographic:
             print("[VIDEO] Creating video with infographic style...")
             ok = create_video_infographic(
                 slides, images, audio_file, durations, output_file,
