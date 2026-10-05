@@ -96,6 +96,14 @@ jobs:
           YOUTUBE_REFRESH_TOKEN:    ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           YOUTUBE_CHANNEL_ID:       ${{ secrets.YOUTUBE_CHANNEL_ID }}
           MAKE_INSTAGRAM_WEBHOOK_URL: ${{ secrets.MAKE_INSTAGRAM_WEBHOOK_URL }}
+          # Optional — if set, main.py queries Make.com's API after sending
+          # the webhook to confirm the scenario is still active (catches a
+          # paused / OAuth-dead scenario in minutes instead of weeks). Secret
+          # names: MAKE_API_KEY (token with scenarios:read), MAKE_SCENARIO_ID
+          # (number at the end of the scenario URL). MAKE_ZONE defaults to
+          # eu1 so your org works out of the box.
+          MAKE_API_KEY:             ${{ secrets.MAKE_API_KEY }}
+          MAKE_SCENARIO_ID:         ${{ secrets.MAKE_SCENARIO_ID }}
           INSTAGRAM_USERNAME:       ${{ secrets.INSTAGRAM_USERNAME }}
           PEXELS_API_KEY:           ${{ secrets.PEXELS_API_KEY }}
           # Flag read by video_hosting.publish_video_url() — pick the

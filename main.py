@@ -6,6 +6,7 @@ Runs on schedule: 6 slots optimized for US peak hours
 """
 
 import os
+import re
 import sys
 import time
 import random
@@ -601,11 +602,91 @@ def upload_to_instagram(video_path, title, keywords=None):
             return False
 
         print("[OK] Instagram: sent to Make.com for posting")
+        # Verify Make.com actually landed the post on Instagram (not just the
+        # webhook returning 200). This caught the 13-day OAuth-token death on
+        # 2026-10-04 that only surfaced when the user noticed Instagram was
+        # frozen — Make.com was accepting webhooks and failing silently at the
+        # downstream Facebook login step. _verify_instagram_landed scrapes the
+        # public profile 90 seconds after send and raises a loud [CRITICAL] in
+        # the Actions log + step summary if no new post is detected.
+        try:
+            _verify_instagram_landed(title)
+        except Exception as _ve:
+            print(f"[WARN] Could not verify Instagram landed: {_ve}")
         return True
 
     except Exception as e:
         print(f"[ERR] Instagram error: {e}")
         return False
+
+
+def _verify_instagram_landed(expected_title, wait_s=0):
+    """Detect a paused / failing Make.com Instagram scenario within one run
+    instead of a 13-day silent death.
+
+    On 2026-09-26 the scenario's Facebook OAuth token expired. Make.com's
+    webhook kept returning 200 (because the webhook step itself succeeds —
+    only the downstream Create-A-Reel step fails), so our pipeline logged
+    [OK] every day while nothing was actually posting. The user noticed on
+    Oct 4 that Instagram had been frozen for 13 days.
+
+    Fix: query Make.com's own API for the scenario's isActive / isPaused
+    state right after sending the webhook. If MAKE_API_KEY and
+    MAKE_SCENARIO_ID aren't set we silently skip — the scraper fallback was
+    tried and does not work (Instagram's public profile is JS-rendered now
+    and returns no post timestamps in raw HTML).
+
+    To activate detection, add two secrets to the repo:
+    - MAKE_API_KEY — from Make.com → profile icon → API → Add token with
+      scenarios:read scope
+    - MAKE_SCENARIO_ID — the integer at the end of the scenario URL
+    Optional:
+    - MAKE_ZONE — defaults to "eu1" (your org is on eu1); set to "us1" etc
+      if your Make.com account is in a different zone.
+    """
+    api_key = os.getenv("MAKE_API_KEY", "").strip().strip('"')
+    scenario_id = os.getenv("MAKE_SCENARIO_ID", "").strip().strip('"')
+    if not api_key or not scenario_id:
+        return  # detection not configured; skip silently
+    zone = os.getenv("MAKE_ZONE", "eu1").strip().strip('"') or "eu1"
+    if wait_s:
+        time.sleep(wait_s)
+    try:
+        resp = requests.get(
+            f"https://{zone}.make.com/api/v2/scenarios/{scenario_id}",
+            headers={"Authorization": f"Token {api_key}"},
+            timeout=15,
+        )
+    except Exception as e:
+        print(f"[VERIFY] Could not reach Make.com API: {e}")
+        return
+    if resp.status_code != 200:
+        print(f"[VERIFY] Make.com API returned {resp.status_code}: {resp.text[:200]}")
+        return
+    try:
+        sc = resp.json().get("scenario", {}) or resp.json()
+    except Exception as e:
+        print(f"[VERIFY] Make.com API body parse failed: {e}")
+        return
+    is_active = sc.get("isActive", sc.get("is_active"))
+    is_paused = sc.get("isPaused", sc.get("is_paused"))
+    if is_active is True and not is_paused:
+        print("[VERIFY] Make.com scenario is active — Instagram should land shortly.")
+        return
+    msg = (f"Make.com scenario {scenario_id} is NOT active (isActive={is_active}, "
+           f"isPaused={is_paused}). The webhook returned 200 but the scenario "
+           "is paused, so NOTHING will be posted to Instagram. Most common "
+           "cause: Facebook/Instagram OAuth token expired. Fix: Make.com → "
+           "open the IG scenario → reconnect the Instagram module → clear "
+           "queue → toggle ON.")
+    print(f"[CRITICAL] {msg}")
+    summary_path = os.getenv("GITHUB_STEP_SUMMARY", "")
+    if summary_path:
+        try:
+            with open(summary_path, "a", encoding="utf-8") as f:
+                f.write(f"\n## 🚨 Make.com scenario is paused\n\n{msg}\n")
+        except Exception:
+            pass
 
 
 def upload_to_facebook(video_path, title, keywords=None):
