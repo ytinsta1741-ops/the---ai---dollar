@@ -498,12 +498,96 @@ def upload_to_youtube(video_path, title, description, is_short=True, keywords=No
 PUBLIC_BASE_URL = "https://the-ai-dollar.onrender.com"
 
 
+def _post_instagram_direct(video_url, caption):
+    """Post a Reel to Instagram directly via the Facebook Graph API — bypasses
+    Make.com entirely. Required when the Make.com scenario is paused (OAuth
+    token death on 2026-09-26 took IG offline for 15 days before anyone
+    noticed). Needs two one-time secrets:
+      - INSTAGRAM_BUSINESS_ID: your IG Business account id (17-digit number
+        from Graph Explorer: GET /{page-id}?fields=instagram_business_account)
+      - FACEBOOK_PAGE_TOKEN: a long-lived page access token with
+        instagram_content_publish scope (never expires if the user is a page
+        admin at generation time — see developers.facebook.com/tools/explorer)
+
+    Flow is: create a video container → poll until FINISHED → publish. All
+    three calls hit graph.facebook.com; the video_url must be public (our
+    GitHub Release URL already is). Returns True on publish success.
+    """
+    ig_id = os.getenv("INSTAGRAM_BUSINESS_ID", "").strip().strip('"')
+    page_token = os.getenv("FACEBOOK_PAGE_TOKEN", "").strip().strip('"')
+    if not ig_id or not page_token:
+        return None  # not configured — caller falls back to Make.com
+
+    api = "https://graph.facebook.com/v21.0"
+    try:
+        # Step 1 — create the media container referencing our public URL
+        create = requests.post(
+            f"{api}/{ig_id}/media",
+            data={
+                "media_type": "REELS",
+                "video_url": video_url,
+                "caption": caption[:2200],  # Instagram caption hard limit
+                "share_to_feed": "true",
+                "access_token": page_token,
+            },
+            timeout=30,
+        )
+        if create.status_code != 200:
+            print(f"[ERR] IG direct: create container {create.status_code} {create.text[:300]}")
+            return False
+        creation_id = create.json().get("id")
+        if not creation_id:
+            print(f"[ERR] IG direct: no creation id in response: {create.text[:200]}")
+            return False
+        print(f"[OK] IG direct: container {creation_id} created; polling for FINISHED status...")
+
+        # Step 2 — poll status. Instagram transcodes the video; typically
+        # 20-45 seconds for a 30s Reel. Give it up to 3 minutes before
+        # giving up — a slow transcode shouldn't kill the post.
+        start = time.time()
+        while time.time() - start < 180:
+            time.sleep(10)
+            st = requests.get(
+                f"{api}/{creation_id}",
+                params={"fields": "status_code,status", "access_token": page_token},
+                timeout=15,
+            )
+            if st.status_code != 200:
+                print(f"[WARN] IG direct: status poll {st.status_code} {st.text[:200]}")
+                continue
+            code = st.json().get("status_code", "")
+            print(f"  [poll] status_code={code}")
+            if code == "FINISHED":
+                break
+            if code == "ERROR":
+                print(f"[ERR] IG direct: container transcoding failed: {st.text[:300]}")
+                return False
+        else:
+            print("[ERR] IG direct: timeout waiting for FINISHED status after 3 minutes")
+            return False
+
+        # Step 3 — publish the finished container to the feed
+        pub = requests.post(
+            f"{api}/{ig_id}/media_publish",
+            data={"creation_id": creation_id, "access_token": page_token},
+            timeout=30,
+        )
+        if pub.status_code != 200:
+            print(f"[ERR] IG direct: publish {pub.status_code} {pub.text[:300]}")
+            return False
+        post_id = pub.json().get("id")
+        print(f"[OK] Instagram DIRECT: published Reel {post_id}")
+        return True
+    except Exception as e:
+        print(f"[ERR] IG direct exception: {e}")
+        return False
+
+
 def upload_to_instagram(video_path, title, keywords=None):
-    """Post to Instagram via a Make.com scenario instead of talking to Meta
-    directly — Make.com already has verified Meta API access, so this
-    sidesteps Meta Developer Portal's SMS verification step entirely.
-    Sends a webhook with a public URL to the video (Make's Instagram
-    module fetches it from there) plus the caption."""
+    """Post to Instagram. Prefers the direct Graph API path (FACEBOOK_PAGE_TOKEN
+    + INSTAGRAM_BUSINESS_ID) because it survives OAuth-expiry cycles that kill
+    Make.com every 60 days. Falls back to the Make.com webhook when the direct
+    secrets aren't set, so the pipeline keeps working during the transition."""
     # Instagram-only hold: set INSTAGRAM_RESUME_DATE=YYYY-MM-DD on Render and
     # Instagram won't post until that date (YouTube/TikTok keep posting).
     # Used to pause IG after an accidental over-post burst without stopping
@@ -520,8 +604,12 @@ def upload_to_instagram(video_path, title, keywords=None):
             print(f"[WARN] INSTAGRAM_RESUME_DATE='{resume}' is not YYYY-MM-DD — ignoring")
 
     webhook_url = os.getenv("MAKE_INSTAGRAM_WEBHOOK_URL", "")
-    if not webhook_url:
-        print("[SKIP] Instagram: MAKE_INSTAGRAM_WEBHOOK_URL not set")
+    has_direct = bool(os.getenv("INSTAGRAM_BUSINESS_ID", "").strip()
+                      and os.getenv("FACEBOOK_PAGE_TOKEN", "").strip())
+    if not webhook_url and not has_direct:
+        print("[SKIP] Instagram: neither direct (INSTAGRAM_BUSINESS_ID + "
+              "FACEBOOK_PAGE_TOKEN) nor Make.com (MAKE_INSTAGRAM_WEBHOOK_URL) "
+              "credentials are set")
         return False
 
     try:
@@ -590,6 +678,25 @@ def upload_to_instagram(video_path, title, keywords=None):
         except Exception as e:
             print(f"[ERR] Instagram: could not publish video URL: {e}")
             return False
+
+        # Try the direct Graph API path first — it survives the OAuth-expiry
+        # cycle that killed Make.com on 2026-09-26 and froze Instagram for
+        # 15 days. Only falls through to the webhook when the direct secrets
+        # aren't configured OR the direct call fails outright.
+        if has_direct:
+            print(f"[Instagram] Posting direct via Graph API: {video_url}")
+            direct_ok = _post_instagram_direct(video_url, caption)
+            if direct_ok:
+                return True
+            if direct_ok is False:
+                # None = "not configured, try webhook"; False = "configured but
+                # errored" — in the second case still try the webhook as a
+                # last resort rather than skipping the post entirely.
+                print("[WARN] Instagram direct failed; falling back to Make.com webhook")
+
+        if not webhook_url:
+            print("[ERR] Instagram: direct failed and no Make.com webhook configured")
+            return False
         print(f"[Instagram] Notifying Make.com: {video_url}")
 
         resp = requests.post(
@@ -602,13 +709,6 @@ def upload_to_instagram(video_path, title, keywords=None):
             return False
 
         print("[OK] Instagram: sent to Make.com for posting")
-        # Verify Make.com actually landed the post on Instagram (not just the
-        # webhook returning 200). This caught the 13-day OAuth-token death on
-        # 2026-10-04 that only surfaced when the user noticed Instagram was
-        # frozen — Make.com was accepting webhooks and failing silently at the
-        # downstream Facebook login step. _verify_instagram_landed scrapes the
-        # public profile 90 seconds after send and raises a loud [CRITICAL] in
-        # the Actions log + step summary if no new post is detected.
         try:
             _verify_instagram_landed(title)
         except Exception as _ve:

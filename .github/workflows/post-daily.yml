@@ -96,12 +96,20 @@ jobs:
           YOUTUBE_REFRESH_TOKEN:    ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           YOUTUBE_CHANNEL_ID:       ${{ secrets.YOUTUBE_CHANNEL_ID }}
           MAKE_INSTAGRAM_WEBHOOK_URL: ${{ secrets.MAKE_INSTAGRAM_WEBHOOK_URL }}
+          # PREFERRED Instagram path (bypasses Make.com entirely — no more
+          # OAuth token death every 60 days). When these two are set the
+          # pipeline posts directly via the Facebook Graph API. The Make.com
+          # webhook above becomes a fallback only.
+          #   INSTAGRAM_BUSINESS_ID — the Instagram Business account id
+          #     (Graph Explorer: GET /{page-id}?fields=instagram_business_account)
+          #   FACEBOOK_PAGE_TOKEN — a long-lived Page Access Token with
+          #     instagram_content_publish and pages_read_engagement scopes
+          INSTAGRAM_BUSINESS_ID:    ${{ secrets.INSTAGRAM_BUSINESS_ID }}
+          FACEBOOK_PAGE_TOKEN:      ${{ secrets.FACEBOOK_PAGE_TOKEN }}
           # Optional — if set, main.py queries Make.com's API after sending
           # the webhook to confirm the scenario is still active (catches a
-          # paused / OAuth-dead scenario in minutes instead of weeks). Secret
-          # names: MAKE_API_KEY (token with scenarios:read), MAKE_SCENARIO_ID
-          # (number at the end of the scenario URL). MAKE_ZONE defaults to
-          # eu1 so your org works out of the box.
+          # paused / OAuth-dead scenario in minutes instead of weeks). Only
+          # needed when still relying on the Make.com fallback.
           MAKE_API_KEY:             ${{ secrets.MAKE_API_KEY }}
           MAKE_SCENARIO_ID:         ${{ secrets.MAKE_SCENARIO_ID }}
           INSTAGRAM_USERNAME:       ${{ secrets.INSTAGRAM_USERNAME }}
