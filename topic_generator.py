@@ -769,8 +769,20 @@ def _prime_hashes_from_rss():
     try:
         channel_id = (os.getenv("YOUTUBE_CHANNEL_ID", "").strip().strip('"')
                       or "UC7RIXToEFJrQOKjI0tAdZeA")
+        # A browser User-Agent is REQUIRED here on GitHub Actions runners.
+        # The bare python-requests UA ("python-requests/2.x") hits YouTube's
+        # rate-limiter from Azure IP ranges and returns 500 — observed on the
+        # Oct 7 02:11 run, with the same titles being re-posted three days
+        # straight because the dedup set stayed empty. A standard Chrome UA
+        # on the same request from the same runner returns 200 reliably.
         resp = requests.get(
             f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/atom+xml,application/xml;q=0.9,*/*;q=0.8",
+            },
             timeout=15,
         )
         if resp.status_code != 200:
@@ -858,11 +870,24 @@ def generate_short_topic():
     global _generated_title_hashes
     import time as _time
 
+    # Last-10 recent titles as plain lowercase text, used as a defence in
+    # depth: even if sync_used_pairs_from_titles missed a pair, we still
+    # reject any topic whose term_a + term_b both appear in a recent title.
+    # Caught the Oct 5-7 "credit score vs credit report" triple-post that
+    # slipped past the sync (which only scanned CONFUSABLE_PAIRS at the time
+    # and never saw curriculum-only pairs).
+    recent_low = _recent_titles_hint(limit=10).lower()
+
     for attempt in range(6):
         if attempt > 0:
             _time.sleep(3)
         topic = generate_ai_topic(existing_titles_hint=_recent_titles_hint())
         if topic:
+            ta = (topic.get("term_a") or "").strip().lower()
+            tb = (topic.get("term_b") or "").strip().lower()
+            if ta and tb and ta in recent_low and tb in recent_low:
+                print(f"[DEDUP] Rejecting repeat pair {ta} vs {tb} — already in last-10 titles")
+                continue
             title_hash = _hash_title(topic["title"])
             if title_hash not in _generated_title_hashes:
                 _generated_title_hashes.add(title_hash)

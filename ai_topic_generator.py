@@ -273,21 +273,33 @@ _used_pairs = set()
 
 
 def sync_used_pairs_from_titles(titles):
-    """Scan real posted titles for which CONFUSABLE_PAIRS they cover (both
-    term names appear in the title, case-insensitive) and mark those used.
-    Called from topic_generator.py's YouTube history sync at every startup."""
+    """Scan real posted titles for which pairs they cover (both term names
+    appear in the title, case-insensitive) and mark those used. Checks BOTH
+    CURRICULUM and CONFUSABLE_PAIRS — the earlier version only scanned
+    CONFUSABLE_PAIRS, so curriculum-only pairs like ("credit score", "credit
+    report") never got marked used from history and the pipeline silently
+    picked that pair THREE days in a row on Oct 5-7 (Mateo → Tomas → Priya,
+    all Credit Score vs Credit Report), repeating the September Revenue-vs-
+    Profit duplicate disaster. Called from topic_generator.py's YouTube
+    history sync at every startup."""
     added = 0
-    for title in titles:
-        low = title.lower()
-        for pair in CONFUSABLE_PAIRS:
-            if pair in _used_pairs:
-                continue
-            a, b = pair
-            if a.lower() in low and b.lower() in low:
+    seen = set()
+    for pair in list(CURRICULUM) + list(CONFUSABLE_PAIRS):
+        if pair in seen:
+            continue
+        seen.add(pair)
+        if pair in _used_pairs:
+            continue
+        a, b = pair
+        a_l, b_l = a.lower(), b.lower()
+        for title in titles:
+            low = title.lower()
+            if a_l in low and b_l in low:
                 _used_pairs.add(pair)
                 added += 1
+                break
     if added:
-        print(f"[OK] Synced {added} confusable pairs as already-used from YouTube history")
+        print(f"[OK] Synced {added} already-used pairs from YouTube history")
 
 
 def _pick_unused_pair():
