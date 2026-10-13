@@ -166,12 +166,12 @@ TEACH WITH A HUMAN CASE STUDY, NEVER A DEFINITION. Do not write dictionary lines
 NAMES — pick ONE first name per person FROM THIS POOL and NEVER REUSE one of the names used in the "already-posted titles" hint. The channel has been shipping "Marcus" five days running because the model defaults to it; the grid now reads as one repeating character instead of thirty different stories, which is actively killing taps. Vary ethnicity and gender across the pair and across uploads: {Aisha, Darius, Priya, Jordan, Leila, Mateo, Nia, Ravi, Sofia, Tomas, Yuki, Zara, Chen, Imani, Omar, Kiran, Noa, Elena, Kwame, Juno}. Give them concrete jobs and real dollar figures. The viewer should learn the difference by watching two lives diverge, not by being told a rule.
 
 STRUCTURE — every video follows this arc across the 7 slides:
-1. Hook (first 4 seconds — this single line decides whether the video dies). It MUST create an immediate contradiction the viewer needs resolved. Build it from a concrete PERSON and a number that shouldn't go together, and state it flat, like an accusation. Aim for one of these shapes:
-   - Contradiction: "He earns triple her salary. She's the rich one."
-   - Proximity + stakes: "Two owners. Same street. One is bleeding cash."
-   - Reversal: "His business made two million. He took home nothing."
-   - Accusation: "Your paycheck is lying to you."
-   BANNED hook openings, they kill retention instantly: any question ("Do you know...", "Ever wondered..."), any definition, any greeting, any use of the words "let's", "today", "in this video", and naming the two finance terms in the first sentence. Name the PEOPLE and the NUMBERS first — the terms themselves are revealed later, once the viewer is already invested in the outcome.
+1. Hook (first 4 seconds — this single line decides whether the video dies). It MUST do two things at once: (a) state a concrete person-plus-dollar contradiction and (b) end on an UNFINISHED CLAUSE that only resolves in slide 2. The viewer should feel they will miss the answer if they swipe. End the hook speech with a trailing connective — "because...", "and then...", "until...", "but..." — never a full stop, never a complete thought. The ON-SCREEN "text" caption may be the complete punchy phrase (no trailing conjunction) because the viewer reads it in one glance; the SPEECH is where the cliffhanger lives. Aim for one of these shapes:
+   - Specific-dollar cliffhanger: "Marcus lost forty seven thousand in one year because..."
+   - Reversal cliffhanger: "He earns three times her salary and she's the rich one because..."
+   - Proximity-stakes cliffhanger: "Same salary. One retires rich. The other retires broke because..."
+   - Single-number cliffhanger: "One number saved Aisha a hundred and eighty thousand and..."
+   BANNED hook openings, they kill retention instantly: any question ("Do you know...", "Ever wondered..."), any definition, any greeting, any use of the words "let's", "today", "in this video", and naming the two finance terms in the first sentence. Name the PEOPLE and the NUMBERS first — the terms themselves are revealed later, once the viewer is already invested in the outcome. The dollar figure MUST appear in the hook: it is the single most screenshot-worthy element and the on-screen caption now renders it 40% larger with a yellow pill, so the number has to be there to anchor the frame.
 2. Person A introduced — their job, their impressive-looking number.
 3. What is actually draining Person A — the hidden cost, with figures.
 4. Person B introduced — the unglamorous job, the smaller number.

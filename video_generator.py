@@ -1977,7 +1977,11 @@ def create_slide_audios(slides, work_dir):
         speech_for_single_voice = _VOICE_TAG_RE.sub("", slide['speech']) if cinematic_mode else slide['speech']
 
         if not ok and use_fish:
-            ok = _run_fish_audio_tts(speech_for_single_voice, audio_path, speed=1.1)
+            # 1.2x (up from 1.1x) tightens the delivery to the ~22-25 second
+            # Shorts sweet spot where completion rate is highest. Not the
+            # 0.95x that was rejected before as unclear — this goes the
+            # other way: slightly punchier, still perfectly intelligible.
+            ok = _run_fish_audio_tts(speech_for_single_voice, audio_path, speed=1.2)
             if not ok:
                 print(f"  [WARN] Fish Audio failed for slide {idx}, trying fallback")
         if not ok and use_piper:
@@ -2744,6 +2748,41 @@ def _word_colour(word):
     if w in _CAP_YELLOW_WORDS:
         return CAP_YELLOW
     return CAP_WHITE
+
+
+# Spelled-out money magnitudes get the same big-yellow treatment as digits,
+# since Fish Audio reads them aloud and the on-screen caption uses the same
+# spoken text. "FIFTY" alone isn't necessarily money, so it only promotes
+# when adjacent to one of these magnitude tokens — the match happens at
+# render time where context is available.
+_MONEY_MAGNITUDES = {
+    "GRAND", "THOUSAND", "MILLION", "BILLION", "TRILLION",
+    "K", "M", "B",
+}
+
+
+def _is_money_word(w, prev_w="", next_w=""):
+    """True when a caption word should get the big-money treatment: a
+    bigger font and a yellow fill-pill behind it, so the dollar figure
+    anchors the eye on every frame instead of blending into the sentence.
+    Catches direct digits ($47,000, 90%), spelled magnitudes (FIFTY
+    THOUSAND), and bare magnitude words when adjacent to a number."""
+    bare = w.strip(".,!?:;\"'()- $%").upper()
+    if "$" in w or "%" in w:
+        return True
+    if bare in _MONEY_MAGNITUDES:
+        return True
+    if any(c.isdigit() for c in bare) and len(bare) >= 2:
+        return True
+    # A number word like FIFTY promotes only when the next word is a
+    # magnitude: FIFTY THOUSAND dollars is money, FIFTY years is not.
+    _NUM_WORDS = {"ONE","TWO","THREE","FOUR","FIVE","SIX","SEVEN","EIGHT",
+                  "NINE","TEN","TWENTY","THIRTY","FORTY","FIFTY","SIXTY",
+                  "SEVENTY","EIGHTY","NINETY","HUNDRED"}
+    nxt = next_w.strip(".,!?:;\"'()- $%").upper()
+    if bare in _NUM_WORDS and nxt in _MONEY_MAGNITUDES:
+        return True
+    return False
 
 
 # The reference sketch is a single white silhouette in one dark outline —
@@ -3517,7 +3556,17 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
         bottom_zone_top = mascot_bottom + 40
         available_h = H - bottom_zone_top - 140
         size = 96
-        cap_y0 = bottom_zone_top + max(0, (available_h - size) // 2)
+        # Vary the caption vertical position across slides so the viewer's
+        # eye moves instead of locking into one spot — perceived as more
+        # dynamic and reads better on short-form. Three-position rotation
+        # (top of zone, middle, bottom) keyed to slide index. Hook and
+        # closer stay centred because their layouts assume it.
+        _mid_y = bottom_zone_top + max(0, (available_h - size) // 2)
+        if is_first or is_last:
+            cap_y0 = _mid_y
+        else:
+            _offsets = [-80, 0, 80]
+            cap_y0 = _mid_y + _offsets[idx % len(_offsets)]
 
         # AUTO-HIGHLIGHT (karaoke) SUBTITLES: the whole spoken line stays on
         # screen and the word currently being said is highlighted in a
@@ -3582,46 +3631,98 @@ def prep_infographic_slides(images, slides, work_dir, landscape=False,
             total_h = line_h * len(_cap_rows)
             yy = cap_y0 - total_h // 2 + dy
 
+            # Big money font: 1.4x the normal caption size so dollar
+            # amounts anchor the eye on every frame. Money words sit on a
+            # permanent yellow pill (not just when active) because the
+            # whole point is to make the number screenshot-worthy.
+            ff_big = get_font(int(_cap_fs * 1.4))
+            stroke_big = max(4, int(_cap_fs * 1.4 * 0.13))
+
+            # Flatten rows so we can look at prev/next words for money
+            # detection — magnitude words like "THOUSAND" need the number
+            # before them to be classified correctly.
+            flat_words = [w for row in _cap_rows for w in row]
+
             for ri, row in enumerate(_cap_rows):
                 widths = []
-                for w in row:
-                    b = dd.textbbox((0, 0), w, font=ff, stroke_width=stroke)
+                is_money_flags = []
+                for wi, w in enumerate(row):
+                    gi = _row_starts[ri] + wi
+                    prev_w = flat_words[gi - 1] if gi > 0 else ""
+                    next_w = flat_words[gi + 1] if gi + 1 < len(flat_words) else ""
+                    is_money = _is_money_word(w, prev_w, next_w)
+                    is_money_flags.append(is_money)
+                    use_ff = ff_big if is_money else ff
+                    use_stroke = stroke_big if is_money else stroke
+                    b = dd.textbbox((0, 0), w, font=use_ff, stroke_width=use_stroke)
                     widths.append(b[2] - b[0])
                 total_w = sum(widths) + space * (len(row) - 1)
                 xx = (W - total_w) // 2 + dx
                 for wi, (w, wd) in enumerate(zip(row, widths)):
                     gi = _row_starts[ri] + wi
+                    is_money = is_money_flags[wi]
+                    use_ff = ff_big if is_money else ff
+                    use_stroke = stroke_big if is_money else stroke
+                    use_fs = int(_cap_fs * 1.4) if is_money else _cap_fs
+                    # Vertical shim so the bigger font still sits on the
+                    # same baseline as the rest of the row.
+                    yy_offset = -(use_fs - _cap_fs) // 2
                     if reveal_only and gi > word_idx:
                         xx += wd + space          # keep the layout stable
                         continue
-                    if gi == word_idx:
-                        # highlight pill behind the word being spoken
-                        pad_x, pad_y = int(_cap_fs * 0.16), int(_cap_fs * 0.10)
+                    if is_money and gi != word_idx:
+                        # Permanent yellow pill behind every money word,
+                        # even when it isn't the active word. Makes the
+                        # dollar figure screenshot-worthy at any frame.
+                        pad_x, pad_y = int(use_fs * 0.16), int(use_fs * 0.10)
                         dd.rounded_rectangle(
-                            [xx - pad_x, yy - pad_y,
-                             xx + wd + pad_x, yy + _cap_fs + pad_y],
-                            radius=int(_cap_fs * 0.22),
-                            fill=_word_colour(w) if _word_colour(w) != CAP_WHITE else ACCENT)
-                        dd.text((xx, yy), w, font=ff, fill=(255, 255, 255),
-                                stroke_width=stroke, stroke_fill=INK)
+                            [xx - pad_x, yy + yy_offset - pad_y,
+                             xx + wd + pad_x, yy + yy_offset + use_fs + pad_y],
+                            radius=int(use_fs * 0.22),
+                            fill=CAP_YELLOW)
+                        dd.text((xx, yy + yy_offset), w, font=use_ff,
+                                fill=INK, stroke_width=use_stroke,
+                                stroke_fill=(255, 255, 255))
+                    elif gi == word_idx:
+                        # Active-word highlight pill (stronger ring on money)
+                        pad_x, pad_y = int(use_fs * 0.16), int(use_fs * 0.10)
+                        pill_fill = (CAP_YELLOW if is_money
+                                     else (_word_colour(w)
+                                           if _word_colour(w) != CAP_WHITE
+                                           else ACCENT))
+                        dd.rounded_rectangle(
+                            [xx - pad_x, yy + yy_offset - pad_y,
+                             xx + wd + pad_x, yy + yy_offset + use_fs + pad_y],
+                            radius=int(use_fs * 0.22),
+                            fill=pill_fill)
+                        text_fill = INK if is_money else (255, 255, 255)
+                        dd.text((xx, yy + yy_offset), w, font=use_ff,
+                                fill=text_fill, stroke_width=use_stroke,
+                                stroke_fill=INK if not is_money else (255,255,255))
                     else:
-                        dd.text((xx, yy), w, font=ff, fill=CAP_WHITE,
-                                stroke_width=stroke, stroke_fill=INK)
+                        dd.text((xx, yy + yy_offset), w, font=use_ff,
+                                fill=CAP_WHITE, stroke_width=use_stroke,
+                                stroke_fill=INK)
                     xx += wd + space
                 yy += line_h
 
         if is_first:
-            # Rotate the hook line so the first frame isn't visually identical
-            # to every previous video's first frame. Same trust-building tone
-            # (never clickbait), varied words. Six-way rotation on day-of-year
-            # so a viewer scrolling the feed sees a different opener each day.
+            # Rotate the hook pill so the first frame isn't visually identical
+            # to every previous video's first frame. The pool was tired
+            # ("WATCH TIL THE END" / "DON'T SKIP") and generic — these new
+            # ones tease a SPECIFIC payoff viewers need to resolve, which is
+            # the single biggest lever on Shorts retention. The pill sits
+            # above the voiced hook, so between the two the viewer has two
+            # independent reasons to stay in the first second.
             _HOOKS = [
-                "WATCH TIL THE END",
-                "MOST GET THIS WRONG",
-                "DON'T SKIP THIS ONE",
-                "THIS COSTS YOU MONEY",
-                "STAY UNTIL THE VERDICT",
-                "SAVE THIS FOR LATER",
+                "ONE NUMBER CHANGES EVERYTHING",
+                "THEY HAD THE SAME SALARY",
+                "A $47,000 MISTAKE",
+                "THE RICH ONE ISN'T WHO YOU THINK",
+                "THIS COST HIM A HOUSE",
+                "90% GET THIS WRONG",
+                "WATCH WHAT HAPPENS NEXT",
+                "THE VERDICT WILL SHOCK YOU",
             ]
             hook = _HOOKS[datetime.now().timetuple().tm_yday % len(_HOOKS)]
             hb = draw.textbbox((0, 0), hook, font=font_sub)
