@@ -119,10 +119,11 @@ jobs:
           GH_RELEASE_UPLOAD: "true"
           # Cinematic story mode: dialogue-tagged scripts, Flux-Schnell
           # images, multi-voice edge-tts (narrator + up to 4 characters),
-          # Ken Burns full-bleed layout. Flip to "false" to roll back to
-          # the sketch infographic style on the next run — no code change
-          # needed, just change this one line.
-          USE_CINEMATIC_STORY_MODE: "true"
+          # Ken Burns full-bleed layout. Set back to "false" on 2026-10-13
+          # at user request — reverting to the stick-figure sketch style
+          # ("old man pointing" format with VS panels + draw-in reveal).
+          # Flip to "true" to re-enable cinematic.
+          USE_CINEMATIC_STORY_MODE: "false"
           # gh needs a token to create the release and upload the asset;
           # GITHUB_TOKEN is provided automatically by Actions.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -136,6 +137,36 @@ jobs:
           fi
           echo "Running: python main.py $args"
           python main.py $args
+
+      - name: Persist dedup state back to the repo
+        # The pipeline writes posted_titles.json / posted_titles_text.json /
+        # used_pairs.json on every successful post, but the Actions runner is
+        # ephemeral — without this step the files vanish and the next run
+        # starts blank, which caused "Credit Score vs Credit Report" to
+        # repeat three times in five days (Oct 9, 12, 13) when YouTube's RSS
+        # fallback 404'd and the in-memory dedup was the only guard left.
+        # Commit touches only the state files; failures don't fail the run.
+        continue-on-error: true
+        run: |
+          set -e
+          changed=0
+          for f in posted_titles.json posted_titles_text.json used_pairs.json; do
+            if [ -f "$f" ] && ! git diff --quiet -- "$f" 2>/dev/null; then
+              git add "$f"
+              changed=1
+            fi
+          done
+          if [ "$changed" = "1" ]; then
+            git config user.name "AI Dollar Bot"
+            git config user.email "noreply@github.com"
+            git commit -m "chore: persist dedup state after post"
+            # Rebase onto any concurrent change (unlikely with the concurrency
+            # group, but harmless) then push.
+            git pull --rebase origin main || true
+            git push origin main
+          else
+            echo "No dedup state changes to persist"
+          fi
 
       - name: Prune old releases
         # Every run creates a release. Keep the ten most recent and delete

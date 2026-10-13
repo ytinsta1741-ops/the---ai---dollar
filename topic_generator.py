@@ -859,6 +859,15 @@ def _remember_title(title):
     except Exception as e:
         print(f"[WARN] Could not save recent title text: {e}")
 
+    # Also flush the used-pairs set so it survives the ephemeral runner.
+    # The workflow commits used_pairs.json back to the repo so the next run
+    # starts with the real state even when YouTube RSS 404s.
+    try:
+        from ai_topic_generator import flush_used_pairs_to_disk
+        flush_used_pairs_to_disk()
+    except Exception as e:
+        print(f"[WARN] Could not flush used pairs: {e}")
+
 
 def generate_short_topic():
     """Generate a unique short-form topic that has never been generated before.

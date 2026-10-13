@@ -264,12 +264,49 @@ def _validate_topic(data):
 
 
 # Pairs already used — cycles through the whole pool before any pair repeats.
-# NOT just in-memory: Render wipes memory on every redeploy (which happens
-# often), so a purely in-memory set silently resets and repeats start
-# happening again right after any push. sync_used_pairs_from_titles() rebuilds
-# this from the channel's REAL YouTube upload history at startup instead —
-# that's the only state that actually survives a redeploy.
+# Three layers of persistence, applied in order:
+#   1. _used_pairs_from_disk() reads a committed JSON file at module import,
+#      restoring state from the previous run even when YouTube RSS fails.
+#   2. sync_used_pairs_from_titles() tops it up from the live RSS feed when
+#      the feed is reachable.
+#   3. mark_pair_used() + flush_used_pairs_to_disk() write it back after
+#      every successful post, and the workflow commits the JSON back to the
+#      repo so the next ephemeral runner starts with the real state.
+# Without layer 1 the pipeline reposted "Credit Score vs Credit Report" three
+# times in five days (Oct 9, 12, 13) because YouTube RSS 404'd intermittently
+# from Actions runners and the in-memory set reset to empty.
+_USED_PAIRS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "used_pairs.json")
 _used_pairs = set()
+
+
+def _load_used_pairs_from_disk():
+    """Rebuild the used-pairs set from the committed state file. Called at
+    module import so dedup survives even a total RSS outage."""
+    global _used_pairs
+    try:
+        if os.path.exists(_USED_PAIRS_FILE):
+            with open(_USED_PAIRS_FILE, "r") as f:
+                data = json.load(f)
+            _used_pairs = {tuple(p) for p in data if isinstance(p, list) and len(p) == 2}
+            if _used_pairs:
+                print(f"[OK] Loaded {len(_used_pairs)} used pairs from disk")
+    except Exception as e:
+        print(f"[WARN] Could not load used_pairs.json: {e}")
+
+
+def flush_used_pairs_to_disk():
+    """Write the current used-pairs set back to the state file so the next
+    runner picks it up after the workflow commits + pushes it. Called after a
+    successful post from topic_generator._remember_title."""
+    try:
+        with open(_USED_PAIRS_FILE, "w") as f:
+            json.dump(sorted([list(p) for p in _used_pairs]), f, indent=2)
+    except Exception as e:
+        print(f"[WARN] Could not write used_pairs.json: {e}")
+
+
+_load_used_pairs_from_disk()
 
 
 def sync_used_pairs_from_titles(titles):
